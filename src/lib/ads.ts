@@ -62,6 +62,49 @@ export function adWhatsappLink(ad: LocalAd): string | null {
 }
 
 /**
+ * O anuncio esta no ar?
+ *
+ * Um anuncio so aparece no portal quando esta **ativo** E dentro do periodo
+ * de veiculacao. Sem esta checagem, um anuncio que ja venceu continuaria
+ * no ar enquanto o painel mostraria a situacao "Encerrado".
+ */
+export function isAdLive(
+  ad: Pick<LocalAd, 'active' | 'starts_at' | 'ends_at'>,
+  now: number = Date.now(),
+): boolean {
+  if (!ad.active) return false;
+
+  if (ad.starts_at) {
+    const start = new Date(ad.starts_at).getTime();
+    if (!Number.isNaN(start) && start > now) return false;
+  }
+
+  if (ad.ends_at) {
+    const end = new Date(ad.ends_at).getTime();
+    if (!Number.isNaN(end) && end < now) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Escolhe o anuncio que fica no ar em um slot.
+ *
+ * Regra: o **mais recem-cadastrado** dentro do periodo de veiculacao. A lista
+ * chega em ordem de cadastro (o mais antigo primeiro), entao o ultimo da
+ * lista e o vencedor. Assim, o anuncio que o Editor-Chefe acabou de
+ * cadastrar entra no ar em vez de ficar escondido atras de um cadastro
+ * antigo que ocupa o mesmo slot.
+ */
+export function pickLiveAd<
+  T extends Pick<LocalAd, 'slot_position' | 'active' | 'starts_at' | 'ends_at'>,
+>(ads: T[], slot: AdSlotPosition): T | null {
+  const live = ads.filter((ad) => ad.slot_position === slot && isAdLive(ad));
+
+  return live.length > 0 ? live[live.length - 1]! : null;
+}
+
+/**
  * Destino final do clique: WhatsApp quando houver numero, senao o target_url.
  * O clique passa sempre por `/api/ads/click/[id]` para contabilizar.
  */

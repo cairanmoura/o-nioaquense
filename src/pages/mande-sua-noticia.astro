@@ -2,6 +2,7 @@
 import EnviarPistaForm from '../components/leitores/EnviarPistaForm.tsx';
 import Icon from '../components/admin/Icon.astro';
 import MainLayout from '../layouts/MainLayout.astro';
+import { readEnv } from '../lib/supabase/server';
 
 /**
  * /mande-sua-noticia
@@ -9,7 +10,13 @@ import MainLayout from '../layouts/MainLayout.astro';
  * "Boca no Trombone": canal direto do morador de Nioaque com a redação.
  */
 
-const redaWhatsapp = import.meta.env.PUBLIC_REDACAO_WHATSAPP ?? '5567999990000';
+/**
+ * O WhatsApp da redação vem do **binding de runtime** (wrangler.toml `[vars]`)
+ * e nao do `import.meta.env`: `import.meta.env.PUBLIC_*` e' fixado no
+ * build, entao o valor configurado no Cloudflare nunca chegaria aqui.
+ */
+const redaWhatsapp =
+  readEnv(Astro.locals, 'PUBLIC_REDACAO_WHATSAPP') ?? '5567999990000';
 
 const EXEMPLOS = [
   'Buraco na rua que piora com a chuva',

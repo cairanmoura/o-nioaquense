@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 
 import { adDestination } from '../../../../lib/ads';
 import { getAdById } from '../../../../lib/content';
+import { demoStore } from '../../../../lib/demo-store';
 
 /**
  * GET /api/ads/click/[id]
@@ -22,11 +23,17 @@ export const GET: APIRoute = async ({ params, redirect, locals }) => {
   const ad = await getAdById(locals, id);
 
   // Contabiliza o clique (falha no contador nunca deve quebrar a navegacao)
-  if (locals.supabase && id) {
-    try {
-      await locals.supabase.rpc('increment_ad_clicks', { p_ad_id: id });
-    } catch {
-      /* contador indisponivel: seguimos com o redirecionamento */
+  if (id) {
+    if (locals.supabase) {
+      try {
+        await locals.supabase.rpc('increment_ad_clicks', { p_ad_id: id });
+      } catch {
+        /* contador indisponivel: seguimos com o redirecionamento */
+      }
+    } else {
+      // Sem Supabase (modo demonstracao): o contador vive na memoria.
+      // Sem isto, o relatorio de cliques ficaria sempre zerado no painel.
+      demoStore.incrementAdClicks(id);
     }
   }
 

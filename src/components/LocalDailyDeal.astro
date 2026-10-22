@@ -50,12 +50,22 @@ const reservedHeight = AD_MIN_HEIGHT.daily_deal;
         </div>
 
         <div class="flex flex-1 flex-col p-5">
-          <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
-            {ad.client_name}
-          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+              {ad.client_name}
+            </p>
+            {ad.price_label && (
+              <span class="rounded-full bg-nioaque-red-50 px-2.5 py-1 font-editorial text-sm font-semibold text-nioaque-red-dark">
+                {ad.price_label}
+              </span>
+            )}
+          </div>
+
           <h3 class="mt-1.5 font-editorial text-xl font-semibold leading-snug text-ink">
             {ad.title}
           </h3>
+
+          {ad.notes && <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">{ad.notes}</p>}
 
           <a
             href={adContactPath(ad)}

@@ -20,9 +20,21 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
 
+  /**
+   * Paginas fixas publicas.
+   *
+   * `/busca` nao entra: o `robots.txt` bloqueia essa rota, e uma URL no
+   * sitemap que o robo pede para nao indexar e um sinal contraditorio.
+   */
   const staticPages = [
     { loc: `${base}/`, priority: '1.0', changefreq: 'hourly' },
-    { loc: `${base}/busca`, priority: '0.4', changefreq: 'weekly' },
+    { loc: `${base}/editoria/nioaque`, priority: '0.9', changefreq: 'hourly' },
+    { loc: `${base}/radar-oficial`, priority: '0.9', changefreq: 'daily' },
+    { loc: `${base}/colunistas`, priority: '0.7', changefreq: 'weekly' },
+    { loc: `${base}/editoria/coluna`, priority: '0.8', changefreq: 'daily' },
+    { loc: `${base}/editoria/ms`, priority: '0.8', changefreq: 'daily' },
+    { loc: `${base}/editoria/brasil`, priority: '0.8', changefreq: 'daily' },
+    { loc: `${base}/mande-sua-noticia`, priority: '0.6', changefreq: 'monthly' },
   ];
 
   const staticXml = staticPages
@@ -31,6 +43,18 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
     <loc>${escape(page.loc)}</loc>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
+  </url>`,
+    )
+    .join('\n');
+
+  /** Paginas individuais dos colunistas. */
+  const columnistXml = feed.profiles
+    .filter((profile) => profile.role === 'columnist' && profile.active)
+    .map(
+      (profile) => `  <url>
+    <loc>${escape(`${base}/colunistas/${profile.slug}`)}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>`,
     )
     .join('\n');
@@ -52,6 +76,7 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticXml}
+${columnistXml}
 ${articlesXml}
 </urlset>
 `;

@@ -29,9 +29,12 @@ const SLOT_LABEL: Record<string, string> = {
 const SLOTS = Object.entries(SLOT_LABEL);
 
 const situation = (ad: { starts_at: string | null; ends_at: string | null; active: boolean }) => {
-  const now = new Date().toISOString();
-  if (ad.starts_at && ad.starts_at > now) return 'Agendado';
-  if (ad.ends_at && ad.ends_at < now) return 'Encerrado';
+  const now = Date.now();
+  const start = ad.starts_at ? new Date(ad.starts_at).getTime() : null;
+  const end = ad.ends_at ? new Date(ad.ends_at).getTime() : null;
+
+  if (start !== null && !Number.isNaN(start) && start > now) return 'Agendado';
+  if (end !== null && !Number.isNaN(end) && end < now) return 'Encerrado';
   return ad.active ? 'No ar' : 'Pausado';
 };
 

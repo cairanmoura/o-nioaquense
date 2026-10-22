@@ -214,6 +214,29 @@ posição no site, WhatsApp do lojista, condição e período de veiculação.
 O **relatório de cliques** mostra o total de cliques, quantos anúncios estão no ar, quantos são
 ofertas do dia e o ranking dos 5 mais clicados — o número para apresentar ao comerciante.
 
+#### Posições no site
+
+| Slot | Onde aparece |
+|------|--------------|
+| `header_billboard` | Topo do portal, em todas as páginas públicas |
+| `home_middle` | Meio da home |
+| `daily_deal` | Bloco "Destaque do Comércio" (com selo e preço) |
+| `sidebar` | Barra lateral da home e das matérias |
+| `article_inline` | Dentro do corpo da matéria, acima do espaço do AdSense |
+
+#### Regras de veiculação
+
+- **Só aparece o que está no ar**: o anúncio precisa estar `active` **e** dentro do período
+  (`starts_at` / `ends_at`). Um anúncio vencido continua cadastrado — com os cliques já contados —
+  mas some do portal (o painel mostra a situação "Encerrado").
+- **O mais recente vence o slot**: se dois anúncios disputam a mesma posição, entra no ar o
+  cadastrado por último. Assim, o anúncio que o Editor-Chefe acabou de registrar aparece de
+  imediato, em vez de ficar escondido atrás de um cadastro antigo.
+- **Preço e condição aparecem para o leitor** nos banners e no Destaque do Comércio.
+- **Todo clique é rastreado**: imagem, título e botão "Chamar no WhatsApp" passam por
+  `/api/ads/click/[id]`, que incrementa `clicks_count` e só então redireciona para o WhatsApp
+  do lojista (com a mensagem já formatada).
+
 ### Boca no Trombone (`/admin/leitores`)
 
 Caixa de entrada com as fotos e os relatos enviados pelos moradores, resposta direta por
@@ -279,11 +302,14 @@ Os arquivos estáticos têm regras próprias em `public/_headers` (`/_astro/*` c
 
 ```bash
 npm run build
-npx wrangler deploy
+npx wrangler deploy                    # bloco [vars] do wrangler.toml
+npx wrangler deploy --env production   # bloco [env.production.vars]
 ```
 
 Variáveis secretas: `npx wrangler secret put PUBLIC_SUPABASE_URL` (idem para as outras).
-As variáveis públicas ficam em `wrangler.toml` → `[vars]`.
+As variáveis públicas ficam em `wrangler.toml` → `[vars]`. A tabela que mostra quais são lidas
+em runtime (não exigem rebuild) e quais são fixadas no build está na seção
+[Deploy (Cloudflare)](#deploy-cloudflare).
 
 ---
 
@@ -483,6 +509,14 @@ npx wrangler deploy
 
 Variáveis: configure-as no Cloudflare (`wrangler secret put PUBLIC_SUPABASE_URL` etc.) ou em
 `.dev.vars` para o ambiente local.
+
+| Variável | Quando é lida | Observação |
+|----------|---------------|------------|
+| `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | runtime (binding) | `readEnv()` prioriza o binding do Worker e cai para o valor do build |
+| `SUPABASE_SERVICE_ROLE_KEY` | runtime (secret) | só no servidor; nunca no bundle do navegador |
+| `PUBLIC_REDACAO_WHATSAPP` | runtime (binding) | WhatsApp do botão "Chamar a redação" — trocar no Cloudflare **não exige rebuild** |
+| `PUBLIC_GOOGLE_ADSENSE_CLIENT` / `PUBLIC_ADSENSE_SLOT_DEFAULT` | build | vão para o bundle do navegador; mudar exige `npm run build` |
+| `PUBLIC_SITE_URL` | build | URL canônica (canonical, sitemaps e OG). Em produção: `https://onioaquense.com` |
 
 > O `astro.config.mjs` usa `session: { driver: 'memory' }` para não exigir um binding KV
 > do Cloudflare. Se for usar `Astro.session`, troque para o driver KV do adaptador.

@@ -2,7 +2,9 @@
 import '../styles/global.css';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import LocalAdBanner from '../components/LocalAdBanner.astro';
 import NioaqueServiceBar from '../components/NioaqueServiceBar.astro';
+import { getHeaderBillboard } from '../lib/content';
 
 /**
  * MainLayout.astro
@@ -10,6 +12,7 @@ import NioaqueServiceBar from '../components/NioaqueServiceBar.astro';
  * Layout principal do portal:
  *
  *   [ Header ]             logo + busca + "Mande sua Notícia" + editorias
+ *   [ Billboard ]          anúncio do comércio no topo do portal
  *   [ NioaqueServiceBar ]  farmácia de plantão + clima + ônibus + alerta
  *   [ <slot /> ]           conteúdo da página
  *   [ Footer ]
@@ -34,6 +37,15 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+
+/**
+ * Anuncio do topo do portal (slot "Topo do portal" do painel).
+ *
+ * So e' renderizado quando existe anuncio no ar: sem anunciante nao sobra
+ * caixa vazia. Quando existe, o `LocalAdBanner` ja reserva a altura
+ * (zero CLS).
+ */
+const billboard = await getHeaderBillboard(Astro.locals);
 ---
 
 <!doctype html>
@@ -82,6 +94,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).hr
     </a>
 
     <Header />
+
+    {
+      billboard && (
+        <div class="container-editorial pt-3">
+          <LocalAdBanner ad={billboard} label="Publicidade local" />
+        </div>
+      )
+    }
 
     {!hideServiceBar && <NioaqueServiceBar />}
 

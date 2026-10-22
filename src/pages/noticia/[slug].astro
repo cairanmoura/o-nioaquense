@@ -306,8 +306,12 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           set:html={article.content}
         />
 
-        {/* Anuncio intercalado */}
-        <div class="mt-10">
+        {/* Anuncio intercalado: o do comercio local (slot "Dentro da materia")
+            e, abaixo, o espaco do Google AdSense. O banner local so aparece
+            quando ha anunciante - sem ele, o espaco do AdSense ja esta
+            reservado e nao sobra uma caixa vazia no meio da materia. */}
+        <div class="mt-10 space-y-6">
+          {feed.ads.article_inline && <LocalAdBanner ad={feed.ads.article_inline} label="Publicidade local" />}
           <GoogleAdSlot format="horizontal" label="Publicidade" />
         </div>
 

@@ -43,7 +43,13 @@
     {
       "name": "Radar Oficial",
       "short_name": "Radar",
-      "url": "/?escopo=radar_oficial",
+      "url": "/radar-oficial",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Mande sua Notícia",
+      "short_name": "Mande",
+      "url": "/mande-sua-noticia",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {

@@ -36,15 +36,23 @@ invocation_logs = true
 # -----------------------------------------------------------------------------
 #  Variaveis publicas (nao secretas) - espelham o .env
 # -----------------------------------------------------------------------------
+#  ATENCAO: `PUBLIC_REDACAO_WHATSAPP` e' lida em RUNTIME (src/lib/supabase/server.ts
+#  -> readEnv), entao o valor deste arquivo vale sem rebuild. Ja as variaveis
+#  usadas no bundle do navegador (AdSense) sao fixadas no build.
+# -----------------------------------------------------------------------------
 [vars]
 PUBLIC_SITE_URL = "https://onioaquense.com"
 PUBLIC_SUPABASE_URL = ""
 PUBLIC_SUPABASE_ANON_KEY = ""
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
+PUBLIC_REDACAO_WHATSAPP = "5567999990000"
 
 # -----------------------------------------------------------------------------
 #  Ambiente de producao
+# -----------------------------------------------------------------------------
+#  `npx wrangler deploy --env production` usa este bloco.
+#  O deploy sem `--env` usa o bloco [vars] acima.
 # -----------------------------------------------------------------------------
 [env.production]
 name = "o-nioaquense"
@@ -55,6 +63,7 @@ PUBLIC_SUPABASE_URL = ""
 PUBLIC_SUPABASE_ANON_KEY = ""
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
+PUBLIC_REDACAO_WHATSAPP = "5567999990000"
 
 # -----------------------------------------------------------------------------
 #  R2 (imagens em WebP) e KV (cache da borda) - Etapas seguintes

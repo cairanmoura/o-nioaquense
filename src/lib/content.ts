@@ -8,9 +8,10 @@
 
 import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-js';
 
-import { mockLocalAds, mockReaderSubmissions } from './mock-data';
+import { mockReaderSubmissions } from './mock-data';
 import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
+import { isAdLive, pickLiveAd } from './ads';
 import type {
   AdSlotPosition,
   Article,
@@ -185,7 +186,9 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
       query(
         supabase,
         'local_ads',
-        (q) => q.eq('active', true).order('starts_at', { ascending: false }),
+        // Ordem de cadastro (o mais antigo primeiro): o ultimo da lista e' o
+        // anuncio mais recente e, portanto, o que fica no ar no slot.
+        (q) => q.eq('active', true).order('created_at', { ascending: true }),
         normalizeAd,
       ),
     ]);
@@ -221,8 +224,11 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
 
   const adsBySlot: Partial<Record<AdSlotPosition, LocalAd>> = {};
 
-  for (const ad of demoStore.listAds().filter((item) => item.active)) {
-    if (!adsBySlot[ad.slot_position]) adsBySlot[ad.slot_position] = ad;
+  // So entra no ar o anuncio ativo E dentro do periodo de veiculacao.
+  // A lista vem em ordem de cadastro: o ultimo vence o slot.
+  for (const ad of demoStore.listAds()) {
+    if (!isAdLive(ad)) continue;
+    adsBySlot[ad.slot_position] = ad;
   }
 
   return {
@@ -256,7 +262,41 @@ export async function getAdById(locals: App.Locals, id: string): Promise<LocalAd
     if (rows?.[0]) return rows[0];
   }
 
-  return mockLocalAds.find((ad) => ad.id === id) ?? null;
+  // O `demoStore` nasce com os anuncios de exemplo e recebe os cadastrados
+  // pelo painel. Buscar so no `mockLocalAds` faria a rota de clique nao
+  // encontrar um anuncio recem-cadastrado e o morador cairia na home.
+  return demoStore.listAds().find((ad) => ad.id === id) ?? null;
+}
+
+/**
+ * Anuncio do topo do portal (slot `header_billboard`).
+ *
+ * Consulta leve: apenas o slot do topo, sem carregar o feed inteiro. O
+ * layout principal usa isso em todas as paginas publicas.
+ */
+export async function getHeaderBillboard(locals: App.Locals): Promise<LocalAd | null> {
+  const supabase = locals.supabase;
+
+  if (supabase) {
+    const rows = await query(
+      supabase,
+      'local_ads',
+      (q) =>
+        q
+          .eq('slot_position', 'header_billboard')
+          .eq('active', true)
+          .order('created_at', { ascending: true }),
+      normalizeAd,
+    );
+
+    if (rows?.length) {
+      // A lista vem do mais antigo para o mais novo: o ultimo e' o vencedor.
+      const live = rows.filter((ad) => isAdLive(ad));
+      return live.length > 0 ? live[live.length - 1]! : null;
+    }
+  }
+
+  return pickLiveAd(demoStore.listAds(), 'header_billboard');
 }
 
 /** Materias do Radar Oficial (traduzidas por `category_label`). */

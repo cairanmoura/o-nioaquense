@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { DEMO_COOKIE, resolveAdminSession } from './lib/auth';
-import { applyCacheHeaders, getEdgeCache, isCacheable, policyForPath } from './lib/cache';
+import { CACHE_POLICIES, applyCacheHeaders, getEdgeCache, isCacheable, policyForPath } from './lib/cache';
 import { createSupabaseServerClient } from './lib/supabase/server';
 
 /**
@@ -49,11 +49,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (isAdminPage) {
       if (!session && !isLoginRoute) {
         const next_ = encodeURIComponent(`${pathname}${context.url.search}`);
-        return context.redirect(`/admin/login?next=${next_}`);
+        // O redirect sai antes do bloco de cache: aplicamos a politica
+        // `private` aqui para que nem o navegador nem o CDN guardem o 302.
+        return applyCacheHeaders(
+          context.redirect(`/admin/login?next=${next_}`),
+          CACHE_POLICIES.private,
+        );
       }
 
       if (session && isLoginRoute) {
-        return context.redirect('/admin');
+        return applyCacheHeaders(context.redirect('/admin'), CACHE_POLICIES.private);
       }
     }
   }
