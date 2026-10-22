@@ -1,0 +1,121 @@
+---
+import { getNioaqueWeather } from '../lib/weather';
+import type { WeatherIcon } from '../lib/weather';
+
+/**
+ * WeatherWidget.astro
+ * -----------------------------------------------------------------------------
+ * Retrato completo do tempo em Nioaque: agora, min/max, sensacao, vento,
+ * umidade, chance de chuva, nascer/por do sol e a previsao dos proximos dias.
+ *
+ * Dados: Open-Meteo (gratuito, sem chave), com cache de 15 min na borda.
+ */
+
+const weather = await getNioaqueWeather(Astro.locals);
+
+const ICONS: Record<WeatherIcon, string> = {
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M6.5 6.5 4.9 4.9M19.1 19.1l-1.6-1.6M17.5 6.5l1.6-1.6M4.9 19.1l1.6-1.6"/>',
+  cloud: '<path d="M7 18a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 18Z"/>',
+  rain: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M9 18v2M13 18v2M17 18v2"/>',
+  storm: '<path d="M7 14a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 14Z"/><path d="m13 13-3 5h4l-2 4"/>',
+  fog: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M4 18h16M6 21h12"/>',
+  snow: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M9 19h.01M13 21h.01M17 19h.01"/>',
+};
+
+const details = [
+  { label: 'Sensação', value: `${weather.feelsLike}°` },
+  { label: 'Vento', value: `${weather.windSpeed} km/h` },
+  { label: 'Umidade', value: `${weather.humidity}%` },
+  { label: 'Chuva', value: `${weather.rainChance}%` },
+];
+---
+
+<section
+  class="overflow-hidden rounded-3xl border border-line bg-nioaque-white"
+  aria-label="Clima em Nioaque"
+>
+  {/* Agora */}
+  <div class="flex items-center gap-4 p-5">
+    <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-nioaque-green-50 text-nioaque-green">
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        set:html={ICONS[weather.icon]}
+      />
+    </span>
+
+    <div class="min-w-0 flex-1">
+      <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+        Nioaque, MS &middot; agora
+      </p>
+      <p class="mt-0.5 flex items-baseline gap-2">
+        <span class="font-editorial text-4xl font-semibold leading-none text-ink">
+          {weather.temperature}°C
+        </span>
+        <span class="truncate text-sm font-medium text-ink-soft">{weather.label}</span>
+      </p>
+      <p class="mt-1 text-xs text-ink-muted">
+        Mín. <strong class="font-semibold text-ink">{weather.tempMin}°</strong> &middot; Máx.
+        <strong class="font-semibold text-ink">{weather.tempMax}°</strong>
+      </p>
+    </div>
+  </div>
+
+  {/* Indicadores */}
+  <dl class="grid grid-cols-4 gap-px border-t border-line bg-line">
+    {
+      details.map((detail) => (
+        <div class="bg-nioaque-white px-2 py-3 text-center">
+          <dt class="text-[9px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+            {detail.label}
+          </dt>
+          <dd class="mt-1 font-editorial text-sm font-semibold text-ink">{detail.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  {/* Sol */}
+  <div class="flex items-center justify-between gap-4 border-t border-line px-5 py-3 text-[11px] font-semibold text-ink-muted">
+    <span class="inline-flex items-center gap-1.5">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-500">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round" />
+      </svg>
+      Nascer {weather.sunrise}
+    </span>
+    <span class="inline-flex items-center gap-1.5">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-nioaque-red">
+        <path d="M12 3v6M5.6 5.6l3.5 3.5M3 13h6M18 13h3M14.9 9.1l3.5-3.5" stroke-linecap="round" />
+        <path d="M4 18h16" stroke-linecap="round" />
+      </svg>
+      Pôr {weather.sunset}
+    </span>
+  </div>
+
+  {/* Previsao dos proximos dias */}
+  {
+    weather.forecast.length > 0 && (
+      <ul class="grid grid-cols-3 gap-px border-t border-line bg-line sm:grid-cols-6">
+        {weather.forecast.slice(1, 7).map((day) => (
+          <li class="bg-nioaque-white px-2 py-3 text-center">
+            <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-muted">
+              {day.weekday} {day.day}
+            </p>
+            <p class="mt-1 font-editorial text-sm font-semibold text-ink">
+              <span class="text-nioaque-red">{day.tempMax}°</span>
+              <span class="text-ink-muted"> / {day.tempMin}°</span>
+            </p>
+            <p class="mt-0.5 text-[10px] font-semibold text-nioaque-green">{day.rainChance}%</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</section>

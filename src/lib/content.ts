@@ -9,12 +9,15 @@
 import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-js';
 
 import { mockLocalAds, mockReaderSubmissions } from './mock-data';
+import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
 import type {
   AdSlotPosition,
   Article,
   ArticleScope,
   LocalAd,
+  LotteryResult,
+  MarketQuote,
   Profile,
   PublicUtility,
   ReaderSubmission,
@@ -395,4 +398,67 @@ export async function getReaderSubmissions(
   }
 
   return { submissions: mockReaderSubmissions, source: 'mock' };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Blocos de servico: loterias e cotacoes                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Ultimo resultado de cada modalidade de loteria. */
+export async function getLotteryResults(locals: App.Locals): Promise<LotteryResult[]> {
+  const supabase = locals.supabase;
+
+  if (supabase) {
+    const rows = await query(
+      supabase,
+      'lottery_results',
+      (q) => q.order('contest_date', { ascending: false }),
+      (row) => ({
+        id: String(row.id),
+        modality: String(row.modality ?? ''),
+        contest_number: String(row.contest_number ?? ''),
+        contest_date: String(row.contest_date ?? ''),
+        numbers: toStringArray(row.numbers),
+        prize_value: row.prize_value ? String(row.prize_value) : null,
+        created_at: String(row.created_at ?? new Date().toISOString()),
+      }),
+    );
+
+    if (rows?.length) {
+      // apenas o resultado mais recente de cada modalidade
+      const latest = new Map<string, LotteryResult>();
+      for (const row of rows) {
+        if (!latest.has(row.modality)) latest.set(row.modality, row);
+      }
+      return [...latest.values()];
+    }
+  }
+
+  return mockLotteryResults;
+}
+
+/** Cotacoes da economia (dolar, euro, bitcoin, Ibovespa). */
+export async function getMarketQuotes(locals: App.Locals): Promise<MarketQuote[]> {
+  const supabase = locals.supabase;
+
+  if (supabase) {
+    const rows = await query(
+      supabase,
+      'market_quotes',
+      (q) => q.order('symbol', { ascending: true }),
+      (row) => ({
+        id: String(row.id),
+        symbol: String(row.symbol ?? ''),
+        label: String(row.label ?? ''),
+        value: Number(row.value ?? 0),
+        change_percent: Number(row.change_percent ?? 0),
+        unit: row.unit ? String(row.unit) : null,
+        updated_at: String(row.updated_at ?? new Date().toISOString()),
+      }),
+    );
+
+    if (rows?.length) return rows;
+  }
+
+  return mockMarketQuotes;
 }

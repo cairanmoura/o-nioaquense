@@ -1,6 +1,6 @@
 ---
 import Icon from '../../components/admin/Icon.astro';
-import UtilidadePublicaEditor from '../../components/admin/UtilidadePublicaEditor.tsx';
+import ToggleSwitch from '../../components/admin/ToggleSwitch.tsx';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getAdminDashboard } from '../../lib/admin';
 import { isAdmin } from '../../lib/auth';
@@ -18,33 +18,256 @@ if (!isAdmin(session)) {
 
 const dashboard = await getAdminDashboard(Astro.locals, session);
 const week = getWeekDays();
+const utility = dashboard.utilities[0] ?? null;
+
+const byDate = new Map(dashboard.utilities.map((item) => [item.duty_date, item]));
+const days = week.map((day) => ({
+  ...day,
+  utility: byDate.get(day.iso) ?? null,
+}));
+
+const ALERT_LEVELS = [
+  { value: 'info', label: 'Informativo (verde)' },
+  { value: 'warning', label: 'Atenção (amarelo)' },
+  { value: 'urgent', label: 'Urgente (vermelho)' },
+];
+
+const inputClass =
+  'mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none';
 ---
 
 <AdminLayout
-  title="Utilidade Publica"
-  subtitle="Farmacia de plantao, alerta da cidade e onibus"
+  title="Utilidade Pública"
+  subtitle="Farmácia de plantão, alerta da cidade e horários de ônibus"
 >
-  <div class="mx-auto max-w-3xl">
-    <p class="mb-5 flex items-start gap-2 rounded-2xl border border-line bg-nioaque-white p-4 text-xs leading-relaxed text-ink-soft">
-      <Icon name="sparkle" size={15} class="mt-0.5 shrink-0 text-nioaque-green" />
-      Tudo aqui aparece no topo do portal e na barra fixa de servicos. Feito para dar certo com o
-      dedo grande e a pressa da rua.
-    </p>
+  <div class="mx-auto max-w-3xl space-y-6">
+    {/* Alerta da cidade */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <header class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+            Alerta urgente da cidade
+          </h2>
+          <p class="mt-1 max-w-md text-xs leading-relaxed text-ink-muted">
+            Aparece no topo do site e na barra fixa, em vermelho ou amarelo. Use para avisos de
+            Sanezul, Energisa, temporais ou interrupções no serviço.
+          </p>
+        </div>
 
-    <UtilidadePublicaEditor
-      client:load
-      week={week.map((day) => ({ iso: day.iso, label: day.label }))}
-      utilities={dashboard.utilities.map((item) => ({
-        id: item.id,
-        duty_date: item.duty_date,
-        pharmacy_name: item.pharmacy_name,
-        pharmacy_phone: item.pharmacy_phone,
-        pharmacy_address: item.pharmacy_address,
-        alert_active: item.alert_active,
-        alert_message: item.alert_message,
-        alert_level: item.alert_level,
-      }))}
-      busSchedules={dashboard.busSchedules}
-    />
+        <div class="w-full max-w-[13rem] rounded-xl bg-editorial p-4">
+          <ToggleSwitch
+            client:visible
+            endpoint={`/api/admin/utilities/${utility?.id ?? ''}`}
+            field="alert_active"
+            checked={utility?.alert_active ?? false}
+            label="Exibir alerta"
+            description="Desligado, o site aparece sem faixa de alerta."
+            highlight="red"
+          />
+        </div>
+      </header>
+
+      {
+        utility && (
+          <form method="POST" action={`/api/admin/utilities/${utility.id}`} class="mt-5 space-y-4">
+            <input type="hidden" name="alert_active" value="true" />
+
+            <label class="block">
+              <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Texto do alerta
+              </span>
+              <textarea
+                name="alert_message"
+                rows={2}
+                placeholder="Ex.: Chuva forte a partir das 16h; a Rua das Palmeiras pode alagar."
+                class={`${inputClass} resize-y`}
+              >
+                {utility.alert_message ?? ''}
+              </textarea>
+            </label>
+
+            <label class="block">
+              <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Nível de urgência
+              </span>
+              <select name="alert_level" class={inputClass}>
+                {ALERT_LEVELS.map((level) => (
+                  <option value={level.value} selected={utility.alert_level === level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-red px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark"
+            >
+              <Icon name="alert" size={14} />
+              Salvar alerta
+            </button>
+          </form>
+        )
+      }
+    </section>
+
+    {/* Farmácia de plantão da semana */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Farmácia de plantão da semana
+      </h2>
+      <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+        Uma linha por dia. A barra fixa do portal mostra a farmácia do dia; os dias vazios usam a
+        última farmácia cadastrada.
+      </p>
+
+      <form method="POST" action="/api/admin/utilities/week" class="mt-4 space-y-3">
+        {
+          days.map((day) => (
+            <div class="rounded-xl bg-editorial p-3">
+              <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                {day.longLabel}
+              </p>
+              <div class="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)]">
+                <input
+                  type="text"
+                  name={`nome-${day.iso}`}
+                  value={day.utility?.pharmacy_name ?? ''}
+                  placeholder="Nome da farmácia"
+                  class="w-full rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+                />
+                <input
+                  type="tel"
+                  name={`tel-${day.iso}`}
+                  value={day.utility?.pharmacy_phone ?? ''}
+                  placeholder="Telefone"
+                  class="w-full rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+                />
+              </div>
+            </div>
+          ))
+        }
+
+        <button
+          type="submit"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+        >
+          <Icon name="pill" size={14} />
+          Salvar escala da semana
+        </button>
+      </form>
+    </section>
+
+    {/* Horários de ônibus */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Horários de ônibus intermunicipais
+      </h2>
+      <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+        Linhas que saem de Nioaque. Separe os horários por vírgula.
+      </p>
+
+      <ul class="mt-4 divide-y divide-line">
+        {
+          dashboard.busSchedules.map((line) => (
+            <li class="py-4 first:pt-0 last:pb-0">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="font-editorial text-base font-semibold text-ink">
+                    {line.route_name} — {line.destination}
+                  </p>
+                  <p class="mt-0.5 text-xs text-ink-muted">
+                    {line.departure_times.join(' · ')}
+                    {line.frequency && ` — ${line.frequency}`}
+                  </p>
+                </div>
+                <span
+                  class:list={[
+                    'pill-scope shrink-0',
+                    line.active
+                      ? 'bg-nioaque-green-50 text-nioaque-green-dark'
+                      : 'bg-ink/10 text-ink-soft',
+                  ]}
+                >
+                  {line.active ? 'Ativa' : 'Pausada'}
+                </span>
+              </div>
+
+              <form method="POST" action={`/api/admin/bus-schedules/${line.id}`} class="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,8rem)_auto]">
+                <input
+                  type="text"
+                  name="route_name"
+                  value={line.route_name}
+                  placeholder="Linha"
+                  class="rounded-xl border border-line bg-editorial px-3 py-2.5 text-sm text-ink focus:border-nioaque-green focus:outline-none"
+                />
+                <input
+                  type="text"
+                  name="destination"
+                  value={line.destination}
+                  placeholder="Destino"
+                  class="rounded-xl border border-line bg-editorial px-3 py-2.5 text-sm text-ink focus:border-nioaque-green focus:outline-none"
+                />
+                <input
+                  type="text"
+                  name="departure_times"
+                  value={line.departure_times.join(', ')}
+                  placeholder="06:30, 18:00"
+                  class="rounded-xl border border-line bg-editorial px-3 py-2.5 text-sm text-ink focus:border-nioaque-green focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  class="rounded-full bg-nioaque-green px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
+                >
+                  Salvar
+                </button>
+              </form>
+            </li>
+          ))
+        }
+      </ul>
+
+      {/* Nova linha */}
+      <form method="POST" action="/api/admin/bus-schedules" class="mt-5 space-y-3 rounded-xl border-2 border-dashed border-line-strong p-4">
+        <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">Nova linha</p>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <input
+            type="text"
+            name="route_name"
+            required
+            placeholder="Linha (ex.: Linha 07)"
+            class="rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+          <input
+            type="text"
+            name="destination"
+            required
+            placeholder="Destino (ex.: Bela Vista)"
+            class="rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+        </div>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <input
+            type="text"
+            name="departure_times"
+            placeholder="06:30, 18:00"
+            class="rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+          <input
+            type="text"
+            name="frequency"
+            placeholder="Diaria / Seg a Sex"
+            class="rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+        </div>
+        <button
+          type="submit"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-ink/90"
+        >
+          <Icon name="send" size={14} />
+          Cadastrar linha
+        </button>
+      </form>
+    </section>
   </div>
 </AdminLayout>

@@ -4,13 +4,21 @@ import { readPayload, requireSession, jsonOk, toErrorResponse } from '../../../.
 import { updateUtility } from '../../../../lib/admin';
 import type { AlertLevel } from '../../../../lib/types';
 
-/** POST /api/admin/utilities/[id] — farmácia de plantão, alerta da cidade e ônibus. */
+/**
+ * POST /api/admin/utilities/[id]
+ * -----------------------------------------------------------------------------
+ * Atualiza a farmacia de plantao / alerta / horarios de onibus de um dia.
+ *
+ * Aceita JSON e FormData. No FormData, o checkbox `alert_active` so chega
+ * marcado; por isso a ausencia da chave significa "desligar".
+ */
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const session = requireSession(locals);
     const id = params.id ?? '';
 
     const payload = await readPayload(request);
+    const isForm = !(request.headers.get('content-type') ?? '').includes('application/json');
 
     const patch: Record<string, unknown> = {};
 
@@ -21,7 +29,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     if (payload.pharmacy_address !== undefined) {
       patch.pharmacy_address = payload.pharmacy_address ? String(payload.pharmacy_address) : null;
     }
-    if (payload.alert_active !== undefined) patch.alert_active = Boolean(payload.alert_active);
+    if (payload.alert_active !== undefined) {
+      patch.alert_active = Boolean(payload.alert_active);
+    } else if (isForm) {
+      // Formulario sem o checkbox marcado => alerta desligado
+      patch.alert_active = false;
+    }
     if (payload.alert_message !== undefined) {
       patch.alert_message = payload.alert_message ? String(payload.alert_message) : null;
     }

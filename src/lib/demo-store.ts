@@ -200,7 +200,7 @@ export const demoStore = {
 };
 
 /** Perfil de demonstracao do Editor-Chefe. */
-export const DEMO_ADMIN_ID = '00000000-0000-4000-8000-000000000001';
+export const DEMO_ADMIN_ID = '10000000-0000-4000-8000-000000000001';
 
 /** Perfil de demonstracao de Colunista (sem permissao de publicar direto). */
-export const DEMO_COLUMNIST_ID = '00000000-0000-4000-8000-000000000002';
+export const DEMO_COLUMNIST_ID = '10000000-0000-4000-8000-000000000002';

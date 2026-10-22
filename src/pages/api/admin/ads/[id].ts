@@ -7,8 +7,8 @@ import type { AdOfferType, AdSlotPosition } from '../../../../lib/types';
 /**
  * POST /api/admin/ads/[id]
  * -----------------------------------------------------------------------------
- * Atualiza um anuncio local. Aceita o simples `active` (pausar/ativar) e
- * tambem a edicao completa dos dados comerciais.
+ * Atualiza um anuncio local: ativa/pausa, edita dados, troca a foto, muda a
+ * posicao no site e o periodo de veiculacao.
  */
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
@@ -39,14 +39,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     if (payload.price_label !== undefined) {
       patch.price_label = payload.price_label ? String(payload.price_label) : null;
     }
-    if (payload.notes !== undefined) {
-      patch.notes = payload.notes ? String(payload.notes) : null;
-    }
+    if (payload.notes !== undefined) patch.notes = payload.notes ? String(payload.notes) : null;
     if (payload.starts_at !== undefined) {
-      patch.starts_at = payload.starts_at ? String(payload.starts_at) : null;
+      patch.starts_at = payload.starts_at ? toIsoDate(String(payload.starts_at)) : null;
     }
     if (payload.ends_at !== undefined) {
-      patch.ends_at = payload.ends_at ? String(payload.ends_at) : null;
+      patch.ends_at = payload.ends_at ? toIsoDate(String(payload.ends_at)) : null;
     }
 
     const ad = await updateAd(locals, session, id, patch);
@@ -55,3 +53,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return toErrorResponse(error);
   }
 };
+
+/** "2026-10-22" -> ISO completo (inicio do dia, UTC). */
+function toIsoDate(value: string): string | null {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00.000Z`;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}

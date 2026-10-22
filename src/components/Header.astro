@@ -4,8 +4,8 @@ import LogoNioaquense from './LogoNioaquense.astro';
 /**
  * Header.astro
  * -----------------------------------------------------------------------------
- * Cabecalho principal: logo, busca rapida, botao de destaque "Mande sua
- * Noticia" e menu de editorias (Nioaque, Radar Oficial, Colunistas, MS, Brasil).
+ * Cabecalho principal: logo, menu de editorias, busca rapida e o botao de
+ * destaque "Mande sua Notícia".
  */
 
 const editorias = [
@@ -38,7 +38,7 @@ const activeScope = Astro.url.searchParams.get('escopo');
       </button>
 
       {/* Logo */}
-      <a href="/" class="w-32 shrink-0 sm:w-44 lg:w-52" aria-label="O Nioaquense - pagina inicial">
+      <a href="/" class="w-28 shrink-0 sm:w-40 lg:w-48" aria-label="O Nioaquense - pagina inicial">
         <LogoNioaquense class="w-full" />
       </a>
 
@@ -59,7 +59,7 @@ const activeScope = Astro.url.searchParams.get('escopo');
           type="search"
           name="q"
           value={searchTerm}
-          placeholder="Buscar noticia..."
+          placeholder="Buscar notícia..."
           class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
         />
       </form>
@@ -69,8 +69,8 @@ const activeScope = Astro.url.searchParams.get('escopo');
         href="/#pistas"
         class="inline-flex shrink-0 items-center gap-2 rounded-full bg-nioaque-red px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-red-dark sm:px-4"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="sm:hidden">
-          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M12 5v14M5 12h14" />
         </svg>
         <span class="hidden sm:inline">Mande sua</span>
         <span>Notícia</span>
@@ -128,7 +128,7 @@ const activeScope = Astro.url.searchParams.get('escopo');
           type="search"
           name="q"
           value={searchTerm}
-          placeholder="Buscar noticia..."
+          placeholder="Buscar notícia..."
           class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
         />
       </form>

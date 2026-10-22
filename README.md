@@ -172,6 +172,29 @@ WhatsApp e o botão **"Transformar em Rascunho de Matéria"** — que cria o ras
 publicado direto), marca a pista como `converted_to_article` e deixa o rascunho visível em
 "Meus rascunhos", no dashboard do Editor-Chefe.
 
+### Blocos de serviço da home
+
+| Bloco | Origem |
+|-------|--------|
+| **Clima em tempo real** | Open-Meteo (lat `-21.1353`, lon `-55.8300`) — agora, mín/máx, sensação, vento, umidade, chance de chuva, nascer/pôr do sol e previsão de 6 dias. Cache de 15 min na borda |
+| **Farmácia de plantão** | `public_utilities` — escala do dia ou da semana, com ligação e WhatsApp |
+| **Horários de ônibus** | tabela `bus_schedules` (estruturada, editável no painel) |
+| **Alerta da cidade** | `public_utilities.alert_active` + nível (verde / amarelo / vermelho) |
+| **Resultados das loterias** | `lottery_results` — Mega-Sena, Quina, Lotofácil, Lotomania e Duplasena |
+| **Cotações** | `market_quotes` — dólar, euro, bitcoin e Ibovespa |
+| **Mais lidas** | ordenação por `articles.views_count` |
+
+### Conteúdo de referência (semente de desenvolvimento)
+
+O `src/lib/mock-data.ts` foi populado com **títulos e resumos reais** publicados nos portais
+locais de Nioaque e de Campo Grande/MS, para que o portal seja avaliado com conteúdo
+realista durante o desenvolvimento. São sementes — ao conectar o Supabase, o banco passa a
+ser a fonte e o mock fica apenas como fallback.
+
+```bash
+node scripts/parse-rss.mjs <arquivo.xml>   # extrai itens de um feed RSS
+```
+
 ### SEO e PWA
 
 | Arquivo | O que é |

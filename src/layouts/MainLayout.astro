@@ -9,9 +9,9 @@ import NioaqueServiceBar from '../components/NioaqueServiceBar.astro';
  * -----------------------------------------------------------------------------
  * Layout principal do portal:
  *
- *   [ Header ]  logo + busca rapida + "Mande sua Noticia" + editorias
+ *   [ Header ]             logo + busca + "Mande sua Notícia" + editorias
  *   [ NioaqueServiceBar ]  farmácia de plantão + clima + ônibus + alerta
- *   [ <slot /> ]           conteudo da pagina
+ *   [ <slot /> ]           conteúdo da página
  *   [ Footer ]
  */
 
@@ -19,9 +19,9 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
-  /** Bloqueia a indexacao (paginas internas, ex.: /admin). */
+  /** Bloqueia a indexação (páginas internas, ex.: /admin). */
   noindex?: boolean;
-  /** Remove a barra de servicos (ex.: paginas de campanha). */
+  /** Remove a barra de serviços (ex.: páginas de campanha). */
   hideServiceBar?: boolean;
 }
 
@@ -75,7 +75,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).hr
       href="#conteudo"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-nioaque-green focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
     >
-      Pular para o conteudo
+      Pular para o conteúdo
     </a>
 
     <Header />
@@ -91,7 +91,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).hr
 </html>
 
 <script>
-  // Service worker (PWA) — registra depois que a pagina carrega.
+  // Service worker (PWA) — registra depois que a página carrega.
   if ('serviceWorker' in navigator && window.isSecureContext) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {

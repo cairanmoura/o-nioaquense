@@ -1,0 +1,73 @@
+---
+import type { MarketQuote } from '../lib/types';
+
+/**
+ * MarketTicker.astro
+ * -----------------------------------------------------------------------------
+ * Faixa economica: dolar, euro, bitcoin e Ibovespa. Alimentada pela tabela
+ * `public.market_quotes` (a redacao atualiza no painel).
+ */
+
+interface Props {
+  quotes: MarketQuote[];
+  class?: string;
+}
+
+const { quotes, class: className = '' } = Astro.props;
+
+const formatValue = (quote: MarketQuote) => {
+  if (quote.symbol === 'ibovespa') {
+    return `${quote.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} pts`;
+  }
+
+  return quote.value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+---
+
+{
+  quotes.length > 0 && (
+    <section
+      class:list={[
+        'overflow-hidden rounded-2xl border border-line bg-nioaque-white',
+        className,
+      ]}
+      aria-label="Cotacoes da economia"
+    >
+      <ul class="divide-y divide-line">
+        {quotes.map((quote) => {
+          const up = quote.change_percent >= 0;
+
+          return (
+            <li class="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                {quote.label}
+              </span>
+              <span class="flex items-baseline gap-2">
+                <span class="font-editorial text-sm font-semibold text-ink">
+                  {quote.symbol === 'dolar' ? 'R$ ' : ''}
+                  {formatValue(quote)}
+                </span>
+                <span
+                  class:list={[
+                    'text-[11px] font-bold',
+                    up ? 'text-nioaque-green' : 'text-nioaque-red',
+                  ]}
+                >
+                  {up ? '+' : ''}
+                  {quote.change_percent.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  %
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )
+}

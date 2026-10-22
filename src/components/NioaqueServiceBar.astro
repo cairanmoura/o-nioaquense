@@ -9,13 +9,12 @@ import { ALERT_STYLE } from '../lib/types';
  * -----------------------------------------------------------------------------
  * Barra fixa de utilidade publica, imediatamente abaixo do cabecalho.
  *
- * Conteudo (rolagem horizontal no mobile):
+ * No celular os itens deslizam na horizontal; no desktop ficam lado a lado.
+ *
+ *   - Alerta da cidade (vermelho / amarelo) no topo, quando ativo
  *   - Farmacia de plantao do dia (ligar / WhatsApp)
  *   - Clima em tempo real de Nioaque (Open-Meteo, cache na borda)
- *   - Atalho para horarios de onibus
- *
- * No topo, quando `alert_active = true`, aparece o alerta da cidade em
- * vermelho (urgente) ou amarelo (atencao).
+ *   - Atalho para os horarios de onibus
  */
 
 const feed = await getHomeFeed(Astro.locals);
@@ -39,7 +38,7 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
 ---
 
 <div class="sticky top-0 z-40">
-  {/* Alerta ativo da cidade */}
+  {/* Alerta da cidade */}
   {
     utility?.alert_active && utility.alert_message && alertStyle && (
       <div class:list={['text-white', alertStyle.className]}>
@@ -70,14 +69,14 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
     )
   }
 
-  {/* Barra de servicos */}
+  {/* Itens de servico */}
   <div class="border-b border-line bg-nioaque-white">
     <div class="container-editorial">
       <div class="flex items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* Farmacia de plantao */}
         <div class="flex shrink-0 items-center gap-2.5 border-r border-line py-2.5 pr-4">
-          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-nioaque-red-50 text-nioaque-red">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-nioaque-red-50 text-nioaque-red">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="7" width="18" height="13" rx="2" />
               <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M12 12v3M10.5 13.5h3" stroke-linecap="round" />
             </svg>
@@ -88,7 +87,7 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
               Farmácia de plantão
             </p>
             <p class="text-xs font-semibold text-ink">
-              {utility?.pharmacy_name ?? 'Consulte a farmácia de plantão'}
+              {utility?.pharmacy_name ?? 'Consulte a farmácia'}
             </p>
           </div>
 
@@ -120,12 +119,15 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
           </div>
         </div>
 
-        {/* Clima em tempo real */}
-        <div class="flex shrink-0 items-center gap-2.5 border-r border-line py-2.5 pl-4 pr-4">
-          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-nioaque-green-50 text-nioaque-green">
+        {/* Clima */}
+        <a
+          href="/#clima"
+          class="flex shrink-0 items-center gap-2.5 border-r border-line py-2.5 pl-4 pr-4 transition-colors hover:text-nioaque-green"
+        >
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-nioaque-green-50 text-nioaque-green">
             <svg
-              width="15"
-              height="15"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -141,14 +143,14 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
               {weather.temperature}°C · {weather.label}
             </p>
           </div>
-        </div>
+        </a>
 
-        {/* Horarios de onibus */}
+        {/* Onibus */}
         <a
           href="/#servicos"
-          class="flex shrink-0 items-center gap-2.5 py-2.5 pl-4 pr-2 transition-colors hover:text-nioaque-green"
+          class="flex shrink-0 items-center gap-2.5 py-2.5 pl-4 pr-4 transition-colors hover:text-nioaque-green"
         >
-          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-ink/10 text-ink">
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-ink/10 text-ink">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="4" y="3" width="16" height="14" rx="2" />
               <path d="M4 11h16M8 17v3M16 17v3M7 14h2M15 14h2" stroke-linecap="round" />

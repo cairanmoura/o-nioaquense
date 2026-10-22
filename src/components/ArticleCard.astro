@@ -1,7 +1,7 @@
 ---
 import ArticlePills from './ArticlePills.astro';
 import ScopePill from './ScopePill.astro';
-import { formatDate, formatNumber } from '../lib/format';
+import { formatDate, formatNumber, formatRelative } from '../lib/format';
 import type { Article, Profile } from '../lib/types';
 
 interface Props {
@@ -92,7 +92,8 @@ const authorName = author?.column_name ?? author?.full_name ?? 'Redacao';
           </a>
         </h3>
         <p class="mt-1.5 text-xs font-medium uppercase tracking-[0.1em] text-ink-muted">
-          {formatDate(article.published_at)} &middot; {formatNumber(article.views_count)} leituras
+          {formatRelative(article.published_at)} &middot; {formatNumber(article.views_count)}{' '}
+          leituras
         </p>
       </div>
     </article>
@@ -153,7 +154,9 @@ const authorName = author?.column_name ?? author?.full_name ?? 'Redacao';
         )}
         <span class="text-ink-soft">{authorName}</span>
         <span aria-hidden="true">&middot;</span>
-        <time datetime={article.published_at ?? undefined}>{formatDate(article.published_at)}</time>
+        <time datetime={article.published_at ?? undefined} title={formatDate(article.published_at)}>
+          {formatRelative(article.published_at)}
+        </time>
       </div>
     </article>
   ) : (
@@ -189,7 +192,9 @@ const authorName = author?.column_name ?? author?.full_name ?? 'Redacao';
         <div class="mt-auto flex items-center gap-2 pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
           <span class="truncate">{authorName}</span>
           <span aria-hidden="true">&middot;</span>
-          <time datetime={article.published_at ?? undefined}>{formatDate(article.published_at)}</time>
+          <time datetime={article.published_at ?? undefined} title={formatDate(article.published_at)}>
+            {formatRelative(article.published_at)}
+          </time>
         </div>
       </div>
     </article>

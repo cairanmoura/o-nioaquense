@@ -49,6 +49,41 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat('pt-BR').format(value);
 }
 
+/**
+ * Tempo relativo no estilo dos portais locais: "há 1 semana", "há 3 meses".
+ * Ate uma semana, mostra o dia e a hora (mais util para quem esta no celular).
+ */
+export function formatRelative(iso: string | null | undefined): string {
+  if (!iso) return '';
+
+  const timestamp = new Date(iso).getTime();
+  if (Number.isNaN(timestamp)) return '';
+
+  const diffMs = Date.now() - timestamp;
+  const minutes = Math.round(diffMs / 60_000);
+
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return `há ${minutes} min`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `há ${hours} h`;
+
+  const days = Math.round(hours / 24);
+  if (days === 1) return 'ontem';
+  if (days < 7) return `há ${days} dias`;
+
+  const weeks = Math.round(days / 7);
+  if (weeks === 1) return 'há 1 semana';
+  if (weeks < 5) return `há ${weeks} semanas`;
+
+  const months = Math.round(days / 30);
+  if (months <= 1) return 'há 1 mês';
+  if (months < 12) return `há ${months} meses`;
+
+  const years = Math.round(days / 365);
+  return years === 1 ? 'há 1 ano' : `há ${years} anos`;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Semana da farmacia de plantao                                              */
 /* -------------------------------------------------------------------------- */

@@ -21,43 +21,46 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
 const SLOT_LABEL: Record<string, string> = {
   header_billboard: 'Topo do portal',
   home_middle: 'Meio da home',
-  article_inline: 'Dentro da materia',
+  article_inline: 'Dentro da matéria',
   sidebar: 'Barra lateral',
-  daily_deal: 'Destaque',
+  daily_deal: 'Destaque do Comércio',
 };
 
-const SLOT_OPTIONS = Object.entries(SLOT_LABEL);
+const SLOTS = Object.entries(SLOT_LABEL);
 
-const formatPeriod = (ad: (typeof dashboard.ads)[number]) => {
+const situation = (ad: { starts_at: string | null; ends_at: string | null; active: boolean }) => {
+  const now = new Date().toISOString();
+  if (ad.starts_at && ad.starts_at > now) return 'Agendado';
+  if (ad.ends_at && ad.ends_at < now) return 'Encerrado';
+  return ad.active ? 'No ar' : 'Pausado';
+};
+
+const formatPeriod = (ad: { starts_at: string | null; ends_at: string | null }) => {
   const start = ad.starts_at ? ad.starts_at.slice(0, 10).split('-').reverse().join('/') : 'imediato';
   const end = ad.ends_at ? ad.ends_at.slice(0, 10).split('-').reverse().join('/') : 'sem data';
   return `${start} a ${end}`;
 };
 
-const situation = (ad: (typeof dashboard.ads)[number]) => {
-  const now = new Date().toISOString();
-  if (ad.starts_at && ad.starts_at > now) return 'agendado';
-  if (ad.ends_at && ad.ends_at < now) return 'encerrado';
-  return ad.active ? 'no ar' : 'pausado';
-};
+const inputClass =
+  'mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none';
 ---
 
 <AdminLayout
-  title="Anuncios Locais"
+  title="Publicidade Local"
   subtitle={`${dashboard.counts.activeAds} no ar de ${dashboard.ads.length}`}
 >
   <div class="mx-auto max-w-3xl space-y-6">
-    {/* ---------------------- Relatorio de cliques ---------------------- */}
+    {/* Relatorio de cliques */}
     <section class="rounded-2xl border border-line bg-nioaque-white p-5">
       <header class="flex items-center gap-2">
         <Icon name="megaphone" size={16} class="text-nioaque-red" />
         <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
-          Relatorio de cliques
+          Relatório de cliques
         </h2>
       </header>
       <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-        Numero de cliques nos botoes "Chamar no WhatsApp". E o numero para apresentar ao
-        comerciante de Nioaque.
+        Cada clique no botão “Chamar no WhatsApp” passa por <code class="font-mono">/api/ads/click/[id]</code> e
+        é contabilizado aqui. É o número para apresentar ao comerciante.
       </p>
 
       <div class="mt-4 grid grid-cols-3 gap-3">
@@ -70,51 +73,69 @@ const situation = (ad: (typeof dashboard.ads)[number]) => {
           </p>
         </div>
         <div class="rounded-xl bg-editorial p-3 text-center">
-          <p class="font-editorial text-2xl font-semibold text-ink">
-            {dashboard.adReport.activeAds}
-          </p>
-          <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-            No ar
-          </p>
+          <p class="font-editorial text-2xl font-semibold text-ink">{dashboard.adReport.activeAds}</p>
+          <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">No ar</p>
         </div>
         <div class="rounded-xl bg-editorial p-3 text-center">
           <p class="font-editorial text-2xl font-semibold text-ink">
             {dashboard.adReport.byOfferType.daily_deal}
           </p>
-          <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-            Ofertas do dia
-          </p>
+          <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">Ofertas</p>
         </div>
       </div>
 
       {
-        dashboard.adReport.top.length > 0 && (
-          <ul class="mt-4 divide-y divide-line border-t border-line">
-            {dashboard.adReport.top.map((ad, index) => (
-              <li class="flex items-center gap-3 py-3">
-                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nioaque-green-50 text-[11px] font-bold text-nioaque-green-dark">
-                  {index + 1}
-                </span>
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-sm font-semibold text-ink">
-                    {ad.client_name}
-                  </span>
-                  <span class="block truncate text-xs text-ink-muted">{ad.title}</span>
-                </span>
-                <span class="shrink-0 font-editorial text-lg font-semibold text-nioaque-green">
-                  {formatNumber(ad.clicks_count)}
-                </span>
-              </li>
-            ))}
-          </ul>
+        dashboard.ads.length > 0 && (
+          <div class="mt-5 overflow-x-auto">
+            <table class="w-full min-w-[30rem] text-left text-sm">
+              <thead>
+                <tr class="border-b border-line text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                  <th class="pb-2 pr-3">Comércio</th>
+                  <th class="pb-2 pr-3">Posição</th>
+                  <th class="pb-2 pr-3">Situação</th>
+                  <th class="pb-2 text-right">Cliques</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line">
+                {dashboard.ads.map((ad) => (
+                  <tr>
+                    <td class="py-3 pr-3">
+                      <span class="block font-semibold text-ink">{ad.client_name}</span>
+                      <span class="block truncate text-xs text-ink-muted">{ad.title}</span>
+                    </td>
+                    <td class="py-3 pr-3 text-xs text-ink-soft">
+                      {SLOT_LABEL[ad.slot_position] ?? ad.slot_position}
+                    </td>
+                    <td class="py-3 pr-3">
+                      <span
+                        class:list={[
+                          'pill-scope',
+                          situation(ad) === 'No ar'
+                            ? 'bg-nioaque-green-50 text-nioaque-green-dark'
+                            : situation(ad) === 'Pausado'
+                              ? 'bg-amber-100 text-amber-900'
+                              : 'bg-ink/10 text-ink-soft',
+                        ]}
+                      >
+                        {situation(ad)}
+                      </span>
+                    </td>
+                    <td class="py-3 text-right font-editorial text-base font-semibold text-nioaque-green">
+                      {formatNumber(ad.clicks_count)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )
       }
     </section>
 
-    {/* ---------------------- Anuncios cadastrados ---------------------- */}
+    {/* Anuncios cadastrados */}
     <section class="space-y-4">
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted">
-        Anuncios cadastrados
+        Anúncios cadastrados
       </h2>
 
       {
@@ -143,22 +164,13 @@ const situation = (ad: (typeof dashboard.ads)[number]) => {
                         : 'bg-nioaque-green-50 text-nioaque-green-dark',
                     ]}
                   >
-                    {ad.offer_type === 'daily_deal' ? 'Oferta do dia' : 'Banner'}
+                    {ad.offer_type === 'daily_deal' ? 'Oferta do Dia' : 'Banner'}
                   </span>
                   <span class="pill-scope bg-ink/10 text-ink-soft">
                     {SLOT_LABEL[ad.slot_position] ?? ad.slot_position}
                   </span>
-                  <span
-                    class:list={[
-                      'pill-scope',
-                      situation(ad) === 'no ar'
-                        ? 'bg-nioaque-green text-white'
-                        : situation(ad) === 'pausado'
-                          ? 'bg-amber-100 text-amber-900'
-                          : 'bg-ink/10 text-ink-soft',
-                    ]}
-                  >
-                    {situation(ad)}
+                  <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                    {formatPeriod(ad)}
                   </span>
                 </div>
 
@@ -167,23 +179,19 @@ const situation = (ad: (typeof dashboard.ads)[number]) => {
                 </h3>
                 <p class="mt-0.5 text-sm leading-relaxed text-ink-soft">{ad.title}</p>
 
-                <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:grid-cols-3">
                   <div>
                     <dt class="font-bold uppercase tracking-[0.1em] text-ink-muted">Cliques</dt>
-                    <dd class="font-editorial text-base font-semibold text-nioaque-green">
+                    <dd class="mt-0.5 font-editorial text-base font-semibold text-nioaque-green">
                       {formatNumber(ad.clicks_count)}
                     </dd>
                   </div>
                   <div>
-                    <dt class="font-bold uppercase tracking-[0.1em] text-ink-muted">Periodo</dt>
-                    <dd class="mt-0.5 text-ink">{formatPeriod(ad)}</dd>
-                  </div>
-                  <div>
                     <dt class="font-bold uppercase tracking-[0.1em] text-ink-muted">WhatsApp</dt>
-                    <dd class="mt-0.5 text-ink">{ad.whatsapp_number ?? '—'}</dd>
+                    <dd class="mt-0.5 break-all text-ink">{ad.whatsapp_number ?? '—'}</dd>
                   </div>
                   <div>
-                    <dt class="font-bold uppercase tracking-[0.1em] text-ink-muted">Condicao</dt>
+                    <dt class="font-bold uppercase tracking-[0.1em] text-ink-muted">Condição</dt>
                     <dd class="mt-0.5 text-ink">{ad.price_label ?? '—'}</dd>
                   </div>
                 </dl>
@@ -196,174 +204,237 @@ const situation = (ad: (typeof dashboard.ads)[number]) => {
                 endpoint={`/api/admin/ads/${ad.id}`}
                 field="active"
                 checked={ad.active}
-                label="Anuncio no ar"
-                description="Desligado, o anuncio some do portal mas continua cadastrado e mantendo os cliques ja contados."
+                label="Anúncio no ar"
+                description="Desligado, o anúncio some do portal mas continua cadastrado e mantendo os cliques já contados."
               />
             </div>
+
+            <details class="mt-3">
+              <summary class="cursor-pointer text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green">
+                Editar dados do anúncio
+              </summary>
+
+              <form method="POST" action={`/api/admin/ads/${ad.id}`} class="mt-3 space-y-3">
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Comércio
+                    </span>
+                    <input type="text" name="client_name" value={ad.client_name} class={inputClass} />
+                  </label>
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      WhatsApp do lojista
+                    </span>
+                    <input
+                      type="tel"
+                      name="whatsapp_number"
+                      value={ad.whatsapp_number ?? ''}
+                      class={inputClass}
+                    />
+                  </label>
+                </div>
+
+                <label class="block">
+                  <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                    Texto do anúncio
+                  </span>
+                  <input type="text" name="title" value={ad.title} class={inputClass} />
+                </label>
+
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Tipo
+                    </span>
+                    <select name="offer_type" class={inputClass}>
+                      <option value="banner" selected={ad.offer_type === 'banner'}>Banner</option>
+                      <option value="daily_deal" selected={ad.offer_type === 'daily_deal'}>
+                        Oferta do Dia
+                      </option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Posição no site
+                    </span>
+                    <select name="slot_position" class={inputClass}>
+                      {SLOTS.map(([value, label]) => (
+                        <option value={value} selected={ad.slot_position === value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Preço / condição
+                    </span>
+                    <input type="text" name="price_label" value={ad.price_label ?? ''} class={inputClass} />
+                  </label>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Foto / arte (URL)
+                    </span>
+                    <input type="text" name="image_url" value={ad.image_url ?? ''} class={inputClass} />
+                  </label>
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Condição / observação
+                    </span>
+                    <input type="text" name="notes" value={ad.notes ?? ''} class={inputClass} />
+                  </label>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Início da veiculação
+                    </span>
+                    <input
+                      type="date"
+                      name="starts_at"
+                      value={ad.starts_at ? ad.starts_at.slice(0, 10) : ''}
+                      class={inputClass}
+                    />
+                  </label>
+                  <label class="block">
+                    <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                      Fim da veiculação
+                    </span>
+                    <input
+                      type="date"
+                      name="ends_at"
+                      value={ad.ends_at ? ad.ends_at.slice(0, 10) : ''}
+                      class={inputClass}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+                >
+                  Salvar anúncio
+                </button>
+              </form>
+            </details>
           </article>
         ))
       }
     </section>
 
-    {/* ---------------------- Novo anuncio ---------------------- */}
+    {/* Novo anuncio */}
     <section class="rounded-2xl border border-line bg-nioaque-white p-5">
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
-        Cadastrar anuncio
+        Cadastrar anúncio
       </h2>
       <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-        Banners e "Ofertas do Dia em Nioaque" para o comercio local.
+        Banners e “Ofertas do Dia em Nioaque” para o comércio local.
       </p>
 
       <form method="POST" action="/api/admin/ads" class="mt-4 space-y-4">
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-              Nome do comercio
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Nome do comércio
             </span>
             <input
               type="text"
               name="client_name"
               required
               placeholder="Ex.: Mercado Nilo"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+              class={inputClass}
             />
           </label>
-
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
               WhatsApp do lojista
             </span>
-            <input
-              type="tel"
-              name="whatsapp_number"
-              placeholder="5567999990000"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="tel" name="whatsapp_number" placeholder="5567999990000" class={inputClass} />
           </label>
         </div>
 
         <label class="block">
-          <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-            Texto do anuncio
+          <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            Texto do anúncio
           </span>
           <input
             type="text"
             name="title"
             required
-            placeholder="Ex.: 20% de desconto em cesta basica nesta semana"
-            class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+            placeholder="Ex.: 20% de desconto em cesta básica nesta semana"
+            class={inputClass}
           />
         </label>
 
         <div class="grid gap-4 sm:grid-cols-3">
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
               Tipo
             </span>
-            <select
-              name="offer_type"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
-            >
+            <select name="offer_type" class={inputClass}>
               <option value="banner">Banner</option>
               <option value="daily_deal">Oferta do Dia</option>
             </select>
           </label>
-
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-              Posicao no site
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Posição no site
             </span>
-            <select
-              name="slot_position"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
-            >
-              {SLOT_OPTIONS.map(([value, label]) => (
+            <select name="slot_position" class={inputClass}>
+              {SLOTS.map(([value, label]) => (
                 <option value={value}>{label}</option>
               ))}
             </select>
           </label>
-
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-              Preco / condicao
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Preço / condição
             </span>
-            <input
-              type="text"
-              name="price_label"
-              placeholder="Ex.: R$ 39,90"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="text" name="price_label" placeholder="Ex.: R$ 39,90" class={inputClass} />
           </label>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
               Foto / arte (URL)
             </span>
-            <input
-              type="text"
-              name="image_url"
-              placeholder="/covers/ad-01.svg"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="text" name="image_url" placeholder="/covers/ad-01.svg" class={inputClass} />
           </label>
-
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
               Link de destino
             </span>
-            <input
-              type="text"
-              name="target_url"
-              placeholder="https://..."
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="text" name="target_url" placeholder="https://..." class={inputClass} />
           </label>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-              Inicio da veiculacao
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Início da veiculação
             </span>
-            <input
-              type="date"
-              name="starts_at"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="date" name="starts_at" class={inputClass} />
           </label>
-
           <label class="block">
-            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-              Fim da veiculacao
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Fim da veiculação
             </span>
-            <input
-              type="date"
-              name="ends_at"
-              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
-            />
+            <input type="date" name="ends_at" class={inputClass} />
           </label>
         </div>
-
-        <label class="block">
-          <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-            Observacao interna
-          </span>
-          <input
-            type="text"
-            name="notes"
-            placeholder="Contrato, forma de pagamento, material entregue..."
-            class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
-          />
-        </label>
 
         <button
           type="submit"
           class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
         >
           <Icon name="megaphone" size={14} />
-          Cadastrar anuncio
+          Cadastrar anúncio
         </button>
       </form>
     </section>

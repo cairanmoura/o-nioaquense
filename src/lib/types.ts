@@ -110,6 +110,28 @@ export interface BusSchedule {
   updated_at: string;
 }
 
+/** Resultado de uma modalidade de loteria. */
+export interface LotteryResult {
+  id: string;
+  modality: string;
+  contest_number: string;
+  contest_date: string;
+  numbers: string[];
+  prize_value: string | null;
+  created_at: string;
+}
+
+/** Cotacao exibida na faixa economica do portal. */
+export interface MarketQuote {
+  id: string;
+  symbol: string;
+  label: string;
+  value: number;
+  change_percent: number;
+  unit: string | null;
+  updated_at: string;
+}
+
 export interface ReaderSubmission {
   id: string;
   sender_name: string;

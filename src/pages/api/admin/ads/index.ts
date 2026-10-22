@@ -20,8 +20,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       offer_type: (payload.offer_type ?? 'banner') as AdOfferType,
       price_label: payload.price_label ? String(payload.price_label) : null,
       notes: payload.notes ? String(payload.notes) : null,
-      starts_at: payload.starts_at ? String(payload.starts_at) : null,
-      ends_at: payload.ends_at ? String(payload.ends_at) : null,
+      starts_at: payload.starts_at ? toIsoDate(String(payload.starts_at)) : null,
+      ends_at: payload.ends_at ? toIsoDate(String(payload.ends_at)) : null,
       active: payload.active === undefined ? true : Boolean(payload.active),
     };
 
@@ -31,3 +31,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return toErrorResponse(error);
   }
 };
+
+/** "2026-10-22" -> ISO completo (inicio do dia, UTC). */
+function toIsoDate(value: string): string | null {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00.000Z`;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}

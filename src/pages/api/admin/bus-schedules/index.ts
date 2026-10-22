@@ -9,12 +9,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const session = requireSession(locals);
     const payload = await readPayload(request);
 
+    const times = Array.isArray(payload.departure_times)
+      ? (payload.departure_times as string[])
+      : String(payload.departure_times ?? '')
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean);
+
     const input: BusScheduleInput = {
       route_name: String(payload.route_name ?? ''),
       destination: String(payload.destination ?? ''),
-      departure_times: Array.isArray(payload.departure_times)
-        ? (payload.departure_times as string[])
-        : [],
+      departure_times: times,
       frequency: payload.frequency ? String(payload.frequency) : null,
       notes: payload.notes ? String(payload.notes) : null,
       position: payload.position ? Number(payload.position) : 0,
