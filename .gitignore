@@ -1,0 +1,58 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+dist/
+.astro/
+.output/
+.vercel/
+.netlify/
+.wrangler/
+.nitro/
+.cache/
+
+# environment variables
+.env
+.env.production
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+!.env.example
+
+# artefatos locais de teste (cookies e payloads usados no curl)
+cookies.txt
+col.txt
+admin.txt
+adm.txt
+p_*.json
+w.json
+a.json
+b.json
+ad.json
+todraft.json
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# typescript
+*.tsbuildinfo

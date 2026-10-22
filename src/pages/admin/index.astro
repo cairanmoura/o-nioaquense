@@ -1,0 +1,400 @@
+---
+import ActionButton from '../../components/admin/ActionButton.tsx';
+import Icon from '../../components/admin/Icon.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAdminDashboard } from '../../lib/admin';
+import { canPublishDirectly, isAdmin } from '../../lib/auth';
+import { formatDate, formatDateTime } from '../../lib/format';
+import { SCOPE_LABEL } from '../../lib/types';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+const dashboard = await getAdminDashboard(Astro.locals, session);
+const editorChefe = isAdmin(session);
+const publishAllowed = canPublishDirectly(session);
+
+const shortcuts = editorChefe
+  ? [
+      {
+        href: '/admin/artigos/novo',
+        title: 'Nova Materia',
+        description: 'Escreva e publique em 3 passos',
+        icon: 'pen',
+        tone: 'bg-nioaque-green text-white',
+      },
+      {
+        href: '/admin/revisao',
+        title: 'Fila de Revisao',
+        description: `${dashboard.counts.pendingReview} texto(s) aguardando`,
+        icon: 'check',
+        tone: 'bg-nioaque-red text-white',
+      },
+      {
+        href: '/admin/leitores',
+        title: 'Boca no Trombone',
+        description: `${dashboard.counts.submissions} relato(s) do leitor`,
+        icon: 'bell',
+        tone: 'bg-ink text-white',
+      },
+      {
+        href: '/admin/utilidade-publica',
+        title: 'Farmacia e Alertas',
+        description: 'Plantao da semana, alerta e onibus',
+        icon: 'pill',
+        tone: 'bg-nioaque-green-50 text-nioaque-green-dark',
+      },
+      {
+        href: '/admin/anuncios',
+        title: 'Anuncios Locais',
+        description: `${dashboard.counts.activeAds} anuncio(s) no ar`,
+        icon: 'megaphone',
+        tone: 'bg-amber-100 text-amber-900',
+      },
+      {
+        href: '/admin/colunistas',
+        title: 'Gestao de Colunistas',
+        description: `${dashboard.counts.columnists} colunista(s) na equipe`,
+        icon: 'users',
+        tone: 'bg-nioaque-red-50 text-nioaque-red-dark',
+      },
+    ]
+  : [
+      {
+        href: '/admin/artigos/novo',
+        title: 'Escrever Nova Coluna',
+        description: '3 passos, direto do celular',
+        icon: 'pen',
+        tone: 'bg-nioaque-green text-white',
+      },
+      {
+        href: '/admin/perfil',
+        title: 'Meu Perfil',
+        description: 'Foto, bio e nome da coluna',
+        icon: 'profile',
+        tone: 'bg-nioaque-green-50 text-nioaque-green-dark',
+      },
+    ];
+
+const stats = editorChefe
+  ? [
+      { label: 'Publicadas', value: dashboard.counts.published, icon: 'check', tone: 'text-nioaque-green' },
+      { label: 'Em revisao', value: dashboard.counts.pendingReview, icon: 'clock', tone: 'text-nioaque-red' },
+      { label: 'Rascunhos', value: dashboard.counts.drafts, icon: 'pen', tone: 'text-ink-muted' },
+      { label: 'Pistas', value: dashboard.counts.submissions, icon: 'bell', tone: 'text-ink-muted' },
+    ]
+  : [
+      {
+        label: 'No ar',
+        value: dashboard.myArticles.filter((article) => article.status === 'published').length,
+        icon: 'check',
+        tone: 'text-nioaque-green',
+      },
+      {
+        label: 'Em revisao',
+        value: dashboard.myArticles.filter((article) => article.status === 'pending_review').length,
+        icon: 'clock',
+        tone: 'text-nioaque-red',
+      },
+      {
+        label: 'Rascunhos',
+        value: dashboard.myArticles.filter((article) => article.status === 'draft').length,
+        icon: 'pen',
+        tone: 'text-ink-muted',
+      },
+    ];
+
+const firstName = session.profile.full_name.split(' ')[0] ?? session.profile.full_name;
+const greeting = (() => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+})();
+---
+
+<AdminLayout
+  title={editorChefe ? 'Painel do Editor-Chefe' : 'Meu painel'}
+  subtitle={`${greeting}, ${firstName}`}
+  actionHref="/admin/artigos/novo"
+  actionLabel={editorChefe ? 'Nova Materia' : 'Nova Coluna'}
+>
+  {/* Cabecalho de papel */}
+  <div
+    class:list={[
+      'mb-6 flex flex-wrap items-center gap-3 rounded-2xl border p-4',
+      editorChefe ? 'border-nioaque-green-100 bg-nioaque-green-50' : 'border-nioaque-red-100 bg-nioaque-red-50',
+    ]}
+  >
+    <span
+      class:list={[
+        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white',
+        editorChefe ? 'bg-nioaque-green' : 'bg-nioaque-red',
+      ]}
+    >
+      <Icon name={editorChefe ? 'check' : 'pen'} size={18} />
+    </span>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold text-ink">
+        {editorChefe ? 'Editor-Chefe' : `Colunista${session.profile.column_name ? ` — ${session.profile.column_name}` : ''}`}
+      </p>
+      <p class="mt-0.5 text-xs leading-relaxed text-ink-soft">
+        {
+          editorChefe
+            ? 'Visao completa: materias, fila de revisao, colunistas, pistas do leitor e anuncios.'
+            : publishAllowed
+              ? 'Sua coluna tem a chave "pode publicar direto": o que voce escrever vai ao ar na hora.'
+              : 'Sua coluna envia os textos para a revisao do Editor-Chefe antes de publicar.'
+        }
+      </p>
+    </div>
+    {
+      !publishAllowed && (
+        <span class="pill-scope shrink-0 bg-amber-100 text-amber-900">
+          <Icon name="lock" size={11} />
+          Revisao obrigatoria
+        </span>
+      )
+    }
+  </div>
+
+  {/* Numeros */}
+  <section aria-label="Numeros" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    {
+      stats.map((stat) => (
+        <div class="rounded-2xl border border-line bg-nioaque-white p-4">
+          <div class:list={['flex items-center gap-2', stat.tone]}>
+            <Icon name={stat.icon} size={15} />
+            <span class="font-sans text-[10px] font-bold uppercase tracking-[0.14em]">
+              {stat.label}
+            </span>
+          </div>
+          <p class="mt-1.5 font-editorial text-3xl font-semibold text-ink">{stat.value}</p>
+        </div>
+      ))
+    }
+  </section>
+
+  {/* Atalhos */}
+  <section aria-label="Atalhos" class="mt-6">
+    <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+      Atalhos
+    </h2>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        shortcuts.map((shortcut) => (
+          <a
+            href={shortcut.href}
+            class="group flex items-start gap-3 rounded-2xl border border-line bg-nioaque-white p-4 transition-shadow hover:shadow-card"
+          >
+            <span
+              class:list={[
+                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105',
+                shortcut.tone,
+              ]}
+            >
+              <Icon name={shortcut.icon} size={19} />
+            </span>
+            <span class="min-w-0">
+              <span class="block font-editorial text-base font-semibold text-ink">
+                {shortcut.title}
+              </span>
+              <span class="mt-0.5 block text-xs leading-relaxed text-ink-muted">
+                {shortcut.description}
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* Fila de revisao (admin) */}
+  {
+    editorChefe && dashboard.pendingArticles.length > 0 && (
+      <section class="mt-8" aria-labelledby="fila-revisao">
+        <div class="flex items-center justify-between gap-3 border-b-2 border-nioaque-red pb-3">
+          <h2 id="fila-revisao" class="font-editorial text-xl font-semibold tracking-tight text-ink">
+            Fila de revisao
+          </h2>
+          <a
+            href="/admin/revisao"
+            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+          >
+            Ver tudo →
+          </a>
+        </div>
+
+        <ul class="mt-4 space-y-3">
+          {dashboard.pendingArticles.slice(0, 3).map((article) => {
+            const author = dashboard.authors.get(article.author_id);
+
+            return (
+              <li class="rounded-2xl border border-line bg-nioaque-white p-4">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-nioaque-red">
+                      {author?.column_name ?? author?.full_name ?? 'Colaborador'}
+                    </p>
+                    <h3 class="mt-1 font-editorial text-lg font-semibold leading-snug text-ink">
+                      {article.title}
+                    </h3>
+                    <p class="mt-1 text-xs text-ink-muted">
+                      {SCOPE_LABEL[article.scope]} · enviado em {formatDateTime(article.created_at)}
+                    </p>
+                  </div>
+
+                  <div class="flex shrink-0 gap-2">
+                    <ActionButton
+                      client:visible
+                      endpoint={`/api/admin/articles/${article.id}`}
+                      payload={{ action: 'publish' }}
+                      label="Aprovar"
+                      shortLabel="Aprovar"
+                      icon="check"
+                      variant="success"
+                    />
+                    <ActionButton
+                      client:visible
+                      endpoint={`/api/admin/articles/${article.id}`}
+                      payload={{ action: 'draft' }}
+                      label="Devolver"
+                      shortLabel="Devolver"
+                      icon="x"
+                      variant="ghost"
+                    />
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    )
+  }
+
+  {/* Meus textos (colunista) / Textos em andamento (editor-chefe) */}
+  {
+    dashboard.myArticles.length > 0 && (
+      <section class="mt-8" aria-labelledby="meus-textos">
+        <div class="flex items-center justify-between gap-3 border-b-2 border-nioaque-green pb-3">
+          <h2 id="meus-textos" class="font-editorial text-xl font-semibold tracking-tight text-ink">
+            {editorChefe ? 'Meus rascunhos' : 'Meus textos'}
+          </h2>
+          <span class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+            {dashboard.myArticles.length} no total
+          </span>
+        </div>
+
+        {
+          !editorChefe && dashboard.myArticles.length === 0 && (
+            <div class="mt-4 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-8 text-center">
+              <p class="font-editorial text-lg font-semibold text-ink">Voce ainda nao escreveu nada</p>
+              <p class="mt-1.5 text-sm text-ink-soft">
+                Comece pela sua primeira coluna — leva menos de cinco minutos.
+              </p>
+              <a
+                href="/admin/artigos/novo"
+                class="mt-5 inline-flex items-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+              >
+                <Icon name="pen" size={14} />
+                Escrever nova coluna
+              </a>
+            </div>
+          )
+        }
+
+        <ul class="mt-4 space-y-3">
+            {dashboard.myArticles.map((article) => (
+              <li class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-nioaque-white p-4">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span
+                      class:list={[
+                        'pill-scope',
+                        article.status === 'published'
+                          ? 'bg-nioaque-green-50 text-nioaque-green-dark'
+                          : article.status === 'pending_review'
+                            ? 'bg-nioaque-red-50 text-nioaque-red-dark'
+                            : 'bg-ink/10 text-ink-soft',
+                      ]}
+                    >
+                      {article.status === 'published'
+                        ? 'No ar'
+                        : article.status === 'pending_review'
+                          ? 'Em revisao'
+                          : 'Rascunho'}
+                    </span>
+                    <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                      {SCOPE_LABEL[article.scope]}
+                    </span>
+                  </div>
+                  <h3 class="mt-1.5 font-editorial text-base font-semibold leading-snug text-ink">
+                    {article.title}
+                  </h3>
+                  <p class="mt-0.5 text-xs text-ink-muted">{formatDate(article.created_at)}</p>
+                </div>
+
+                <a
+                  href={`/admin/artigos/${article.id}`}
+                  class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green"
+                >
+                  <Icon name="pen" size={13} />
+                  Editar
+                </a>
+              </li>
+            ))}
+          </ul>
+      </section>
+    )
+  }
+
+  {/* Ultimas pistas (admin) */}
+  {
+    editorChefe && dashboard.submissions.length > 0 && (
+      <section class="mt-8" aria-labelledby="ultimas-pistas">
+        <div class="flex items-center justify-between gap-3 border-b-2 border-nioaque-green pb-3">
+          <h2 id="ultimas-pistas" class="font-editorial text-xl font-semibold tracking-tight text-ink">
+            Boca no Trombone
+          </h2>
+          <a
+            href="/admin/leitores"
+            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+          >
+            Ver tudo →
+          </a>
+        </div>
+
+        <ul class="mt-4 space-y-3">
+          {dashboard.submissions.slice(0, 2).map((submission) => (
+            <li class="rounded-2xl border border-line bg-nioaque-white p-4">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-nioaque-green">
+                    {submission.neighborhood ?? 'Nioaque'} · {formatDate(submission.created_at)}
+                  </p>
+                  <p class="mt-1.5 text-sm leading-relaxed text-ink">{submission.message}</p>
+                  <p class="mt-1.5 text-xs font-semibold text-ink-muted">
+                    {submission.sender_name} · {submission.sender_whatsapp}
+                  </p>
+                </div>
+
+                <ActionButton
+                  client:visible
+                  endpoint={`/api/admin/submissions/${submission.id}`}
+                  payload={{ status: 'reviewed' }}
+                  label="Marcar vista"
+                  shortLabel="Vista"
+                  icon="check"
+                  variant="ghost"
+                />              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</AdminLayout>

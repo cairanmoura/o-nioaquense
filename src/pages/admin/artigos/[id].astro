@@ -1,0 +1,85 @@
+---
+import QuickPublishWizard from '../../../components/admin/QuickPublishWizard.tsx';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { CATEGORY_OPTIONS, SCOPE_OPTIONS, getArticleForAdmin } from '../../../lib/admin';
+import { canPublishDirectly } from '../../../lib/auth';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+const { id = '' } = Astro.params;
+const article = await getArticleForAdmin(Astro.locals, session, id);
+
+if (!article) {
+  return Astro.redirect('/admin');
+}
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
+const formatDate = (iso: string | null) =>
+  iso ? iso.slice(0, 10).split('-').reverse().join('/') : '—';
+---
+
+<AdminLayout title="Editar Materia" subtitle={article.title}>
+  <div class="mx-auto max-w-3xl">
+    <div class="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-nioaque-white p-4">
+      <span
+        class:list={[
+          'pill-scope',
+          article.status === 'published'
+            ? 'bg-nioaque-green-50 text-nioaque-green-dark'
+            : article.status === 'pending_review'
+              ? 'bg-nioaque-red-50 text-nioaque-red-dark'
+              : 'bg-ink/10 text-ink-soft',
+        ]}
+      >
+        {
+          article.status === 'published'
+            ? 'No ar'
+            : article.status === 'pending_review'
+              ? 'Em revisao'
+              : 'Rascunho'
+        }
+      </span>
+      <p class="min-w-0 flex-1 text-xs text-ink-muted">
+        Criada em {formatDate(article.created_at)} &middot; publicada em {formatDate(article.published_at)}
+      </p>
+      {
+        article.status === 'published' && (
+          <a
+            href={`/materia/${article.slug}`}
+            class="shrink-0 rounded-full border border-line px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green"
+          >
+            Ver no portal
+          </a>
+        )
+      }
+    </div>
+
+    <QuickPublishWizard
+      client:load
+      mode="edit"
+      role={session.profile.role}
+      canPublishDirectly={canPublishDirectly(session)}
+      categories={CATEGORY_OPTIONS}
+      scopes={SCOPE_OPTIONS}
+      siteUrl={siteUrl}
+      article={{
+        id: article.id,
+        title: article.title,
+        subtitle: article.subtitle ?? '',
+        slug: article.slug,
+        summary_bullets: article.summary_bullets,
+        content: article.content,
+        cover_image_url: article.cover_image_url,
+        cover_image_caption: article.cover_image_caption,
+        scope: article.scope,
+        category_label: article.category_label,
+        is_breaking: article.is_breaking,
+        status: article.status,
+      }}
+    />
+  </div>
+</AdminLayout>

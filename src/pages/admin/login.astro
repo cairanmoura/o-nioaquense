@@ -1,0 +1,166 @@
+---
+import Icon from '../../components/admin/Icon.astro';
+import LogoNioaquense from '../../components/LogoNioaquense.astro';
+import { isSupabaseConfigured } from '../../lib/auth';
+import '../../styles/global.css';
+
+/**
+ * /admin/login
+ * -----------------------------------------------------------------------------
+ * Tela de login do painel. Fora do `AdminLayout` (nao ha sessao ainda).
+ */
+
+const supabaseReady = isSupabaseConfigured(Astro.locals);
+const next = Astro.url.searchParams.get('next') ?? '/admin';
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1E293B" />
+    <title>Entrar | Painel O Nioaquense</title>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+
+  <body class="flex min-h-screen flex-col bg-ink text-ink">
+    <div class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+      <div class="w-full max-w-md">
+        <div class="flex justify-center">
+          <div class="w-44">
+            <LogoNioaquense class="w-full" />
+          </div>
+        </div>
+
+        <p class="mt-4 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
+          Painel da redação
+        </p>
+
+        <div class="mt-8 rounded-3xl bg-nioaque-white p-6 shadow-lift sm:p-8">
+          {
+            supabaseReady ? (
+              <form method="POST" action="/api/auth/login" class="space-y-4">
+                <input type="hidden" name="next" value={next} />
+
+                <div>
+                  <h1 class="font-editorial text-2xl font-semibold text-ink">Entrar</h1>
+                  <p class="mt-1 text-sm text-ink-soft">
+                    Use o e-mail cadastrado pela redação.
+                  </p>
+                </div>
+
+                <label class="block">
+                  <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                    E-mail
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                    placeholder="voce@onioaquense.com.br"
+                    class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+                  />
+                </label>
+
+                <label class="block">
+                  <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                    Senha
+                  </span>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+                    class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  class="flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+                >
+                  <Icon name="logout" size={15} class="rotate-180" />
+                  Entrar no painel
+                </button>
+              </form>
+            ) : (
+              <div>
+                <h1 class="font-editorial text-2xl font-semibold text-ink">Entrar no painel</h1>
+                <p class="mt-1 text-sm leading-relaxed text-ink-soft">
+                  O Supabase ainda nao esta configurado neste ambiente. Use um perfil de
+                  demonstracao para revisar o painel — os dados ficam apenas em memoria.
+                </p>
+
+                <div class="mt-6 space-y-3">
+                  <form method="POST" action="/api/auth/login">
+                    <input type="hidden" name="demo_role" value="admin" />
+                    <input type="hidden" name="next" value={next} />
+                    <button
+                      type="submit"
+                      class="flex w-full items-center gap-3 rounded-2xl border-2 border-nioaque-green bg-nioaque-green-50 px-4 py-4 text-left transition-colors hover:bg-nioaque-green hover:text-white"
+                    >
+                      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-nioaque-green text-white">
+                        <Icon name="check" size={18} />
+                      </span>
+                      <span>
+                        <span class="block font-editorial text-base font-semibold">
+                          Entrar como Editor-Chefe
+                        </span>
+                        <span class="block text-xs opacity-80">
+                          Visao completa: materias, revisao, colunistas, pistas e anuncios
+                        </span>
+                      </span>
+                    </button>
+                  </form>
+
+                  <form method="POST" action="/api/auth/login">
+                    <input type="hidden" name="demo_role" value="columnist" />
+                    <input type="hidden" name="next" value={next} />
+                    <button
+                      type="submit"
+                      class="flex w-full items-center gap-3 rounded-2xl border-2 border-line bg-editorial px-4 py-4 text-left transition-colors hover:border-nioaque-red hover:bg-nioaque-red-50"
+                    >
+                      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-nioaque-red text-white">
+                        <Icon name="pen" size={18} />
+                      </span>
+                      <span>
+                        <span class="block font-editorial text-base font-semibold">
+                          Entrar como Colunista
+                        </span>
+                        <span class="block text-xs opacity-80">
+                          Visao enxuta: seus textos, nova coluna e seu perfil
+                        </span>
+                      </span>
+                    </button>
+                  </form>
+                </div>
+
+                <p class="mt-5 rounded-xl bg-amber-100 px-4 py-3 text-[11px] leading-relaxed text-amber-900">
+                  O modo demonstracao e' desativado automaticamente assim que as chaves do Supabase
+                  forem configuradas em <code class="font-mono">.env</code>.
+                </p>
+              </div>
+            )
+          }
+        </div>
+
+        <p class="mt-6 text-center">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/60 transition-colors hover:text-white"
+          >
+            <Icon name="eye" size={14} />
+            Voltar ao portal
+          </a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

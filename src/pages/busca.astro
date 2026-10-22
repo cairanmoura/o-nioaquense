@@ -1,0 +1,115 @@
+---
+import ArticleCard from '../components/ArticleCard.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import { getHomeFeed, searchArticles } from '../lib/content';
+import type { Profile } from '../lib/types';
+
+/**
+ * Busca do portal. A query vem de `?q=` e filtra titulo, subtitulo,
+ * categoria e os destaques ("Direto ao ponto") das materias publicadas.
+ */
+
+const term = (Astro.url.searchParams.get('q') ?? '').trim();
+const results = term ? await searchArticles(Astro.locals, term) : [];
+
+const feed = await getHomeFeed(Astro.locals);
+const profilesById = new Map<string, Profile>(feed.profiles.map((profile) => [profile.id, profile]));
+const authorOf = (id: string) => profilesById.get(id) ?? null;
+---
+
+<MainLayout
+  title={term ? `Busca: ${term}` : 'Busca'}
+  description="Busque materias do O Nioaquense por titulo, tema ou editoria."
+  noindex
+>
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-green pb-4">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+        Busca
+      </p>
+      <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">
+        {term ? `Resultados para "${term}"` : 'O que voce procura?'}
+      </h1>
+      {
+        term && (
+          <p class="mt-2 text-sm text-ink-muted">
+            {results.length} {results.length === 1 ? 'matéria encontrada' : 'matérias encontradas'}
+          </p>
+        )
+      }
+    </header>
+
+    <form action="/busca" method="get" role="search" class="mt-6 flex max-w-xl items-center gap-2 rounded-full border border-line bg-nioaque-white px-5 py-3 focus-within:border-nioaque-green">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+      </svg>
+      <label for="busca-pagina" class="sr-only">Buscar no O Nioaquense</label>
+      <input
+        id="busca-pagina"
+        type="search"
+        name="q"
+        value={term}
+        placeholder="Buscar noticia..."
+        class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
+      />
+      <button
+        type="submit"
+        class="shrink-0 rounded-full bg-nioaque-green px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
+      >
+        Buscar
+      </button>
+    </form>
+
+    {
+      !term && (
+        <div class="mt-10 rounded-2xl border border-line bg-nioaque-white p-6">
+          <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+            Sugestões
+          </h2>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {['Recapeamento', 'Farmácia de plantão', 'Câmara', 'Festival', 'Ônibus', 'Saneamento'].map(
+              (suggestion) => (
+                <a
+                  href={`/busca?q=${encodeURIComponent(suggestion)}`}
+                  class="pill-scope bg-nioaque-green-50 text-nioaque-green-dark transition-colors hover:bg-nioaque-green hover:text-white"
+                >
+                  {suggestion}
+                </a>
+              ),
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      term && results.length > 0 && (
+        <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+          <div class="divide-y divide-line">
+            {results.map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="compact" />
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      term && results.length === 0 && (
+        <div class="mt-10 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-8 text-center">
+          <p class="font-editorial text-xl font-semibold text-ink">Nada encontrado por aqui</p>
+          <p class="mt-2 text-sm text-ink-soft">
+            Tente outra palavra ou volte para a capa do portal.
+          </p>
+          <a
+            href="/"
+            class="mt-5 inline-flex rounded-full bg-nioaque-green px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+          >
+            Voltar para a capa
+          </a>
+        </div>
+      )
+    }
+  </div>
+</MainLayout>

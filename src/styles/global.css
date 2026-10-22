@@ -1,0 +1,213 @@
+/* =============================================================================
+   O Nioaquense - folha de estilo global
+   -----------------------------------------------------------------------------
+   Tailwind CSS v4 (configuracao via @theme, sem tailwind.config.js) + tokens
+   oficiais da bandeira de Nioaque + tipografia editorial.
+   ============================================================================= */
+
+/* 1) Fontes do Google (Newsreader + Plus Jakarta Sans) ------------------------ */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,400;1,6..72,500;1,6..72,600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
+
+/* 2) Tailwind --------------------------------------------------------------- */
+@import 'tailwindcss';
+
+/* 3) Tokens do tema --------------------------------------------------------- */
+@theme {
+  /* --- Cores oficiais da bandeira de Nioaque --- */
+  --color-nioaque-green: #008026; /* Verde Nioaque (primaria) */
+  --color-nioaque-red: #e60000; /* Vermelho Nioaque (acento / urgencia) */
+  --color-nioaque-white: #ffffff; /* Branco puro (cards / faixa central) */
+  --color-editorial: #faf9f6; /* Fundo editorial */
+  --color-ink: #1e293b; /* Texto principal */
+
+  /* --- Derivados uteis (mesma familia cromatica) --- */
+  --color-nioaque-green-dark: #006020;
+  --color-nioaque-green-light: #00a233;
+  --color-nioaque-green-50: #eaf6ee;
+  --color-nioaque-green-100: #c9e9d4;
+  --color-nioaque-red-dark: #b30000;
+  --color-nioaque-red-light: #ff2a2a;
+  --color-nioaque-red-50: #fdeaea;
+  --color-ink-soft: #475569;
+  --color-ink-muted: #64748b;
+  --color-line: #e4e2dc;
+  --color-line-strong: #d3d0c8;
+
+  /* --- Tipografia --- */
+  --font-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* --- Tipografia em escala fluida (mobile-first) --- */
+  --text-display: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-headline: clamp(1.75rem, 1.2rem + 2.4vw, 3rem);
+  --text-headline--line-height: 1.08;
+  --text-headline--letter-spacing: -0.02em;
+
+  --text-title: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem);
+  --text-title--line-height: 1.18;
+  --text-title--letter-spacing: -0.015em;
+
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1.1;
+  --text-eyebrow--letter-spacing: 0.16em;
+
+  /* --- Raios / sombras --- */
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgb(30 41 59 / 0.04), 0 8px 24px -12px rgb(30 41 59 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(30 41 59 / 0.05), 0 18px 40px -18px rgb(30 41 59 / 0.22);
+}
+
+/* 4) Camada base ----------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-editorial);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Titulos editoriais em serifado */
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-editorial {
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+  }
+
+  /* Foco visivel e consistente (acessibilidade) */
+  :focus-visible {
+    outline: 2px solid var(--color-nioaque-green);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-nioaque-green);
+    color: var(--color-nioaque-white);
+  }
+
+  /* Respeita quem prefere menos movimento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* 5) Utilitarios editoriais ------------------------------------------------ */
+@layer components {
+  /* Pilula de editoria (estilo BHAZ) */
+  .pill-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: var(--radius-pill);
+    padding: 0.25rem 0.7rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    white-space: nowrap;
+    /* Nunca pode estourar o container (mobile 360px) */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Caixa "Direto ao Ponto" */
+  .box-resumo {
+    border-left: 4px solid var(--color-nioaque-green);
+    background-color: var(--color-nioaque-white);
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  /* Link sublinhado discreto, estilo editorial */
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    transition: text-decoration-color 150ms ease;
+  }
+
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* Corpo de materia (conteudo vindo do CMS via set:html) */
+  .prose-editorial p {
+    margin-block: 0;
+  }
+
+  .prose-editorial p + p {
+    margin-top: 1.25rem;
+  }
+
+  .prose-editorial strong {
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .prose-editorial a {
+    color: var(--color-nioaque-green);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .prose-editorial ul,
+  .prose-editorial ol {
+    margin-top: 1.25rem;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .prose-editorial h2,
+  .prose-editorial h3 {
+    margin-top: 2rem;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* 6) Utilitarios pontuais -------------------------------------------------- */
+@utility container-editorial {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: 1rem;
+
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Regua vertical usada em blocos de servico */
+@utility rule-editorial {
+  border-top: 1px solid var(--color-line);
+}

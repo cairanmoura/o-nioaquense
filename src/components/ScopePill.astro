@@ -1,0 +1,24 @@
+---
+import { SCOPE_BADGE_CLASS, SCOPE_LABEL } from '../lib/types';
+import type { ArticleScope } from '../lib/types';
+
+interface Props {
+  scope: ArticleScope;
+  category?: string | null;
+  class?: string;
+  /** Mostra apenas o rotulo da editoria (sem a cor). */
+  plain?: boolean;
+}
+
+const { scope, category, class: className = '', plain = false } = Astro.props;
+---
+
+<span
+  class:list={[
+    'pill-scope',
+    plain ? 'bg-transparent px-0 text-ink-muted' : SCOPE_BADGE_CLASS[scope],
+    className,
+  ]}
+>
+  {plain ? SCOPE_LABEL[scope] : (category ?? SCOPE_LABEL[scope])}
+</span>

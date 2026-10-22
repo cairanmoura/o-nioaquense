@@ -1,0 +1,35 @@
+---
+import CategoryPill from './CategoryPill.astro';
+import ScopePill from './ScopePill.astro';
+import type { Article } from '../lib/types';
+
+/**
+ * ArticlePills.astro
+ * -----------------------------------------------------------------------------
+ * Conjunto de pilulas de uma materia.
+ *
+ * Materias de Nioaque ganham a pilula colorida de categoria (estilo BHAZ);
+ * as demais editorias mantem a pilula de escopo (verde / vermelho / preto).
+ */
+
+interface Props {
+  article: Article;
+  /** Mostra a editoria alem da categoria (ex.: "Nioaque" + "Cidade"). */
+  showEditor?: boolean;
+  class?: string;
+}
+
+const { article, showEditor = false, class: className = '' } = Astro.props;
+---
+
+<div class:list={['flex flex-wrap items-center gap-2', className]}>
+  {showEditor && <ScopePill scope={article.scope} />}
+  {
+    article.scope === 'nioaque' ? (
+      <CategoryPill category={article.category_label} />
+    ) : (
+      <ScopePill scope={article.scope} category={article.category_label} />
+    )
+  }
+  {article.is_breaking && <span class="pill-scope bg-nioaque-red text-white">Urgente</span>}
+</div>

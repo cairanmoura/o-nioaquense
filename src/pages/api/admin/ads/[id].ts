@@ -1,0 +1,57 @@
+import type { APIRoute } from 'astro';
+
+import { readPayload, requireSession, jsonOk, toErrorResponse } from '../../../../lib/api';
+import { updateAd, type AdInput } from '../../../../lib/admin';
+import type { AdOfferType, AdSlotPosition } from '../../../../lib/types';
+
+/**
+ * POST /api/admin/ads/[id]
+ * -----------------------------------------------------------------------------
+ * Atualiza um anuncio local. Aceita o simples `active` (pausar/ativar) e
+ * tambem a edicao completa dos dados comerciais.
+ */
+export const POST: APIRoute = async ({ params, request, locals }) => {
+  try {
+    const session = requireSession(locals);
+    const id = params.id ?? '';
+
+    const payload = await readPayload(request);
+    const patch: Partial<AdInput> = {};
+
+    if (payload.active !== undefined) patch.active = Boolean(payload.active);
+    if (payload.client_name !== undefined) patch.client_name = String(payload.client_name);
+    if (payload.title !== undefined) patch.title = String(payload.title);
+    if (payload.image_url !== undefined) {
+      patch.image_url = payload.image_url ? String(payload.image_url) : null;
+    }
+    if (payload.target_url !== undefined) {
+      patch.target_url = payload.target_url ? String(payload.target_url) : null;
+    }
+    if (payload.whatsapp_number !== undefined) {
+      patch.whatsapp_number = payload.whatsapp_number ? String(payload.whatsapp_number) : null;
+    }
+    if (payload.slot_position !== undefined) {
+      patch.slot_position = String(payload.slot_position) as AdSlotPosition;
+    }
+    if (payload.offer_type !== undefined) {
+      patch.offer_type = String(payload.offer_type) as AdOfferType;
+    }
+    if (payload.price_label !== undefined) {
+      patch.price_label = payload.price_label ? String(payload.price_label) : null;
+    }
+    if (payload.notes !== undefined) {
+      patch.notes = payload.notes ? String(payload.notes) : null;
+    }
+    if (payload.starts_at !== undefined) {
+      patch.starts_at = payload.starts_at ? String(payload.starts_at) : null;
+    }
+    if (payload.ends_at !== undefined) {
+      patch.ends_at = payload.ends_at ? String(payload.ends_at) : null;
+    }
+
+    const ad = await updateAd(locals, session, id, patch);
+    return jsonOk({ ad });
+  } catch (error) {
+    return toErrorResponse(error);
+  }
+};

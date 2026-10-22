@@ -1,0 +1,93 @@
+---
+import { ADSENSE_MIN_HEIGHT, type AdsenseFormat } from '../lib/ads';
+
+/**
+ * GoogleAdSlot.astro
+ * -----------------------------------------------------------------------------
+ * Slot preparado para o Google AdSense.
+ *
+ * Regra do projeto (AGENTS.md #1): **zero CLS**. A altura minima do slot e'
+ * reservada no CSS, de modo que o criativo do AdSense nunca empurra o
+ * conteudo ao carregar.
+ *
+ * Sem `PUBLIC_GOOGLE_ADSENSE_CLIENT` configurado, o componente renderiza um
+ * placeholder com a MESMA altura reservada - o layout permanece identico
+ * entre desenvolvimento e producao.
+ */
+
+interface Props {
+  /** Slot do AdSense (data-ad-slot). */
+  slot?: string;
+  /** Formato do criativo. */
+  format?: AdsenseFormat;
+  /** Rotulo exibido no canto do bloco. */
+  label?: string;
+  class?: string;
+  /** Altura minima customizada (sobrescreve o formato). */
+  minHeight?: string;
+}
+
+const {
+  slot: slotId = import.meta.env.PUBLIC_ADSENSE_SLOT_DEFAULT,
+  format = 'rectangle',
+  label = 'Publicidade',
+  class: className = '',
+  minHeight,
+} = Astro.props;
+
+const client = import.meta.env.PUBLIC_GOOGLE_ADSENSE_CLIENT;
+const reservedHeight = minHeight ?? ADSENSE_MIN_HEIGHT[format];
+
+const AD_FORMAT: Record<AdsenseFormat, string> = {
+  leaderboard: 'horizontal',
+  rectangle: 'vertical',
+  horizontal: 'horizontal',
+  mobileBanner: 'horizontal',
+};
+---
+
+<div
+  class:list={[
+    'relative flex flex-col overflow-hidden rounded-2xl border border-line bg-nioaque-white',
+    className,
+  ]}
+  style={`min-height:${reservedHeight}`}
+>
+  <span
+    class="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white"
+  >
+    {label}
+  </span>
+
+  {
+    client && slotId ? (
+      <>
+        <ins
+          class="adsbygoogle"
+          style="display:block; flex:1; min-height:inherit;"
+          data-ad-client={client}
+          data-ad-slot={slotId}
+          data-ad-format={AD_FORMAT[format]}
+          data-full-width-responsive="true"
+        />
+        <script is:inline async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`} crossorigin="anonymous" />
+        <script is:inline>
+          {`(adsbygoogle = window.adsbygoogle || []).push({});`}
+        </script>
+      </>
+    ) : (
+      /* Placeholder com a altura reservada: o layout nao muda quando o
+         AdSense for ativado em producao. */
+      <div class="flex flex-1 items-center justify-center p-6 text-center">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted/70">
+            {label}
+          </p>
+          <p class="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted/50">
+            Google AdSense
+          </p>
+        </div>
+      </div>
+    )
+  }
+</div>

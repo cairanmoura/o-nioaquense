@@ -1,0 +1,107 @@
+---
+import CategoryPill from './CategoryPill.astro';
+import { formatDate } from '../lib/format';
+import type { ColumnistPick } from '../lib/content';
+
+/**
+ * ColumnistShowcase.astro
+ * -----------------------------------------------------------------------------
+ * Faixa de colunistas em destaque: avatar circular com borda verde/vermelha,
+ * nome da coluna, autor e titulo do texto.
+ */
+
+interface Props {
+  picks: ColumnistPick[];
+  class?: string;
+}
+
+const { picks, class: className = '' } = Astro.props;
+const visible = picks.filter((pick) => pick.article).slice(0, 6);
+---
+
+<section
+  class:list={['rounded-3xl border border-line bg-nioaque-white p-5 sm:p-7', className]}
+  aria-labelledby="faixa-colunistas"
+>
+  <header class="flex flex-wrap items-end justify-between gap-3 border-b-2 border-nioaque-red pb-4">
+    <div>
+      <p class="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-nioaque-red">
+        Opinião
+      </p>
+      <h2 id="faixa-colunistas" class="mt-1 font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        Colunistas em destaque
+      </h2>
+    </div>
+    <a
+      href="/?escopo=coluna"
+      class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+    >
+      Ver todas →
+    </a>
+  </header>
+
+  <ul class="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:thin] lg:grid lg:grid-cols-3 lg:overflow-visible xl:grid-cols-4">
+    {
+      visible.map(({ profile, article }, index) => (
+        <li class="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-auto">
+          <article class="group flex h-full flex-col rounded-2xl border border-line bg-editorial p-5 transition-shadow hover:shadow-card">
+            <div class="flex items-center gap-3.5">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt=""
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  class:list={[
+                    'h-16 w-16 shrink-0 rounded-full object-cover ring-[3px] transition-transform group-hover:scale-105',
+                    index % 2 === 0 ? 'ring-nioaque-green' : 'ring-nioaque-red',
+                  ]}
+                />
+              ) : (
+                <span
+                  class:list={[
+                    'flex h-16 w-16 shrink-0 items-center justify-center rounded-full font-editorial text-xl font-semibold text-white ring-[3px]',
+                    index % 2 === 0 ? 'bg-nioaque-green ring-nioaque-green' : 'bg-nioaque-red ring-nioaque-red',
+                  ]}
+                >
+                  {profile.full_name.charAt(0)}
+                </span>
+              )}
+
+              <div class="min-w-0">
+                <p class="truncate font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+                  {profile.column_name}
+                </p>
+                <p class="mt-0.5 truncate font-editorial text-base font-semibold text-ink">
+                  {profile.full_name}
+                </p>
+              </div>
+            </div>
+
+            {article && (
+              <>
+                <h3 class="mt-4 font-editorial text-lg font-semibold leading-snug text-ink">
+                  <a
+                    href={`/materia/${article.slug}`}
+                    class="transition-colors group-hover:text-nioaque-green"
+                  >
+                    {article.title}
+                  </a>
+                </h3>
+
+                <div class="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                  <CategoryPill category={article.category_label} />
+                  <span class="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                    {formatDate(article.published_at)}
+                  </span>
+                </div>
+              </>
+            )}
+          </article>
+        </li>
+      ))
+    }
+  </ul>
+</section>

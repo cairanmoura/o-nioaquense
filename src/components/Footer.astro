@@ -1,0 +1,79 @@
+---
+import LogoNioaquense from './LogoNioaquense.astro';
+
+const year = new Date().getFullYear();
+
+const columns = [
+  {
+    title: 'Editorias',
+    links: [
+      { label: 'Nioaque', href: '/?escopo=nioaque' },
+      { label: 'Radar Oficial', href: '/?escopo=radar_oficial' },
+      { label: 'Colunistas', href: '/?escopo=coluna' },
+      { label: 'Mato Grosso do Sul', href: '/?escopo=ms' },
+      { label: 'Brasil', href: '/?escopo=brasil' },
+    ],
+  },
+  {
+    title: 'Servicos',
+    links: [
+      { label: 'Farmacia de plantao', href: '/#servicos' },
+      { label: 'Horarios de onibus', href: '/#servicos' },
+      { label: 'Alertas da cidade', href: '/#servicos' },
+      { label: 'Destaque do comercio', href: '/#comercio' },
+    ],
+  },
+  {
+    title: 'O Nioaquense',
+    links: [
+      { label: 'Sobre o portal', href: '/#sobre' },
+      { label: 'Fale com a redacao', href: '/#pistas' },
+      { label: 'Envie uma pista', href: '/#pistas' },
+      { label: 'Anuncie no portal', href: '/#pistas' },
+    ],
+  },
+];
+---
+
+<footer class="mt-16 border-t border-line bg-nioaque-white">
+  <div class="container-editorial py-12">
+    <div class="grid gap-10 md:grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,auto))]">
+      <div id="sobre" class="max-w-sm scroll-mt-32">
+        <LogoNioaquense class="w-48" />
+        <p class="mt-5 text-sm leading-relaxed text-ink-soft">
+          Jornalismo hiperlocal de Nioaque (MS). Publicamos o que acontece na cidade, no Sul de Mato
+          Grosso do Sul e no Brasil, com transparencia sobre como cada noticia foi apurada.
+        </p>
+      </div>
+
+      {
+        columns.map((column) => (
+          <nav aria-label={column.title}>
+            <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+              {column.title}
+            </h2>
+            <ul class="mt-4 space-y-2.5">
+              {column.links.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="link-underline text-sm text-ink-soft transition-colors hover:text-nioaque-red"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <div
+      class="mt-10 flex flex-col gap-3 border-t border-line pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>&copy; {year} O Nioaquense. Todos os direitos reservados.</p>
+      <p>Conteudo demonstrativo - Etapa 2 do projeto. Nao e' um veiculo em expediente.</p>
+    </div>
+  </div>
+</footer>

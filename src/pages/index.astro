@@ -1,0 +1,298 @@
+---
+import ArticleCard from '../components/ArticleCard.astro';
+import ColumnistShowcase from '../components/ColumnistShowcase.astro';
+import EnviarPista from '../components/islands/EnviarPista';
+import GoogleAdSlot from '../components/GoogleAdSlot.astro';
+import LocalAdBanner from '../components/LocalAdBanner.astro';
+import LocalDailyDeal from '../components/LocalDailyDeal.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import RadarOficialBlock from '../components/RadarOficialBlock.astro';
+import ServiceBlock from '../components/ServiceBlock.astro';
+import { getColumnistPicks, getHomeFeed, getRadarArticles } from '../lib/content';
+import { SCOPE_LABEL } from '../lib/types';
+import type { ArticleScope, Profile } from '../lib/types';
+
+/**
+ * Home do O Nioaquense.
+ *
+ * Estilo: editorial do Nexo Jornal (hierarquia serifada, "Direto ao ponto",
+ * colunas de texto) com o dinamismo de cores do BHAZ (pílulas de categoria,
+ * faixa de breaking, vitrine do comércio local).
+ */
+
+const feed = await getHomeFeed(Astro.locals);
+const columnists = await getColumnistPicks(Astro.locals);
+const radar = await getRadarArticles(Astro.locals);
+
+const profilesById = new Map<string, Profile>(feed.profiles.map((profile) => [profile.id, profile]));
+const authorOf = (id: string) => profilesById.get(id) ?? null;
+
+const scopeParam = Astro.url.searchParams.get('escopo') as ArticleScope | null;
+const validScopes: ArticleScope[] = ['nioaque', 'ms', 'brasil', 'coluna', 'radar_oficial'];
+const activeScope = scopeParam && validScopes.includes(scopeParam) ? scopeParam : null;
+
+/* --- Manchete principal: prioriza Nioaque --- */
+const featuredNioaque = feed.featured.find((article) => article.scope === 'nioaque');
+const lead =
+  activeScope === null
+    ? (featuredNioaque ?? feed.featured[0] ?? feed.articles[0] ?? null)
+    : (feed.byScope[activeScope][0] ?? feed.articles[0] ?? null);
+
+/* --- Submanchetes: as outras materias de Nioaque --- */
+const nioaquePool = feed.byScope.nioaque.filter((article) => article.id !== lead?.id);
+const subLeads = (activeScope && activeScope !== 'nioaque'
+  ? feed.byScope[activeScope].filter((article) => article.id !== lead?.id)
+  : nioaquePool
+).slice(0, 3);
+
+const secondary = feed.articles.filter((article) => article.id !== lead?.id);
+const breaking = feed.breaking.slice(0, 3);
+
+const nioaqueGrid = nioaquePool.filter((article) => !subLeads.some((item) => item.id === article.id)).slice(0, 4);
+const ms = feed.byScope.ms.slice(0, 3);
+const brasil = feed.byScope.brasil.slice(0, 3);
+---
+
+<MainLayout
+  description="Portal de noticias hiperlocal de Nioaque (MS). O que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil."
+>
+  {/* Faixa de ultima hora */}
+  {
+    breaking.length > 0 && (
+      <div class="border-b border-nioaque-red/20 bg-nioaque-red-50">
+        <div class="container-editorial flex items-center gap-3 py-2.5">
+          <span class="pill-scope shrink-0 bg-nioaque-red text-white">Última hora</span>
+          <div class="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-medium text-ink">
+            {breaking.map((article) => (
+              <a
+                href={`/materia/${article.slug}`}
+                class="link-underline transition-colors hover:text-nioaque-red"
+              >
+                {article.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  {/* Topo: billboard do Google AdSense */}
+  <div class="container-editorial pt-5">
+    <GoogleAdSlot format="leaderboard" label="Publicidade" />
+  </div>
+
+  <div class="container-editorial py-8 sm:py-10">
+    {/* Cabecalho da capa */}
+    <div class="flex flex-wrap items-end justify-between gap-3 border-b-2 border-nioaque-green pb-3">
+      <div>
+        <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+          Capa de hoje
+        </p>
+        <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">
+          {activeScope ? SCOPE_LABEL[activeScope] : 'O que acontece em Nioaque'}
+        </h1>
+      </div>
+      <p class="text-xs font-medium text-ink-muted">
+        {feed.source === 'mock' ? 'Conteúdo de demonstração' : 'Atualizado pela redação'}
+      </p>
+    </div>
+
+    {/* Manchete + submanchetes | coluna lateral */}
+    <div class="grid gap-8 pt-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:gap-10">
+      <section aria-label="Manchete principal" class="min-w-0">
+        {
+          lead && (
+            <ArticleCard
+              article={lead}
+              author={authorOf(lead.author_id)}
+              variant="lead"
+              showEditor
+            />
+          )
+        }
+
+        {/* Submanchetes de Nioaque */}
+        {
+          subLeads.length > 0 && (
+            <div class="mt-8 grid gap-6 border-t-2 border-line pt-6 sm:grid-cols-3">
+              {subLeads.map((article) => (
+                <ArticleCard
+                  article={article}
+                  author={authorOf(article.author_id)}
+                  variant="standard"
+                />
+              ))}
+            </div>
+          )
+        }
+      </section>
+
+      {/* Coluna lateral */}
+      <aside class="lg:border-l lg:border-line lg:pl-8">
+        <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+          Mais recentes
+        </h2>
+        <div class="mt-4 divide-y divide-line">
+          {
+            secondary.slice(0, 6).map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="compact" />
+            ))
+          }
+        </div>
+
+        <div class="mt-8">
+          <LocalAdBanner ad={feed.ads.home_middle} />
+        </div>
+
+        <div class="mt-8">
+          <GoogleAdSlot format="rectangle" label="Publicidade" />
+        </div>
+      </aside>
+    </div>
+
+    {/* Colunistas em destaque */}
+    <div class="mt-12">
+      <ColumnistShowcase picks={columnists} />
+    </div>
+
+    {/* Nioaque */}
+    {
+      nioaqueGrid.length > 0 && (
+        <section class="mt-12" aria-labelledby="sec-nioaque">
+          <div class="flex items-center gap-3 border-b-2 border-nioaque-green pb-3">
+            <h2 id="sec-nioaque" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              Nioaque
+            </h2>
+            <span class="pill-scope bg-nioaque-green-50 text-nioaque-green-dark">
+              {nioaquePool.length} matérias
+            </span>
+          </div>
+          <div class="grid gap-6 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+            {nioaqueGrid.map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {/* Anuncio no meio da home */}
+    <div class="mt-10">
+      <GoogleAdSlot format="horizontal" label="Publicidade" />
+    </div>
+
+    {/* Radar Oficial */}
+    <div class="mt-12">
+      <RadarOficialBlock articles={radar} />
+    </div>
+
+    {/* Mato Grosso do Sul */}
+    {
+      ms.length > 0 && (
+        <section class="mt-12" aria-labelledby="sec-ms">
+          <div class="flex items-center gap-3 border-b-2 border-nioaque-green pb-3">
+            <h2 id="sec-ms" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              Mato Grosso do Sul
+            </h2>
+            <a
+              href="/?escopo=ms"
+              class="ml-auto font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+            >
+              Ver tudo →
+            </a>
+          </div>
+          <div class="grid gap-6 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            {ms.map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {/* Vitrine do comercio local */}
+    <section id="comercio" class="mt-12 scroll-mt-28" aria-labelledby="sec-comercio">
+      <div class="flex items-center gap-3 border-b-2 border-nioaque-red pb-3">
+        <h2 id="sec-comercio" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          Destaque do Comércio de Nioaque
+        </h2>
+        <span class="pill-scope bg-nioaque-red-50 text-nioaque-red-dark">Anuncie aqui</span>
+      </div>
+
+      <div class="grid gap-6 pt-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <LocalDailyDeal ad={feed.ads.daily_deal} />
+
+        <div class="flex flex-col gap-6">
+          <LocalAdBanner ad={feed.ads.sidebar} label="Destaque local" />
+          <GoogleAdSlot format="horizontal" label="Publicidade" />
+        </div>
+      </div>
+    </section>
+
+    {/* Brasil */}
+    {
+      brasil.length > 0 && (
+        <section class="mt-12" aria-labelledby="sec-brasil">
+          <div class="flex items-center gap-3 border-b-2 border-nioaque-green pb-3">
+            <h2 id="sec-brasil" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              Brasil
+            </h2>
+            <a
+              href="/?escopo=brasil"
+              class="ml-auto font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+            >
+              Ver tudo →
+            </a>
+          </div>
+          <div class="grid gap-6 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            {brasil.map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {/* Servicos do dia */}
+    <div class="mt-12">
+      <ServiceBlock utility={feed.utility} />
+    </div>
+
+    {/* Envio de pistas */}
+    <section id="pistas" class="mt-12 scroll-mt-28" aria-labelledby="sec-pistas">
+      <div class="grid gap-8 rounded-3xl border border-line bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-12">
+        <div>
+          <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+            Sua vez
+          </p>
+          <h2 id="sec-pistas" class="mt-2 text-headline font-semibold leading-tight text-ink">
+            Alguma coisa aconteceu na sua rua?
+          </h2>
+          <p class="mt-4 text-[0.9375rem] leading-relaxed text-ink-soft">
+            Mande a dica. A redação apura, confere com os órgãos públicos e publica. Seu nome só
+            aparece se você quiser.
+          </p>
+          <ul class="mt-6 space-y-2.5 text-sm text-ink-soft">
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              Buracos, coleta de lixo, iluminação, transporte
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              Escolas, saúde, eventos da cidade
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              Comércio, agricultura e produções locais
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <EnviarPista client:visible />
+        </div>
+      </div>
+    </section>
+  </div>
+</MainLayout>

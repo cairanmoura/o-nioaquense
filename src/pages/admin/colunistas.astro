@@ -1,0 +1,248 @@
+---
+import ActionButton from '../../components/admin/ActionButton.tsx';
+import Icon from '../../components/admin/Icon.astro';
+import ToggleSwitch from '../../components/admin/ToggleSwitch.tsx';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAdminDashboard } from '../../lib/admin';
+import { isAdmin } from '../../lib/auth';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+if (!isAdmin(session)) {
+  return Astro.redirect('/admin');
+}
+
+const dashboard = await getAdminDashboard(Astro.locals, session);
+---
+
+<AdminLayout
+  title="Gestao de Colunistas"
+  subtitle={`${dashboard.columnists.length} na equipe`}
+>
+  <div class="mx-auto max-w-4xl space-y-6">
+    {/* Chave de publicacao direta */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Permissao de publicacao
+      </h2>
+      <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">
+        Sem a chave <strong>"Pode publicar direto sem revisao"</strong>, o colunista so consegue
+        gravar rascunhos e enviar textos para a sua fila. Com a chave, o texto dele vai direto ao
+        ar. A regra e' aplicada no servidor e no banco (RLS + trigger).
+      </p>
+
+      <ul class="mt-4 divide-y divide-line">
+        {
+          dashboard.columnists.map((columnist) => (
+            <li class="py-4 first:pt-0 last:pb-0">
+              <div class="flex items-start gap-3">
+                {columnist.avatar_url ? (
+                  <img
+                    src={columnist.avatar_url}
+                    alt=""
+                    width="44"
+                    height="44"
+                    loading="lazy"
+                    decoding="async"
+                    class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green"
+                  />
+                ) : (
+                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink/10 font-editorial text-base font-semibold text-ink-soft">
+                    {columnist.full_name.charAt(0)}
+                  </span>
+                )}
+
+                <div class="min-w-0 flex-1">
+                  <p class="font-editorial text-base font-semibold leading-tight text-ink">
+                    {columnist.full_name}
+                  </p>
+                  <p class="mt-0.5 text-xs text-ink-muted">
+                    {columnist.column_name ?? 'Sem coluna definida'} &middot; {columnist.slug}
+                  </p>
+                </div>
+
+                <span
+                  class:list={[
+                    'pill-scope shrink-0',
+                    columnist.active
+                      ? 'bg-nioaque-green-50 text-nioaque-green-dark'
+                      : 'bg-ink/10 text-ink-soft',
+                  ]}
+                >
+                  {columnist.active ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+
+              <div class="mt-3 space-y-3 rounded-xl bg-editorial p-4">
+                <ToggleSwitch
+                  client:visible
+                  endpoint={`/api/admin/profiles/${columnist.id}`}
+                  field="can_publish_directly"
+                  checked={columnist.can_publish_directly}
+                  label="Pode publicar direto sem revisao"
+                  description={
+                    columnist.can_publish_directly
+                      ? 'Os textos dele vao direto ao ar.'
+                      : 'Os textos dele passam por voce antes de publicar.'
+                  }
+                  highlight="red"
+                />
+
+                <div class="border-t border-line pt-3">
+                  <ToggleSwitch
+                    client:visible
+                    endpoint={`/api/admin/profiles/${columnist.id}`}
+                    field="active"
+                    checked={columnist.active}
+                    label="Acesso ativo"
+                    description="Desligado, o colunista nao consegue entrar no painel."
+                  />
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    {/* Cadastro de novo colunista */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Cadastrar colunista
+      </h2>
+      <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">
+        O usuario e' criado no Supabase Auth com uma senha provisoria. Depois, o colunista troca a
+        senha pelo proprio link de acesso.
+      </p>
+
+      <form method="POST" action="/api/admin/profiles" class="mt-4 space-y-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block">
+            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              Nome completo
+            </span>
+            <input
+              type="text"
+              name="full_name"
+              required
+              placeholder="Nome do colunista"
+              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+            />
+          </label>
+
+          <label class="block">
+            <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+              E-mail
+            </span>
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="colunista@exemplo.com"
+              class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+            />
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            Nome da coluna
+          </span>
+          <input
+            type="text"
+            name="column_name"
+            placeholder="Ex.: Visao de Nioaque"
+            class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+        </label>
+
+        <label class="block">
+          <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+            Bio
+          </span>
+          <textarea
+            name="bio"
+            rows={3}
+            placeholder="Fale em poucas linhas quem e o colunista."
+            class="mt-1.5 w-full resize-y rounded-xl border border-line bg-editorial px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+          />
+        </label>
+
+        <label class="flex items-start gap-3 rounded-xl bg-editorial px-4 py-3">
+          <input
+            type="checkbox"
+            name="can_publish_directly"
+            value="true"
+            class="mt-0.5 h-5 w-5 shrink-0 accent-nioaque-red"
+          />
+          <span>
+            <span class="block text-sm font-semibold text-ink">
+              Pode publicar direto sem revisao
+            </span>
+            <span class="block text-[11px] text-ink-muted">
+              Deixe desligado para o texto passar pela fila de revisao.
+            </span>
+          </span>
+        </label>
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+        >
+          <Icon name="users" size={14} />
+          Cadastrar colunista
+        </button>
+      </form>
+    </section>
+
+    {/* Publicacoes dos colunistas */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Textos em circulacao
+      </h2>
+
+      <ul class="mt-4 divide-y divide-line">
+        {
+          dashboard.pendingArticles.map((article) => {
+            const author = dashboard.authors.get(article.author_id);
+
+            return (
+              <li class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div class="min-w-0 flex-1">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-nioaque-red">
+                    {author?.column_name ?? author?.full_name ?? 'Colaborador'}
+                  </p>
+                  <p class="mt-0.5 font-editorial text-base font-semibold leading-snug text-ink">
+                    {article.title}
+                  </p>
+                </div>
+
+                <ActionButton
+                  client:visible
+                  endpoint={`/api/admin/articles/${article.id}`}
+                  payload={{ action: 'publish' }}
+                  label="Aprovar"
+                  shortLabel="Aprovar"
+                  icon="check"
+                  variant="success"
+                />
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      {
+        dashboard.pendingArticles.length === 0 && (
+          <p class="mt-4 rounded-xl bg-editorial px-4 py-3 text-sm text-ink-soft">
+            Nenhum texto aguardando revisao no momento.
+          </p>
+        )
+      }
+    </section>
+  </div>
+</AdminLayout>

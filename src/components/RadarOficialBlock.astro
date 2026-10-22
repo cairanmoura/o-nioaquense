@@ -1,0 +1,146 @@
+---
+import { formatDate } from '../lib/format';
+import type { Article } from '../lib/types';
+
+/**
+ * RadarOficialBlock.astro
+ * -----------------------------------------------------------------------------
+ * Bloco "Radar Oficial": Prefeitura, Camara, Concursos e Diario Oficial
+ * explicados em linguagem simples.
+ *
+ * As materias sao agrupadas pela `category_label` e cada grupo recebe um
+ * subtitulo que explica, em uma linha, o que aquela secao significa.
+ */
+
+interface Props {
+  articles: Article[];
+  class?: string;
+}
+
+const { articles, class: className = '' } = Astro.props;
+
+const GROUPS = [
+  {
+    key: 'Prefeitura',
+    hint: 'O que o Executivo esta fazendo na cidade',
+    accent: 'text-nioaque-green',
+    icon: 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6',
+  },
+  {
+    key: 'Câmara',
+    hint: 'Decisoes e projetos da Casa',
+    accent: 'text-nioaque-red',
+    icon: 'M3 9h18M5 9v11M9 9v11M15 9v11M19 9v11M2 20h20M12 3l9 5H3Z',
+  },
+  {
+    key: 'Concursos',
+    hint: 'Vagas, seletivas e nomeacoes',
+    accent: 'text-nioaque-green',
+    icon: 'M4 5h16v14H4zM8 9h8M8 13h5',
+  },
+  {
+    key: 'Diário Oficial',
+    hint: 'Publicacoes e avisos do dia',
+    accent: 'text-nioaque-red',
+    icon: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6',
+  },
+];
+
+const byCategory = new Map<string, Article[]>();
+for (const article of articles) {
+  const key = article.category_label ?? 'Prefeitura';
+  const list = byCategory.get(key) ?? [];
+  list.push(article);
+  byCategory.set(key, list);
+}
+---
+
+<section
+  class:list={['overflow-hidden rounded-3xl bg-ink text-white', className]}
+  aria-labelledby="radar-oficial"
+>
+  <header class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
+    <div>
+      <p class="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-nioaque-green">
+        Servico publico
+      </p>
+      <h2 id="radar-oficial" class="mt-1 font-editorial text-2xl font-semibold tracking-tight sm:text-3xl">
+        Radar Oficial
+      </h2>
+      <p class="mt-1.5 max-w-xl text-sm text-white/60">
+        O que a Prefeitura, a Camara, os concursos e o Diario Oficial resolveram -
+        traduzido para o cidadao.
+      </p>
+    </div>
+    <a
+      href="/?escopo=radar_oficial"
+      class="rounded-full bg-white/10 px-4 py-2 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green"
+    >
+      Ver tudo
+    </a>
+  </header>
+
+  <div class="grid gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+    {
+      GROUPS.map((group) => {
+        const items = (byCategory.get(group.key) ?? []).slice(0, 2);
+
+        return (
+          <div class="bg-ink p-5 sm:p-6">
+            <div class="flex items-start gap-3">
+              <span
+                class:list={[
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10',
+                  group.accent,
+                ]}
+              >
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d={group.icon} />
+                </svg>
+              </span>
+              <div class="min-w-0">
+                <h3 class="font-sans text-xs font-bold uppercase tracking-[0.14em] text-white">
+                  {group.key}
+                </h3>
+                <p class="mt-0.5 text-[11px] leading-snug text-white/50">{group.hint}</p>
+              </div>
+            </div>
+
+            {items.length > 0 ? (
+              <ul class="mt-4 space-y-3 border-t border-white/10 pt-4">
+                {items.map((item) => (
+                  <li>
+                    <a
+                      href={`/materia/${item.slug}`}
+                      class="group flex flex-col gap-1 transition-colors hover:text-nioaque-green"
+                    >
+                      <span class="font-editorial text-[0.9375rem] font-semibold leading-snug text-white group-hover:text-nioaque-green">
+                        {item.title}
+                      </span>
+                      <span class="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+                        {formatDate(item.published_at)}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="mt-4 border-t border-white/10 pt-4 text-[11px] text-white/40">
+                Nada publicado por enquanto.
+              </p>
+            )}
+          </div>
+        );
+      })
+    }
+  </div>
+</section>

@@ -1,0 +1,73 @@
+---
+import Icon from '../../components/admin/Icon.astro';
+import ProfileEditor from '../../components/admin/ProfileEditor.tsx';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { canPublishDirectly, isAdmin } from '../../lib/auth';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+const publishAllowed = canPublishDirectly(session);
+---
+
+<AdminLayout
+  title="Meu Perfil"
+  subtitle={session.profile.full_name}
+>
+  <div class="mx-auto max-w-2xl space-y-5">
+    {/* Situacao do acesso */}
+    <section
+      class:list={[
+        'flex items-start gap-3 rounded-2xl border p-4',
+        publishAllowed
+          ? 'border-nioaque-green-100 bg-nioaque-green-50'
+          : 'border-amber-200 bg-amber-50',
+      ]}
+    >
+      <span
+        class:list={[
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white',
+          publishAllowed ? 'bg-nioaque-green' : 'bg-amber-500',
+        ]}
+      >
+        <Icon name={publishAllowed ? 'unlock' : 'lock'} size={16} />
+      </span>
+      <div>
+        <p
+          class:list={[
+            'text-sm font-semibold',
+            publishAllowed ? 'text-nioaque-green-dark' : 'text-amber-900',
+          ]}
+        >
+          {isAdmin(session)
+            ? 'Editor-Chefe — acesso completo'
+            : publishAllowed
+              ? 'Sua coluna publica direto'
+              : 'Sua coluna passa por revisao'}
+        </p>
+        <p class="mt-1 text-xs leading-relaxed text-ink-soft">
+          {isAdmin(session)
+            ? 'Voce pode publicar, aprovar textos, gerenciar colunistas, pistas e anuncios.'
+            : publishAllowed
+              ? 'Seus textos vao direto ao ar assim que voce clica em publicar.'
+              : 'Seus textos vao para a fila do Editor-Chefe. Para publicar direto, peça a chave "pode publicar direto".'}
+        </p>
+      </div>
+    </section>
+
+    <ProfileEditor
+      client:load
+      role={session.profile.role}
+      profile={{
+        full_name: session.profile.full_name,
+        column_name: session.profile.column_name,
+        bio: session.profile.bio,
+        avatar_url: session.profile.avatar_url,
+        social_links: session.profile.social_links,
+      }}
+    />
+  </div>
+</AdminLayout>

@@ -1,0 +1,235 @@
+---
+import '../styles/global.css';
+import Icon from '../components/admin/Icon.astro';
+import LogoNioaquense from '../components/LogoNioaquense.astro';
+
+/**
+ * AdminLayout.astro
+ * -----------------------------------------------------------------------------
+ * Casca do painel /admin, mobile-first.
+ *
+ * - Mobile: barra de navegacao fixa no rodape (alcance do polegar).
+ * - Desktop (lg+): barra lateral fixa a esquerda.
+ */
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  /** Destaca a acao principal no topo (ex.: "Nova Materia"). */
+  actionHref?: string;
+  actionLabel?: string;
+}
+
+const { title, subtitle, actionHref, actionLabel } = Astro.props;
+
+const user = Astro.locals.adminUser;
+const isEditorChefe = user?.profile.role === 'admin';
+const pathname = Astro.url.pathname;
+
+/** Itens da barra inferior (mobile): no maximo 5, para o polegar alcancar. */
+const bottomNav = [
+  { href: '/admin', label: 'Inicio', icon: 'home', adminOnly: false },
+  { href: '/admin/artigos/novo', label: 'Escrever', icon: 'pen', adminOnly: false },
+  { href: '/admin/revisao', label: 'Revisao', icon: 'check', adminOnly: true },
+  { href: '/admin/leitores', label: 'Leitores', icon: 'bell', adminOnly: true },
+  { href: '/admin/perfil', label: 'Perfil', icon: 'profile', adminOnly: false },
+].filter((item) => !item.adminOnly || isEditorChefe);
+
+/** Itens da barra lateral (desktop): painel completo. */
+const sidebarNav = [
+  ...bottomNav,
+  { href: '/admin/utilidade-publica', label: 'Utilidade Publica', icon: 'pill', adminOnly: true },
+  { href: '/admin/colunistas', label: 'Colunistas', icon: 'users', adminOnly: true },
+  { href: '/admin/anuncios', label: 'Anuncios', icon: 'megaphone', adminOnly: true },
+];
+
+const isActive = (href: string) =>
+  href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1E293B" />
+
+    <title>{title ? `${title} | Painel O Nioaquense` : 'Painel O Nioaquense'}</title>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+
+  <body class="min-h-screen bg-editorial text-ink antialiased">
+    <div class="lg:flex">
+      {/* ---------------- Barra lateral (desktop) ---------------- */}
+      <aside class="hidden w-64 shrink-0 flex-col border-r border-line bg-nioaque-white lg:flex">
+        <div class="border-b border-line p-5">
+          <a href="/" class="block w-40" aria-label="O Nioaquense">
+            <LogoNioaquense class="w-full" />
+          </a>
+          <p class="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+            Painel da redação
+          </p>
+        </div>
+
+        <nav aria-label="Navegacao do painel" class="flex-1 p-3">
+          <ul class="space-y-1">
+            {
+              sidebarNav.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    class:list={[
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
+                      isActive(item.href)
+                        ? 'bg-nioaque-green text-white'
+                        : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                    ]}
+                  >
+                    <Icon name={item.icon} size={18} />
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div class="border-t border-line p-3">
+          <a
+            href="/"
+            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+          >
+            <Icon name="eye" size={18} />
+            Ver o portal
+          </a>
+          <form method="POST" action="/api/auth/logout">
+            <button
+              type="submit"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red"
+            >
+              <Icon name="logout" size={18} />
+              Sair
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      {/* ---------------- Conteudo ---------------- */}
+      <div class="flex min-w-0 flex-1 flex-col pb-20 lg:pb-0">
+        {/* Topo */}
+        <header class="sticky top-0 z-30 border-b border-line bg-editorial/95 backdrop-blur">
+          <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
+            <a href="/admin" class="w-24 shrink-0 lg:hidden" aria-label="Painel O Nioaquense">
+              <LogoNioaquense class="w-full" />
+            </a>
+
+            <div class="min-w-0 flex-1">
+              {
+                title && (
+                  <h1 class="truncate font-editorial text-lg font-semibold leading-tight text-ink sm:text-xl">
+                    {title}
+                  </h1>
+                )
+              }
+              {
+                subtitle && (
+                  <p class="truncate text-xs text-ink-muted">{subtitle}</p>
+                )
+              }
+            </div>
+
+            {actionHref && actionLabel && (
+              <a
+                href={actionHref}
+                class="inline-flex shrink-0 items-center gap-2 rounded-full bg-nioaque-green px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark sm:px-4"
+              >
+                <Icon name="pen" size={14} />
+                <span class="hidden sm:inline">{actionLabel}</span>
+                <span class="sm:hidden">Novo</span>
+              </a>
+            )}
+
+            {user && (
+              <div class="hidden shrink-0 items-center gap-2 sm:flex">
+                <div class="text-right">
+                  <p class="text-xs font-semibold leading-tight text-ink">
+                    {user.profile.full_name}
+                  </p>
+                  <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-nioaque-green">
+                    {isEditorChefe ? 'Editor-Chefe' : 'Colunista'}
+                  </p>
+                </div>
+                {user.profile.avatar_url ? (
+                  <img
+                    src={user.profile.avatar_url}
+                    alt=""
+                    width="36"
+                    height="36"
+                    class="h-9 w-9 rounded-full object-cover ring-2 ring-nioaque-green"
+                  />
+                ) : (
+                  <span class="flex h-9 w-9 items-center justify-center rounded-full bg-nioaque-green font-editorial text-sm font-semibold text-white">
+                    {user.profile.full_name.charAt(0)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {user?.isDemo && (
+            <p class="bg-amber-100 px-4 py-1.5 text-center text-[11px] font-semibold text-amber-900 sm:px-6">
+              Modo demonstração — dados fictícios em memória. Configure o Supabase para gravar de
+              verdade.
+            </p>
+          )}
+        </header>
+
+        <main class="flex-1 px-4 py-5 sm:px-6 sm:py-7">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    {/* ---------------- Navegacao inferior (mobile) ---------------- */}
+    <nav
+      aria-label="Navegacao do painel"
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-nioaque-white/97 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+    >
+      <ul class="flex">
+        {
+          bottomNav.map((item) => (
+            <li class="flex-1">
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                class:list={[
+                  'flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold uppercase tracking-[0.06em] transition-colors',
+                  isActive(item.href) ? 'text-nioaque-green' : 'text-ink-muted',
+                ]}
+              >
+                <Icon name={item.icon} size={20} />
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        <li class="flex-1">
+          <form method="POST" action="/api/auth/logout">
+            <button
+              type="submit"
+              class="flex w-full flex-col items-center gap-1 py-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-muted"
+            >
+              <Icon name="logout" size={20} />
+              Sair
+            </button>
+          </form>
+        </li>
+      </ul>
+    </nav>
+  </body>
+</html>

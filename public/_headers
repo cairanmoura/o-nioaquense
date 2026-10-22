@@ -1,0 +1,32 @@
+# =============================================================================
+#  Cache dos arquivos estaticos servidos pelo Cloudflare Workers Assets
+#  (aplicado automaticamente pelo binding ASSETS)
+#
+#  O cache das PAGINAS (HTML) e' definido em runtime em src/lib/cache.ts,
+#  com `s-maxage` + `stale-while-revalidate`.
+# =============================================================================
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/covers/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/favicon.svg
+  Cache-Control: public, max-age=604800
+
+/favicon-32.png
+  Cache-Control: public, max-age=604800
+
+/manifest.json
+  Cache-Control: public, max-age=86400
+
+/offline.html
+  Cache-Control: public, max-age=3600
+
+# O service worker precisa ser sempre revalidado
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate

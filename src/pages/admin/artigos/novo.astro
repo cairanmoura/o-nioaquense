@@ -1,0 +1,31 @@
+---
+import QuickPublishWizard from '../../../components/admin/QuickPublishWizard.tsx';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { CATEGORY_OPTIONS, SCOPE_OPTIONS } from '../../../lib/admin';
+import { canPublishDirectly } from '../../../lib/auth';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
+---
+
+<AdminLayout
+  title="Nova Materia"
+  subtitle="3 passos, pensado para o celular"
+>
+  <div class="mx-auto max-w-3xl">
+    <QuickPublishWizard
+      client:load
+      mode="create"
+      role={session.profile.role}
+      canPublishDirectly={canPublishDirectly(session)}
+      categories={CATEGORY_OPTIONS}
+      scopes={SCOPE_OPTIONS}
+      siteUrl={siteUrl}
+    />
+  </div>
+</AdminLayout>

@@ -1,0 +1,71 @@
+# =============================================================================
+#  O Nioaquense - Cloudflare Workers (wrangler.toml)
+# -----------------------------------------------------------------------------
+#  Deploy:  npm run build && npx wrangler deploy
+#  Preview: npm run preview        (sobe o workerd localmente)
+#
+#  Variaveis secretas (nunca vao para o git):
+#      npx wrangler secret put PUBLIC_SUPABASE_URL
+#      npx wrangler secret put PUBLIC_SUPABASE_ANON_KEY
+#      npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+#
+#  O cache das paginas publicas e' definido em runtime (src/lib/cache.ts):
+#  `s-maxage` + `stale-while-revalidate`. O cache dos arquivos estaticos
+#  fica em public/_headers.
+# =============================================================================
+
+name = "o-nioaquense"
+main = "./dist/_worker.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Executa o Worker perto do usuario (reduz latencia para o banco)
+placement = { mode = "smart" }
+
+[assets]
+binding = "ASSETS"
+directory = "./dist"
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+# -----------------------------------------------------------------------------
+#  Variaveis publicas (nao secretas) - espelham o .env
+# -----------------------------------------------------------------------------
+[vars]
+PUBLIC_SITE_URL = "https://onioaquense.com"
+PUBLIC_SUPABASE_URL = ""
+PUBLIC_SUPABASE_ANON_KEY = ""
+PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
+PUBLIC_ADSENSE_SLOT_DEFAULT = ""
+
+# -----------------------------------------------------------------------------
+#  Ambiente de producao
+# -----------------------------------------------------------------------------
+[env.production]
+name = "o-nioaquense"
+
+[env.production.vars]
+PUBLIC_SITE_URL = "https://onioaquense.com"
+PUBLIC_SUPABASE_URL = ""
+PUBLIC_SUPABASE_ANON_KEY = ""
+PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
+PUBLIC_ADSENSE_SLOT_DEFAULT = ""
+
+# -----------------------------------------------------------------------------
+#  R2 (imagens em WebP) e KV (cache da borda) - Etapas seguintes
+#  Criar os recursos antes de descomentar:
+#      npx wrangler r2 bucket create o-nioaquense-capas
+#      npx wrangler kv namespace create SESSION
+# -----------------------------------------------------------------------------
+# [[r2_buckets]]
+# binding = "R2_CAPAS"
+# bucket_name = "o-nioaquense-capas"
+#
+# [[kv_namespaces]]
+# binding = "SESSION"
+# id = "<id-do-namespace>"

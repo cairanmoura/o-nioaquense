@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sem conexão | O Nioaquense</title>
+    <meta name="theme-color" content="#008026" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        --green: #008026;
+        --red: #e60000;
+        --editorial: #faf9f6;
+        --ink: #1e293b;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--editorial);
+        color: var(--ink);
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+      }
+
+      .card {
+        max-width: 26rem;
+      }
+
+      .flag {
+        display: block;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px -18px rgb(30 41 59 / 0.5);
+      }
+
+      h1 {
+        margin: 1.5rem 0 0.5rem;
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 1.75rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+        color: #475569;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+      }
+
+      button {
+        margin-top: 1.75rem;
+        border: 0;
+        border-radius: 999px;
+        background: var(--green);
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        padding: 0.875rem 1.75rem;
+        text-transform: uppercase;
+      }
+
+      button:hover {
+        background: #006020;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <svg class="flag" viewBox="0 0 400 100" role="img" aria-label="O Nioaquense">
+        <rect x="0" y="0" width="400" height="18" fill="#008026" />
+        <rect x="0" y="18" width="400" height="64" fill="#ffffff" />
+        <rect x="0" y="82" width="400" height="18" fill="#e60000" />
+        <g fill="#e60000">
+          <rect x="26" y="28" width="8" height="44" />
+          <rect x="18" y="37" width="24" height="8" />
+        </g>
+      </svg>
+
+      <h1>Você está sem conexão</h1>
+      <p>
+        Sem sinal com a internet agora. As últimas notícias de Nioaque voltam assim que a conexão
+        voltar.
+      </p>
+
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+    </div>
+  </body>
+</html>

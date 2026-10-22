@@ -1,0 +1,60 @@
+---
+/**
+ * CategoryPill.astro
+ * -----------------------------------------------------------------------------
+ * Pilula colorida de categoria (estilo BHAZ). A paleta e' deterministica:
+ * a mesma categoria recebe sempre a mesma cor, e todas as cores pertencem
+ * a identidade do portal (verde, vermelho, preto editorial e tons de apoio).
+ */
+
+interface Props {
+  category?: string | null;
+  class?: string;
+  /** Rotulo alternativo quando nao ha categoria. */
+  fallback?: string;
+}
+
+const { category, class: className = '', fallback = 'Nioaque' } = Astro.props;
+
+const PALETTE = [
+  'bg-nioaque-green text-white',
+  'bg-nioaque-red text-white',
+  'bg-ink text-white',
+  'bg-nioaque-green-50 text-nioaque-green-dark ring-1 ring-inset ring-nioaque-green-100',
+  'bg-nioaque-red-50 text-nioaque-red-dark ring-1 ring-inset ring-red-100',
+  'bg-amber-100 text-amber-900',
+  'bg-ink/10 text-ink',
+];
+
+const EXPLICIT: Record<string, string> = {
+  cidade: PALETTE[0],
+  'meio ambiente': PALETTE[3],
+  educacao: PALETTE[6],
+  saude: PALETTE[2],
+  cultura: PALETTE[1],
+  infraestrutura: PALETTE[6],
+  economia: PALETTE[2],
+  estado: PALETTE[3],
+  turismo: PALETTE[0],
+  brasil: PALETTE[2],
+  'radar oficial': PALETTE[1],
+  prefeitura: PALETTE[0],
+  camara: PALETTE[2],
+  concursos: PALETTE[4],
+  'diario oficial': PALETTE[6],
+};
+
+function hash(value: string): number {
+  let result = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    result = (result * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return result;
+}
+
+const label = category?.trim() || fallback;
+const normalized = label.toLowerCase();
+const tone = EXPLICIT[normalized] ?? PALETTE[hash(normalized) % PALETTE.length];
+---
+
+<span class:list={['pill-scope', tone, className]}>{label}</span>

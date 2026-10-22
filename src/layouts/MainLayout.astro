@@ -1,0 +1,102 @@
+---
+import '../styles/global.css';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import NioaqueServiceBar from '../components/NioaqueServiceBar.astro';
+
+/**
+ * MainLayout.astro
+ * -----------------------------------------------------------------------------
+ * Layout principal do portal:
+ *
+ *   [ Header ]  logo + busca rapida + "Mande sua Noticia" + editorias
+ *   [ NioaqueServiceBar ]  farmácia de plantão + clima + ônibus + alerta
+ *   [ <slot /> ]           conteudo da pagina
+ *   [ Footer ]
+ */
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  /** Bloqueia a indexacao (paginas internas, ex.: /admin). */
+  noindex?: boolean;
+  /** Remove a barra de servicos (ex.: paginas de campanha). */
+  hideServiceBar?: boolean;
+}
+
+const {
+  title = 'O Nioaquense',
+  description = 'Portal de noticias hiperlocal de Nioaque (MS). O que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil.',
+  image,
+  noindex = false,
+  hideServiceBar = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title === 'O Nioaquense' ? title : `${title} | O Nioaquense`}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="O Nioaquense" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {image && <meta property="og:image" content={image} />}
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#008026" />
+
+    {/* PWA: instalacao como aplicativo no celular */}
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="O Nioaquense" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+
+  <body class="min-h-screen bg-editorial text-ink antialiased">
+    <a
+      href="#conteudo"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-nioaque-green focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+    >
+      Pular para o conteudo
+    </a>
+
+    <Header />
+
+    {!hideServiceBar && <NioaqueServiceBar />}
+
+    <main id="conteudo">
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>
+
+<script>
+  // Service worker (PWA) — registra depois que a pagina carrega.
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        /* sem service worker: o portal continua funcionando */
+      });
+    });
+  }
+</script>

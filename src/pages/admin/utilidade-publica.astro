@@ -1,0 +1,50 @@
+---
+import Icon from '../../components/admin/Icon.astro';
+import UtilidadePublicaEditor from '../../components/admin/UtilidadePublicaEditor.tsx';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAdminDashboard } from '../../lib/admin';
+import { isAdmin } from '../../lib/auth';
+import { getWeekDays } from '../../lib/format';
+
+const session = Astro.locals.adminUser;
+
+if (!session) {
+  return Astro.redirect('/admin/login');
+}
+
+if (!isAdmin(session)) {
+  return Astro.redirect('/admin');
+}
+
+const dashboard = await getAdminDashboard(Astro.locals, session);
+const week = getWeekDays();
+---
+
+<AdminLayout
+  title="Utilidade Publica"
+  subtitle="Farmacia de plantao, alerta da cidade e onibus"
+>
+  <div class="mx-auto max-w-3xl">
+    <p class="mb-5 flex items-start gap-2 rounded-2xl border border-line bg-nioaque-white p-4 text-xs leading-relaxed text-ink-soft">
+      <Icon name="sparkle" size={15} class="mt-0.5 shrink-0 text-nioaque-green" />
+      Tudo aqui aparece no topo do portal e na barra fixa de servicos. Feito para dar certo com o
+      dedo grande e a pressa da rua.
+    </p>
+
+    <UtilidadePublicaEditor
+      client:load
+      week={week.map((day) => ({ iso: day.iso, label: day.label }))}
+      utilities={dashboard.utilities.map((item) => ({
+        id: item.id,
+        duty_date: item.duty_date,
+        pharmacy_name: item.pharmacy_name,
+        pharmacy_phone: item.pharmacy_phone,
+        pharmacy_address: item.pharmacy_address,
+        alert_active: item.alert_active,
+        alert_message: item.alert_message,
+        alert_level: item.alert_level,
+      }))}
+      busSchedules={dashboard.busSchedules}
+    />
+  </div>
+</AdminLayout>

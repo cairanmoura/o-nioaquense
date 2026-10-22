@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img">
+<rect width="1600" height="900" fill="#FAF9F6"/><circle cx="800" cy="558" r="108" fill="none" stroke="#E60000" stroke-width="18" opacity="0.85"/><circle cx="800" cy="558" r="189" fill="none" stroke="#008026" stroke-width="18" opacity="0.76"/><circle cx="800" cy="558" r="270" fill="none" stroke="#008026" stroke-width="18" opacity="0.6699999999999999"/><circle cx="800" cy="558" r="351" fill="none" stroke="#E60000" stroke-width="18" opacity="0.58"/><circle cx="800" cy="558" r="432" fill="none" stroke="#008026" stroke-width="18" opacity="0.49"/><circle cx="800" cy="558" r="513" fill="none" stroke="#008026" stroke-width="18" opacity="0.4"/><circle cx="800" cy="558" r="594" fill="none" stroke="#E60000" stroke-width="18" opacity="0.30999999999999994"/><rect width="1600" height="108" fill="#008026"/><g transform="translate(1508 808) scale(0.34)">
+    <rect x="0" y="0" width="100" height="18" fill="#008026"/>
+    <rect x="0" y="18" width="100" height="64" fill="#FFFFFF"/>
+    <rect x="0" y="82" width="100" height="18" fill="#E60000"/>
+    <rect x="26" y="28" width="8" height="44" fill="#E60000"/>
+    <rect x="18" y="37" width="24" height="8" fill="#E60000"/>
+  </g>
+</svg>
