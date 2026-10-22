@@ -1,0 +1,20 @@
+# Normaliza as quebras de linha: o repositorio guarda LF, o checkout entrega
+# LF em Linux/macOS e CRLF no Windows. Evita diffs de "arquivo inteiro alterado".
+* text=auto eol=lf
+
+# Arquivos que precisam de CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Lockfiles: sem conversao
+package-lock.json -diff
