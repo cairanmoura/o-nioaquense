@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
       const lastmod = (article.updated_at ?? article.published_at ?? '').slice(0, 10);
 
       return `  <url>
-    <loc>${escape(`${base}/materia/${article.slug}`)}</loc>
+    <loc>${escape(`${base}/noticia/${article.slug}`)}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

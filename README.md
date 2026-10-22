@@ -69,6 +69,55 @@ PUBLIC_ADSENSE_SLOT_DEFAULT="XXXXXXXXXX"
 
 ---
 
+## Etapa 3 — Leitura, colunistas, editorias e "Mande sua Notícia" (status: concluída)
+
+| # | Entrega | Onde está |
+|---|---------|-----------|
+| 1 | Página de leitura (`/noticia/[slug]`) com "Direto ao Ponto", áudio e SEO | `src/pages/noticia/[slug].astro`, `src/components/AudioPlayer.tsx` |
+| 2 | Perfis dos colunistas (listagem + individual) | `src/pages/colunistas/{index,[slug]}.astro`, `src/components/ColumnistCard.astro` |
+| 3 | Radar Oficial e rota dinâmica de editorias | `src/pages/radar-oficial.astro`, `src/pages/editoria/[scope].astro` |
+| 4 | Canal "Mande sua Notícia" (formulário + endpoint) | `src/pages/mande-sua-noticia.astro`, `src/components/leitores/EnviarPistaForm.tsx`, `src/pages/api/leitores.ts` |
+
+### Página de leitura
+
+- **Cabecalho**: pílula da editoria, título serifado de alto impacto, subtítulo, autor com foto
+  (link para o perfil), data e botões de compartilhamento rápido (WhatsApp, Telegram, X, Facebook);
+- **"Direto ao Ponto"** em destaque no topo, listando os 3 tópicos do resumo;
+- **"Ouvir a Notícia"** — `AudioPlayer` usa a **Web Speech API** (`speechSynthesis`, voz `pt-BR`)
+  para ler título, resumo e corpo, com play/pause/parar, velocidade 1x e 1.5x e barra de progresso;
+- **Corpo** com tipografia confortável, anúncio intercalado (altura reservada) eBOX de
+  matérias relacionadas de Nioaque;
+- **SEO completo**: canonical, Open Graph, Twitter Card e **Schema.org `NewsArticle`**
+  (headline, datePublished, author, publisher) em JSON-LD.
+
+### Colunistas
+
+`/colunistas` lista todos os colunistas com foto, coluna e número de textos.
+`/colunistas/[slug]` mostra foto, bio, redes sociais e o histórico completo de textos assinados.
+
+### Editorias
+
+`/editoria/[scope]` cobre Nioaque, MS, Brasil e Colunas com destaque + grade.
+`/radar-oficial` é a editoria especial: Prefeitura, Câmara, Concursos e Diário Oficial,
+cada assunto com uma linha de explicação em linguagem simples.
+
+### Mande sua Notícia ("Boca no Trombone")
+
+Formulário mobile-first em `/mande-sua-noticia`: nome (opcional), WhatsApp, bairro/região,
+relato e até 5 fotos — **comprimidas em WebP no cliente antes de qualquer upload**. O endpoint
+`POST /api/leitores` valida, sobe as fotos no bucket `pistas` e grava em `reader_submissions`
+com status `pending`. A página também tem o botão direto para o WhatsApp da redação
+(`PUBLIC_REDACAO_WHATSAPP`).
+
+### Nota técnica: `client:load` nos botões
+
+As ilhas que carregam **botões clicáveis** usam `client:load` (e não `client:visible`).
+Com `client:visible`, a hidratação depende do `IntersectionObserver` disparar — em páginas
+profundas ele pode não disparar e o botão fica sem evento. Como são controles que o morador
+precisa acionar assim que vê, `client:load` é o directive correto.
+
+---
+
 ## Etapa 4 — Autenticação, painel /admin e portal do colunista (status: concluída)
 
 | # | Entrega | Onde está |
@@ -140,7 +189,7 @@ só WebP/JPEG/PNG) com politicas de escrita restritas a quem está autenticado, 
 
 | # | Entrega | Onde está |
 |---|---------|-----------|
-| 1 | Tela rápida de utilidade pública (farmácia da semana, alerta, ônibus) | `src/pages/admin/utilidade-publica.astro`, `src/components/admin/UtilidadePublicaEditor.tsx` |
+| 1 | Tela rápida de utilidade pública (farmácia da semana, alerta, ônibus) | `src/pages/admin/utilidade-publica.astro` |
 | 2 | Gestão de publicidade local + relatório de cliques | `src/pages/admin/anuncios.astro` |
 | 3 | Caixa de entrada "Boca no Trombone" + transformar em rascunho | `src/pages/admin/leitores.astro` |
 | 4 | Sitemap de notícias, robots.txt e PWA (manifest + service worker) | `src/pages/sitemap-news.xml.ts`, `src/pages/sitemap.xml.ts`, `src/pages/robots.txt.ts`, `public/manifest.json`, `public/sw.js` |
@@ -238,6 +287,7 @@ As variáveis públicas ficam em `wrangler.toml` → `[vars]`.
 
 ---
 
+
 ## Rodando localmente
 
 ```bash
@@ -326,7 +376,11 @@ src/
 ├─ pages/
 │  ├─ index.astro              # home
 │  ├─ busca.astro              # busca do portal
-│  ├─ materia/[slug].astro
+│  ├─ noticia/[slug].astro     # pagina de leitura
+│  ├─ colunistas/{index,[slug]}.astro
+│  ├─ editoria/[scope].astro   # rota dinamica de editorias
+│  ├─ radar-oficial.astro      # editoria especial
+│  ├─ mande-sua-noticia.astro  # Boca no Trombone
 │  ├─ sitemap.xml.ts           # sitemap geral
 │  ├─ sitemap-news.xml.ts      # sitemap do Google Noticias
 │  ├─ robots.txt.ts
@@ -342,6 +396,7 @@ src/
 │  │  └─ perfil.astro
 │  └─ api/
 │     ├─ auth/{login,logout}.ts
+│     ├─ leitores.ts            # envio de pistas do morador
 │     ├─ admin/…               # articles, profiles, me, upload, ads, bus…
 │     ├─ ads/click/[id].ts     # contagem de clique + redirect
 │     └─ demo/asset/[id].ts    # imagens do modo demonstracao

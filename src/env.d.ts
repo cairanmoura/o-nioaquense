@@ -37,6 +37,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_ANON_KEY?: string;
   readonly PUBLIC_GOOGLE_ADSENSE_CLIENT?: string;
   readonly PUBLIC_ADSENSE_SLOT_DEFAULT?: string;
+  /** WhatsApp da redação (canal "Mande sua Notícia"). */
+  readonly PUBLIC_REDACAO_WHATSAPP?: string;
 }
 
 interface ImportMeta {

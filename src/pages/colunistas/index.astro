@@ -1,0 +1,45 @@
+---
+import ColumnistCard from '../../components/ColumnistCard.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getColumnists } from '../../lib/content';
+
+/**
+ * /colunistas
+ * -----------------------------------------------------------------------------
+ * Pagina de listagem dos colunistas do portal.
+ */
+
+const columnists = await getColumnists(Astro.locals);
+---
+
+<MainLayout
+  title="Colunistas"
+  description="Os colunistas do O Nioaquense: quem escreve, sobre o que escreve e todos os textos publicados."
+>
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-red pb-5">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+        Opinião
+      </p>
+      <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">Colunistas</h1>
+      <p class="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">
+        Quem escreve no O Nioaquense. Cada coluna é assinada, com o texto inteiro disponível e o
+        histórico de publicações de quem assina.
+      </p>
+    </header>
+
+    {
+      columnists.length === 0 ? (
+        <p class="mt-10 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-10 text-center text-sm text-ink-soft">
+          Nenhum colunista cadastrado ainda.
+        </p>
+      ) : (
+        <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {columnists.map((columnist) => (
+            <ColumnistCard profile={columnist.profile} articleCount={columnist.articleCount} />
+          ))}
+        </div>
+      )
+    }
+  </div>
+</MainLayout>

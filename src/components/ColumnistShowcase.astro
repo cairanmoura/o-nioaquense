@@ -33,7 +33,7 @@ const visible = picks.filter((pick) => pick.article).slice(0, 6);
       </h2>
     </div>
     <a
-      href="/?escopo=coluna"
+      href="/editoria/coluna"
       class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
     >
       Ver todas →
@@ -84,7 +84,7 @@ const visible = picks.filter((pick) => pick.article).slice(0, 6);
               <>
                 <h3 class="mt-4 font-editorial text-lg font-semibold leading-snug text-ink">
                   <a
-                    href={`/materia/${article.slug}`}
+                    href={`/noticia/${article.slug}`}
                     class="transition-colors group-hover:text-nioaque-green"
                   >
                     {article.title}

@@ -7,6 +7,7 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import type { AstroCookies } from 'astro';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -44,6 +45,26 @@ export function getSupabaseCredentials(
 
   if (!url || !anonKey) return null;
   return { url, anonKey };
+}
+
+/**
+ * Chave `service_role` (opcional). Usada apenas no servidor, em operacoes
+ * que o anon key nao pode fazer (upload de midia, leitura de tabela restrita).
+ */
+export function getServiceRoleKey(locals: App.Locals): string | undefined {
+  return readEnv(locals, 'SUPABASE_SERVICE_ROLE_KEY');
+}
+
+/** Cliente com privilegios elevados (service role). `null` se nao houver chave. */
+export function createServiceClient(locals: App.Locals): SupabaseClient | null {
+  const credentials = getSupabaseCredentials(locals);
+  const serviceKey = getServiceRoleKey(locals);
+
+  if (!credentials || !serviceKey) return null;
+
+  return createClient(credentials.url, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
 /** Converte o cabecalho `Cookie` em pares `{ name, value }`. */

@@ -80,7 +80,7 @@ export function policyForPath(pathname: string): CachePolicy {
     return CACHE_POLICIES.home;
   }
 
-  if (pathname.startsWith('/materia/')) {
+  if (pathname.startsWith('/noticia/')) {
     return CACHE_POLICIES.article;
   }
 

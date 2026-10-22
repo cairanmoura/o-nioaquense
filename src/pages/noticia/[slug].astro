@@ -1,0 +1,407 @@
+---
+import ArticleCard from '../../components/ArticleCard.astro';
+import AudioPlayer from '../../components/AudioPlayer.tsx';
+import GoogleAdSlot from '../../components/GoogleAdSlot.astro';
+import LocalAdBanner from '../../components/LocalAdBanner.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
+import ScopePill from '../../components/ScopePill.astro';
+import { getArticlePage, getHomeFeed } from '../../lib/content';
+import { excerpt } from '../../lib/seo';
+import { formatDateTime, formatNumber } from '../../lib/format';
+import { SCOPE_LABEL } from '../../lib/types';
+import type { Profile } from '../../lib/types';
+
+/**
+ * Pagina de leitura da materia.
+ * -----------------------------------------------------------------------------
+ *  - Cabecalho: pilula da editoria, titulo serifado, subtitulo, autor, data
+ *  - "Direto ao Ponto" em destaque (estilo Nexo/Axios)
+ *  - "Ouvir a Noticia" (Web Speech API, pt-BR)
+ *  - Corpo com tipografia confortavel, anuncio intercalado eBOX relacionados
+ *  - Meta tags + Schema.org NewsArticle
+ */
+
+const { slug = '' } = Astro.params;
+
+const [page, feed] = await Promise.all([
+  getArticlePage(Astro.locals, slug),
+  getHomeFeed(Astro.locals),
+]);
+
+if (!page.article) {
+  return Astro.redirect('/');
+}
+
+const article = page.article;
+const author = page.author;
+const profilesById = new Map<string, Profile>(feed.profiles.map((profile) => [profile.id, profile]));
+
+const canonical = new URL(`/noticia/${article.slug}`, Astro.site ?? Astro.url.origin).href;
+const shareUrl = canonical;
+const shareText = article.title;
+
+const description = excerpt(
+  article.subtitle ?? article.summary_bullets.join(' ') ?? article.content,
+  160,
+);
+
+/** Materias relacionadas de Nioaque (mesmo escopo). */
+const related = page.related.length
+  ? page.related
+  : feed.byScope.nioaque.filter((item) => item.id !== article.id).slice(0, 3);
+
+const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+const telegramShare = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+const facebookShare = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+---
+
+<MainLayout
+  title={article.title}
+  description={description}
+  image={article.cover_image_url ?? undefined}
+>
+  {/* Metadados e Schema.org NewsArticle */}
+  <Fragment slot="head">
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="O Nioaquense" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={article.title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {article.cover_image_url && <meta property="og:image" content={article.cover_image_url} />}
+    <meta property="article:published_time" content={article.published_at ?? ''} />
+    <meta property="article:modified_time" content={article.updated_at} />
+    <meta property="article:section" content={SCOPE_LABEL[article.scope]} />
+    {author && <meta property="article:author" content={author.full_name} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={article.title} />
+    <meta name="twitter:description" content={description} />
+    {article.cover_image_url && <meta name="twitter:image" content={article.cover_image_url} />}
+
+    {
+      article.category_label && (
+        <meta name="keywords" content={article.category_label} />
+      )
+    }
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'NewsArticle',
+        headline: article.title,
+        description,
+        image: article.cover_image_url ? [article.cover_image_url] : ['/icons/icon-512.png'],
+        datePublished: article.published_at,
+        dateModified: article.updated_at,
+        author: author
+          ? {
+              '@type': 'Person',
+              name: author.full_name,
+              url: new URL(`/colunistas/${author.slug}`, Astro.site ?? Astro.url.origin).href,
+            }
+          : { '@type': 'Organization', name: 'O Nioaquense' },
+        publisher: {
+          '@type': 'Organization',
+          name: 'O Nioaquense',
+          logo: { '@type': 'ImageObject', url: '/icons/icon-512.png' },
+        },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+        articleSection: SCOPE_LABEL[article.scope],
+        isAccessibleForFree: true,
+        inLanguage: 'pt-BR',
+      })}
+    />
+  </Fragment>
+
+  <article class="container-editorial py-8 sm:py-10">
+    {/* Cabecalho */}
+    <header class="mx-auto max-w-3xl">
+      <div class="flex flex-wrap items-center gap-2">
+        <ScopePill scope={article.scope} category={article.category_label} />
+        {article.is_featured && <span class="pill-scope bg-ink text-white">Destaque</span>}
+      </div>
+
+      <h1 class="mt-4 text-display font-semibold leading-[1.04] text-ink">
+        {article.title}
+      </h1>
+
+      {article.subtitle && (
+        <p class="mt-5 text-lg leading-relaxed text-ink-soft sm:text-xl">{article.subtitle}</p>
+      )}
+
+      {/* Autor + data + compartilhamento */}
+      <div
+        class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-line py-4"
+      >
+        {
+          author && (
+            <a
+              href={`/colunistas/${author.slug}`}
+              class="group flex min-w-0 items-center gap-3"
+            >
+              {author.avatar_url ? (
+                <img
+                  src={author.avatar_url}
+                  alt=""
+                  width="44"
+                  height="44"
+                  loading="lazy"
+                  decoding="async"
+                  class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green transition-transform group-hover:scale-105"
+                />
+              ) : (
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-base font-semibold text-white">
+                  {author.full_name.charAt(0)}
+                </span>
+              )}
+              <span class="min-w-0">
+                <span class="block truncate font-editorial text-base font-semibold leading-tight text-ink">
+                  {author.column_name ?? author.full_name}
+                </span>
+                <span class="block truncate text-xs text-ink-muted">
+                  {author.column_name ? author.full_name : 'Redação O Nioaquense'}
+                </span>
+              </span>
+            </a>
+          )
+        }
+
+        <div class="ml-auto flex items-center gap-3">
+          <time
+            datetime={article.published_at ?? undefined}
+            class="text-xs font-medium uppercase tracking-[0.1em] text-ink-muted"
+          >
+            {formatDateTime(article.published_at)}
+          </time>
+
+          {/* Compartilhamento rapido */}
+          <div class="flex items-center gap-1.5">
+            <a
+              href={whatsappShare}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Compartilhar no WhatsApp"
+              title="Compartilhar no WhatsApp"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white transition-opacity hover:opacity-90"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.2h.01c5.43 0 9.84-4.4 9.84-9.84C21.89 6.4 17.48 2 12.04 2Zm5.76 14.02c-.24.68-1.4 1.3-1.94 1.36-.54.06-1.04.08-1.68-.12-.4-.12-.9-.3-1.56-.58-2.74-1.18-4.52-3.94-4.66-4.12-.14-.18-1.12-1.5-1.12-2.86 0-1.36.7-2.02.96-2.3.26-.28.56-.34.74-.34.18 0 .38 0 .54.02.18.02.42-.06.66.5.24.56.82 1.94.9 2.08.06.14.1.3.02.48-.08.18-.12.3-.24.46-.12.16-.26.36-.36.48-.12.12-.26.26-.1.5.14.24.64 1.06 1.38 1.72.94.84 1.74 1.1 1.98 1.22.24.12.38.1.52-.06.14-.16.6-.7.76-.94.16-.24.32-.2.54-.12.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.6-.18 1.2Z" />
+              </svg>
+            </a>
+            <a
+              href={telegramShare}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Compartilhar no Telegram"
+              title="Compartilhar no Telegram"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-[#229ED9] text-white transition-opacity hover:opacity-90"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.3-.1-.5-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.2c.9-.3 1.6.2 1.5 1.4Z" />
+              </svg>
+            </a>
+            <a
+              href={xShare}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Compartilhar no X"
+              title="Compartilhar no X"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-white transition-opacity hover:opacity-90"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L2.8 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.2h1.7L7.3 3.7H5.5l12.3 16.5Z" />
+              </svg>
+            </a>
+            <a
+              href={facebookShare}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Compartilhar no Facebook"
+              title="Compartilhar no Facebook"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877F2] text-white transition-opacity hover:opacity-90"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.1 24 12.07Z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {/* Direto ao Ponto */}
+    {
+      article.summary_bullets.length > 0 && (
+        <aside
+          class="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-nioaque-green-100 bg-nioaque-white"
+          aria-label="Direto ao ponto"
+        >
+          <header class="flex items-center gap-2 bg-nioaque-green px-5 py-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="text-white" aria-hidden="true">
+              <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+            </svg>
+            <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+              Direto ao ponto
+            </h2>
+          </header>
+          <ul class="divide-y divide-line">
+            {article.summary_bullets.map((bullet, index) => (
+              <li class="flex gap-4 px-5 py-4">
+                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nioaque-red-50 font-editorial text-sm font-semibold text-nioaque-red">
+                  {index + 1}
+                </span>
+                <p class="text-[1.0625rem] leading-relaxed text-ink">{bullet}</p>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+
+    {/* Ouvir a Noticia */}
+    <div class="mx-auto mt-6 max-w-3xl">
+      {/* "Ouvir a Notícia": `client:load` de propósito — é um botão que o
+          morador precisa usar assim que vê, sem esperar a hidratação. */}
+      <AudioPlayer
+        client:load
+        title={article.title}
+        bullets={article.summary_bullets}
+        html={article.content}
+      />
+    </div>
+
+    {/* Capa */}
+    {
+      article.cover_image_url && (
+        <figure class="mx-auto mt-8 max-w-4xl">
+          <img
+            src={article.cover_image_url}
+            alt={article.cover_image_caption ?? article.title}
+            width="1600"
+            height="900"
+            loading="eager"
+            decoding="async"
+            class="aspect-[16/9] w-full rounded-2xl object-cover ring-1 ring-line"
+          />
+          {article.cover_image_caption && (
+            <figcaption class="mt-2 px-1 text-xs leading-relaxed text-ink-muted">
+              {article.cover_image_caption}
+            </figcaption>
+          )}
+        </figure>
+      )
+    }
+
+    {/* Corpo + lateral */}
+    <div class="mx-auto mt-10 grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+      <div class="min-w-0">
+        <div
+          class="prose-editorial space-y-5 font-editorial text-[1.125rem] leading-[1.8] text-ink sm:text-[1.1875rem]"
+          set:html={article.content}
+        />
+
+        {/* Anuncio intercalado */}
+        <div class="mt-10">
+          <GoogleAdSlot format="horizontal" label="Publicidade" />
+        </div>
+
+        {/* Assinatura */}
+        {
+          author && (
+            <aside class="mt-10 flex items-start gap-4 rounded-2xl border border-line bg-nioaque-white p-5">
+              {author.avatar_url ? (
+                <img
+                  src={author.avatar_url}
+                  alt=""
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  class="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green"
+                />
+              ) : (
+                <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-xl font-semibold text-white">
+                  {author.full_name.charAt(0)}
+                </span>
+              )}
+              <div class="min-w-0">
+                <p class="font-editorial text-lg font-semibold text-ink">{author.full_name}</p>
+                {author.column_name && (
+                  <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-red">
+                    {author.column_name}
+                  </p>
+                )}
+                {author.bio && (
+                  <p class="mt-2 text-sm leading-relaxed text-ink-soft">{author.bio}</p>
+                )}
+                <a
+                  href={`/colunistas/${author.slug}`}
+                  class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+                >
+                  Ver todos os textos
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </aside>
+          )
+        }
+
+        {/* Relacionadas */}
+        {
+          related.length > 0 && (
+            <section class="mt-12" aria-labelledby="relacionadas">
+              <h2
+                id="relacionadas"
+                class="border-b-2 border-nioaque-green pb-3 font-editorial text-2xl font-semibold tracking-tight text-ink"
+              >
+                Mais sobre Nioaque
+              </h2>
+              <div class="grid gap-6 pt-6 sm:grid-cols-3">
+                {related.map((item) => (
+                  <ArticleCard
+                    article={item}
+                    author={profilesById.get(item.author_id) ?? null}
+                    variant="standard"
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        }
+      </div>
+
+      {/* Lateral */}
+      <aside class="lg:sticky lg:top-32 lg:self-start">
+        <LocalAdBanner ad={feed.ads.sidebar} />
+        <p class="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted/70">
+          Publicidade
+        </p>
+
+        <div class="mt-8 rounded-2xl border border-line bg-nioaque-white p-5">
+          <p class="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+            Tem uma dica?
+          </p>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">
+            Mande a sua para a redação. Toda pista é apurada antes de virar notícia.
+          </p>
+          <a
+            href="/mande-sua-noticia"
+            class="mt-4 inline-flex items-center gap-2 rounded-full bg-nioaque-red px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-red-dark"
+          >
+            Boca no Trombone
+          </a>
+        </div>
+
+        <p class="mt-6 text-xs text-ink-muted">
+          {formatNumber(article.views_count)} leituras
+        </p>
+      </aside>
+    </div>
+  </article>
+</MainLayout>

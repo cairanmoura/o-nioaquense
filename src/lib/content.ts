@@ -270,6 +270,51 @@ export interface ColumnistPick {
   article: Article | null;
 }
 
+export interface ColumnistSummary {
+  profile: Profile;
+  articleCount: number;
+  latestArticle: Article | null;
+}
+
+/** Colunistas ativos com a contagem de textos publicados. */
+export async function getColumnists(locals: App.Locals): Promise<ColumnistSummary[]> {
+  const feed = await getHomeFeed(locals);
+
+  return feed.profiles
+    .filter((profile) => profile.role === 'columnist' && profile.active)
+    .map((profile) => {
+      const articles = feed.articles.filter((article) => article.author_id === profile.id);
+
+      return {
+        profile,
+        articleCount: articles.length,
+        latestArticle: articles[0] ?? null,
+      };
+    })
+    .sort((a, b) => b.articleCount - a.articleCount);
+}
+
+/** Perfil de um colunista pelo slug, com o historico de textos. */
+export async function getColumnistBySlug(
+  locals: App.Locals,
+  slug: string,
+): Promise<{ profile: Profile; articles: Article[] } | null> {
+  const feed = await getHomeFeed(locals);
+  const profile = feed.profiles.find((item) => item.slug === slug);
+
+  if (!profile) return null;
+
+  const articles = feed.articles
+    .filter((article) => article.author_id === profile.id)
+    .sort(
+      (a, b) =>
+        new Date(b.published_at ?? b.created_at).getTime() -
+        new Date(a.published_at ?? a.created_at).getTime(),
+    );
+
+  return { profile, articles };
+}
+
 /** Colunistas com o texto mais recente de cada um. */
 export async function getColumnistPicks(locals: App.Locals): Promise<ColumnistPick[]> {
   const feed = await getHomeFeed(locals);
@@ -315,7 +360,7 @@ export interface ArticlePage {
   related: Article[];
   source: DataSource;}
 
-/** Busca uma materia pelo slug (para `/materia/[slug]`). */
+/** Busca uma materia pelo slug (para `/noticia/[slug]`). */
 export async function getArticlePage(
   locals: App.Locals,
   slug: string,

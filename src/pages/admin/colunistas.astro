@@ -79,7 +79,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
 
               <div class="mt-3 space-y-3 rounded-xl bg-editorial p-4">
                 <ToggleSwitch
-                  client:visible
+                  client:load
                   endpoint={`/api/admin/profiles/${columnist.id}`}
                   field="can_publish_directly"
                   checked={columnist.can_publish_directly}
@@ -94,7 +94,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
 
                 <div class="border-t border-line pt-3">
                   <ToggleSwitch
-                    client:visible
+                    client:load
                     endpoint={`/api/admin/profiles/${columnist.id}`}
                     field="active"
                     checked={columnist.active}
@@ -222,7 +222,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
                 </div>
 
                 <ActionButton
-                  client:visible
+                  client:load
                   endpoint={`/api/admin/articles/${article.id}`}
                   payload={{ action: 'publish' }}
                   label="Aprovar"

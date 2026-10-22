@@ -1,0 +1,133 @@
+---
+import ArticleCard from '../../components/ArticleCard.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getHomeFeed } from '../../lib/content';
+import type { ArticleScope } from '../../lib/types';
+
+/**
+ * /editoria/[scope]
+ * -----------------------------------------------------------------------------
+ * Rota dinamica das editorias. `radar_oficial` tem pagina propria
+ * (/radar-oficial) e por isso e' redirecionada.
+ */
+
+const { scope = 'nioaque' } = Astro.params;
+
+const EDITORIAS: Record<string, { label: string; description: string; color: string }> = {
+  nioaque: {
+    label: 'Nioaque',
+    description:
+      'A cidade em primeiro plano: obras, servicos, escolas, saude,trade e o que esta mudando no municipio.',
+    color: 'bg-nioaque-green',
+  },
+  ms: {
+    label: 'Mato Grosso do Sul',
+    description:
+      'As decisoes do Estado que chegam primeiro a Nioaque: infraestrutura, saude, educacao e economia.',
+    color: 'bg-ink',
+  },
+  brasil: {
+    label: 'Brasil',
+    description:
+      'O pais em titulos que interessam quem vive no interior: politica, economia, clima e direitos.',
+    color: 'bg-ink',
+  },
+  coluna: {
+    label: 'Colunas',
+    description:
+      'Opinao assinada. Cada coluna tem autor, nome e historico de textos.',
+    color: 'bg-nioaque-red',
+  },
+  radar_oficial: {
+    label: 'Radar Oficial',
+    description: 'Prefeitura, Camara, Concursos e Diario Oficial explicados em linguagem simples.',
+    color: 'bg-nioaque-red',
+  },
+};
+
+const editoria = EDITORIAS[scope];
+
+if (!editoria) {
+  return Astro.redirect('/');
+}
+
+if (scope === 'radar_oficial') {
+  return Astro.redirect('/radar-oficial');
+}
+
+const feed = await getHomeFeed(Astro.locals);
+const articles = feed.byScope[scope as ArticleScope] ?? [];
+const profilesById = new Map(feed.profiles.map((profile) => [profile.id, profile]));
+
+const featured = articles.find((article) => article.is_featured) ?? articles[0];
+const rest = articles.filter((article) => article.id !== featured?.id);
+---
+
+<MainLayout title={editoria.label} description={editoria.description}>
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-green pb-5">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+        Editoria
+      </p>
+      <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">{editoria.label}</h1>
+      <p class="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">
+        {editoria.description}
+      </p>
+      <p class="mt-3 text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">
+        {articles.length} {articles.length === 1 ? 'matéria' : 'matérias'}
+      </p>
+    </header>
+
+    {
+      articles.length === 0 ? (
+        <p class="mt-10 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-10 text-center text-sm text-ink-soft">
+          Nenhuma matéria publicada nesta editoria ainda.
+        </p>
+      ) : (
+        <>
+          {featured && (
+            <div class="mt-8 grid gap-8 border-b border-line pb-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+              <ArticleCard
+                article={featured}
+                author={profilesById.get(featured.author_id) ?? null}
+                variant="lead"
+              />
+
+              <div class="divide-y divide-line">
+                {rest.slice(0, 5).map((article) => (
+                  <ArticleCard
+                    article={article}
+                    author={profilesById.get(article.author_id) ?? null}
+                    variant="compact"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {rest.length > 5 && (
+            <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.slice(5).map((article) => (
+                <ArticleCard
+                  article={article}
+                  author={profilesById.get(article.author_id) ?? null}
+                  variant="standard"
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )
+    }
+
+    <p class="mt-12">
+      <a
+        href="/"
+        class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+      >
+        <span aria-hidden="true">←</span>
+        Voltar para a capa
+      </a>
+    </p>
+  </div>
+</MainLayout>

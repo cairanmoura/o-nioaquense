@@ -109,6 +109,11 @@ export const demoStore = {
     return state.submissions;
   },
 
+  createSubmission(submission: ReaderSubmission): ReaderSubmission {
+    state.submissions.unshift(submission);
+    return submission;
+  },
+
   updateSubmission(id: string, patch: Partial<ReaderSubmission>): ReaderSubmission | undefined {
     const index = state.submissions.findIndex((item) => item.id === id);
     if (index === -1) return undefined;

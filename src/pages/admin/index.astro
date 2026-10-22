@@ -249,7 +249,7 @@ const greeting = (() => {
 
                   <div class="flex shrink-0 gap-2">
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/articles/${article.id}`}
                       payload={{ action: 'publish' }}
                       label="Aprovar"
@@ -258,7 +258,7 @@ const greeting = (() => {
                       variant="success"
                     />
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/articles/${article.id}`}
                       payload={{ action: 'draft' }}
                       label="Devolver"
@@ -383,7 +383,7 @@ const greeting = (() => {
                 </div>
 
                 <ActionButton
-                  client:visible
+                  client:load
                   endpoint={`/api/admin/submissions/${submission.id}`}
                   payload={{ status: 'reviewed' }}
                   label="Marcar vista"

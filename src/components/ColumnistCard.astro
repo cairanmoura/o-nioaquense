@@ -1,0 +1,81 @@
+---
+import type { Profile } from '../lib/types';
+
+/**
+ * ColumnistCard.astro
+ * -----------------------------------------------------------------------------
+ * Card de colunista: foto, nome da coluna, autor e número de textos.
+ */
+
+interface Props {
+  profile: Profile;
+  articleCount?: number;
+}
+
+const { profile, articleCount = 0 } = Astro.props;
+
+const socials = Object.entries(profile.social_links).filter(([, value]) => Boolean(value));
+---
+
+<article
+  class="group flex h-full flex-col rounded-2xl border border-line bg-nioaque-white p-5 transition-shadow hover:shadow-lift"
+>
+  <div class="flex items-start gap-4">
+    {
+      profile.avatar_url ? (
+        <img
+          src={profile.avatar_url}
+          alt=""
+          width="72"
+          height="72"
+          loading="lazy"
+          decoding="async"
+          class="h-18 w-18 shrink-0 rounded-full object-cover ring-[3px] ring-nioaque-green transition-transform group-hover:scale-105"
+          style="height:4.5rem;width:4.5rem"
+        />
+      ) : (
+        <span class="flex h-18 w-18 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-2xl font-semibold text-white ring-[3px] ring-nioaque-green" style="height:4.5rem;width:4.5rem">
+          {profile.full_name.charAt(0)}
+        </span>
+      )
+    }
+
+    <div class="min-w-0 flex-1">
+      <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+        {profile.column_name ?? 'Colunista'}
+      </p>
+      <h2 class="mt-1 font-editorial text-lg font-semibold leading-tight text-ink">
+        <a
+          href={`/colunistas/${profile.slug}`}
+          class="transition-colors group-hover:text-nioaque-green"
+        >
+          {profile.full_name}
+        </a>
+      </h2>
+      <p class="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">
+        {articleCount} {articleCount === 1 ? 'texto' : 'textos'}
+      </p>
+    </div>
+  </div>
+
+  {profile.bio && <p class="mt-4 text-sm leading-relaxed text-ink-soft">{profile.bio}</p>}
+
+  {
+    socials.length > 0 && (
+      <ul class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+        {socials.map(([network, url]) => (
+          <li>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex rounded-full bg-editorial px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+            >
+              {network}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</article>

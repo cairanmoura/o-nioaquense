@@ -26,7 +26,7 @@ Disallow: /busca
 
 # Google Noticias
 User-agent: Googlebot-News
-Allow: /materia/
+Allow: /noticia/
 Disallow: /admin
 
 Sitemap: ${base}/sitemap.xml

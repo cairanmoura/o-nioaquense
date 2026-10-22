@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
       const publishedAt = new Date(article.published_at ?? Date.now()).toISOString();
 
       return `  <url>
-    <loc>${escape(`${base}/materia/${article.slug}`)}</loc>
+    <loc>${escape(`${base}/noticia/${article.slug}`)}</loc>
     <news:news>
       <news:publication>
         <news:name>O Nioaquense</news:name>

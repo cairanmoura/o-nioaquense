@@ -1,7 +1,6 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import ColumnistShowcase from '../components/ColumnistShowcase.astro';
-import EnviarPista from '../components/islands/EnviarPista';
 import GoogleAdSlot from '../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../components/LocalAdBanner.astro';
 import LocalDailyDeal from '../components/LocalDailyDeal.astro';
@@ -70,7 +69,7 @@ const brasil = feed.byScope.brasil.slice(0, 3);
           <div class="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-medium text-ink">
             {breaking.map((article) => (
               <a
-                href={`/materia/${article.slug}`}
+                href={`/noticia/${article.slug}`}
                 class="link-underline transition-colors hover:text-nioaque-red"
               >
                 {article.title}
@@ -217,7 +216,7 @@ const brasil = feed.byScope.brasil.slice(0, 3);
               Mato Grosso do Sul
             </h2>
             <a
-              href="/?escopo=ms"
+              href="/editoria/ms"
               class="ml-auto font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
             >
               Ver tudo →
@@ -260,7 +259,7 @@ const brasil = feed.byScope.brasil.slice(0, 3);
               Brasil
             </h2>
             <a
-              href="/?escopo=brasil"
+              href="/editoria/brasil"
               class="ml-auto font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
             >
               Ver tudo →
@@ -277,7 +276,7 @@ const brasil = feed.byScope.brasil.slice(0, 3);
 
     {/* Envio de pistas */}
     <section id="pistas" class="mt-12 scroll-mt-28" aria-labelledby="sec-pistas">
-      <div class="grid gap-8 rounded-3xl border border-line bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-12">
+      <div class="grid gap-8 rounded-3xl border border-line bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12">
         <div>
           <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
             Sua vez
@@ -303,10 +302,52 @@ const brasil = feed.byScope.brasil.slice(0, 3);
               Comércio, agricultura e produções locais
             </li>
           </ul>
+
+          <a
+            href="/mande-sua-noticia"
+            class="mt-7 inline-flex items-center gap-2 rounded-full bg-nioaque-red px-6 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Mande sua notícia
+          </a>
         </div>
 
-        <div>
-          <EnviarPista client:visible />
+        <div class="rounded-2xl bg-editorial p-5 sm:p-6">
+          <p class="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+            Boca no Trombone
+          </p>
+          <p class="mt-3 font-editorial text-xl font-semibold leading-snug text-ink">
+            O canal direto entre o morador de Nioaque e a redação.
+          </p>
+          <p class="mt-3 text-sm leading-relaxed text-ink-soft">
+            Nombre opcional, WhatsApp, bairro, relato e até cinco fotos. A pauta chega na nossa mesa
+            em segundos — e a apuração começa na hora.
+          </p>
+
+          <ul class="mt-5 space-y-2.5 text-sm text-ink-soft">
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              Formulário curtinho, feito para o celular
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              Fotos comprimidas antes de subir
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              Ou chame a redação no WhatsApp
+            </li>
+          </ul>
+
+          <a
+            href="/mande-sua-noticia"
+            class="mt-6 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+          >
+            Abrir o canal
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
     </section>

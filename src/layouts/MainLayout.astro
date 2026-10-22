@@ -68,6 +68,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).hr
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    {/* Slot para meta tags e JSON-LD especificos da pagina */}
+    <slot name="head" />
   </head>
 
   <body class="min-h-screen bg-editorial text-ink antialiased">

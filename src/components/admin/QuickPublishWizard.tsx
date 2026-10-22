@@ -202,8 +202,8 @@ export default function QuickPublishWizard({
   const whatsappText = useMemo(() => {
     const bullets = form.bullets.filter((bullet) => bullet.trim());
     const url = effectiveSlug
-      ? `${siteUrl}/materia/${effectiveSlug}`
-      : `${siteUrl}/materia/nova-materia`;
+      ? `${siteUrl}/noticia/${effectiveSlug}`
+      : `${siteUrl}/noticia/nova-materia`;
 
     return [
       `*${form.title || 'Titulo da materia'}*`,
@@ -431,7 +431,7 @@ export default function QuickPublishWizard({
               </button>
 
               <a
-                href={`/materia/${result.slug}`}
+                href={`/noticia/${result.slug}`}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-editorial"
               >
                 Ver a materia
@@ -842,7 +842,7 @@ export default function QuickPublishWizard({
                 Endereco da materia (slug)
               </span>
               <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-editorial px-4 py-3">
-                <span className="shrink-0 text-xs text-ink-muted">/materia/</span>
+                <span className="shrink-0 text-xs text-ink-muted">/noticia/</span>
                 <input
                   type="text"
                   value={form.slug}

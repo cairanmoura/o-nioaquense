@@ -95,7 +95,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
 
                   <div class="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/submissions/${submission.id}`}
                       payload={{ action: 'to_draft' }}
                       label="Transformar em Rascunho de Matéria"
@@ -112,7 +112,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
                       Responder no WhatsApp
                     </a>
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/submissions/${submission.id}`}
                       payload={{ status: 'archived' }}
                       label="Arquivar"

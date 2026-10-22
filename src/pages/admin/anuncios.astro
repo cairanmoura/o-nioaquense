@@ -200,7 +200,7 @@ const inputClass =
 
             <div class="mt-4 rounded-xl bg-editorial p-4">
               <ToggleSwitch
-                client:visible
+                client:load
                 endpoint={`/api/admin/ads/${ad.id}`}
                 field="active"
                 checked={ad.active}

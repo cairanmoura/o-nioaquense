@@ -98,7 +98,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
                       Ler e editar
                     </a>
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/articles/${article.id}`}
                       payload={{ action: 'publish' }}
                       label="Aprovar e publicar"
@@ -107,7 +107,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
                       variant="success"
                     />
                     <ActionButton
-                      client:visible
+                      client:load
                       endpoint={`/api/admin/articles/${article.id}`}
                       payload={{ action: 'draft' }}
                       label="Devolver"
