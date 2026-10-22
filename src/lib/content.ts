@@ -12,6 +12,7 @@ import { mockReaderSubmissions } from './mock-data';
 import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
 import { isAdLive, pickLiveAd } from './ads';
+import { fetchRSSArticles, rssToArticle } from './rss';
 import type {
   AdSlotPosition,
   Article,
@@ -214,13 +215,28 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
 
   /* ---- Fallback: dados de demonstracao (em memoria) ---- */
   const source = demoStore.listArticles();
-  const articles = source
+  let articles = source
     .filter((article) => article.status === 'published')
     .sort(
       (a, b) =>
         new Date(b.published_at ?? b.created_at).getTime() -
         new Date(a.published_at ?? a.created_at).getTime(),
     );
+
+  // Busca artigos reais via RSS (Agencia Brasil etc.) e mescla ao feed
+  try {
+    const rssArticles = await fetchRSSArticles();
+    const rssConverted = rssArticles.map((rss) => rssToArticle(rss, 'brasil'));
+    articles = [...articles, ...rssConverted].sort(
+      (a, b) => {
+        const dateA = new Date(a.published_at ?? a.created_at ?? '').getTime();
+        const dateB = new Date(b.published_at ?? b.created_at ?? '').getTime();
+        return dateB - dateA;
+      },
+    );
+  } catch {
+    /* Se o RSS falhar, segue apenas com os artigos mock */
+  }
 
   const adsBySlot: Partial<Record<AdSlotPosition, LocalAd>> = {};
 

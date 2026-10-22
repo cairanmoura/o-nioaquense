@@ -1,0 +1,59 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+/**
+ * /expediente
+ * -----------------------------------------------------------------------------
+ * Pagina sobre o O Nioaquense - missão, equipe e como apuramos as notícias.
+ */
+
+const year = new Date().getFullYear();
+---
+
+<MainLayout title="Expediente" description="Sobre o O Nioaquense: missão, equipe e como apuramos as notícias de Nioaque (MS).">
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-green pb-5 mb-8">
+      <h1 class="text-headline font-semibold leading-tight text-ink">Expediente</h1>
+      <p class="mt-3 text-[0.9375rem] leading-relaxed text-ink-soft">
+        Quem somos, como trabalhamos e como entrar em contato com a redação do O Nioaquense.
+      </p>
+    </header>
+
+    <section class="mb-8">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Sobre o portal</h2>
+      <p class="text-ink-soft leading-relaxed">
+        O Nioaquense é um portal de notícias hiperlocal focado em Nioaque (MS), cobrindo também
+        Mato Grosso do Sul e Brasil. Publicamos com transparência sobre como cada notícia foi apurada,
+        priorizando o interesse público e o serviço ao cidadão.
+      </p>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Equipe editorial</h2>
+      <ul class="space-y-3 text-ink-soft">
+        <li>Redação: equipe de jornalistas locais</li>
+        <li>Colunistas: assinados, com direito de resposta</li>
+        <li>Contato: contato@onioaquense.com</li>
+        <li>WhatsApp da redação: (67) 9999-9000</li>
+      </ul>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Como apuramos</h2>
+      <p class="text-ink-soft leading-relaxed">
+        Toda matéria passa por verificação de fontes oficiais. Correções e atualizações são publicadas
+        com aviso claro ao leitor. Denúncias via "Boca no Trombone" são apuradas antes de qualquer publicação.
+      </p>
+    </section>
+
+    <div class="mt-8 rounded-2xl border border-line bg-nioaque-white p-6">
+      <h3 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Contato</h3>
+      <p class="text-ink-soft">
+        Redação O Nioaquense<br>
+        Nioaque, MS, Brasil<br>
+        E-mail: contato@onioaquense.com<br>
+        Telefone: (67) 9999-9000
+      </p>
+    </div>
+  </div>
+</MainLayout>

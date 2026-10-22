@@ -1,0 +1,141 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+/**
+ * /artes
+ * -----------------------------------------------------------------------------
+ * Galeria de artes oficiais de Nioaque.
+ * Exibe as artes geometricas (bandeira de Nioaque) e permite download em
+ * SVG ou PNG (1200x675 e 1080x1080) com 1 clique.
+ */
+
+const ARTES_LIST = [
+  'cap-01', 'cap-02', 'cap-03', 'cap-04', 'cap-05', 'cap-06', 'cap-07', 'cap-08',
+  'cap-09', 'cap-10', 'cap-11', 'cap-12', 'cap-13', 'cap-14', 'cap-15', 'cap-16',
+  'cap-17', 'cap-18', 'cap-19', 'cap-20', 'cap-21', 'cap-22',
+  'arte-camara-politica', 'arte-prefeitura-obras', 'arte-agro-campo',
+  'arte-seguranca-plantao', 'arte-saude', 'arte-educacao', 'arte-esporte',
+  'arte-cultura-9gac',
+];
+
+const artes = ARTES_LIST.map((name) => {
+  const label = name
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  return {
+    name,
+    label,
+    svgUrl: `/artes-nioarquense/${name}.svg`,
+    png675: `/artes-nioarquense/png/${name}-1200x675.png`,
+    png1080: `/artes-nioarquense/png/${name}-1080x1080.png`,
+  };
+});
+---
+
+<MainLayout title="Artes Oficiais" description="Artes geometrica da bandeira de Nioaque para download em SVG e PNG.">
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-red pb-5 mb-8">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+        Identidade visual
+      </p>
+      <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">Artes Oficiais</h1>
+      <p class="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">
+        Colecao de artes geometrica da bandeira de Nioaque (MS). Use como capa de materias
+        do Radar Oficial, Colunas ou sempre que a materia nao tiver foto de camera. Baixe em
+        SVG ou PNG com um clique.
+      </p>
+    </header>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {artes.map((arte) => (
+        <article class="group rounded-2xl border border-line bg-nioaque-white p-4 hover:shadow-lift transition-shadow">
+          <div class="relative aspect-[16/9] rounded-xl overflow-hidden bg-ink/5 mb-3">
+            <img
+              src={arte.svgUrl}
+              alt={arte.label}
+              width="1200"
+              height="675"
+              loading="lazy"
+              decoding="async"
+              class="w-full h-full object-cover"
+            />
+          </div>
+
+          <h3 class="font-editorial text-sm font-semibold leading-tight text-ink mb-2">{arte.label}</h3>
+
+          <div class="flex flex-wrap gap-2 mb-3">
+            <a
+              href={arte.svgUrl}
+              download
+              target="_blank"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-editorial px-3 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M7 10l5 5 5-5"/>
+                <path d="M12 15V3"/>
+              </svg>
+              SVG
+            </a>
+
+            <a
+              href={arte.png675}
+              download
+              target="_blank"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-editorial px-3 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M7 10l5 5 5-5"/>
+                <path d="M12 15V3"/>
+              </svg>
+              PNG 16:9
+            </a>
+
+            <a
+              href={arte.png1080}
+              download
+              target="_blank"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-editorial px-3 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red-dark"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M7 10l5 5 5-5"/>
+                <path d="M12 15V3"/>
+              </svg>
+              PNG 1:1
+            </a>
+          </div>
+
+          <p class="text-[10px] text-ink-muted">
+            1200x675px • 16:9 • SVG + PNG
+          </p>
+        </article>
+      ))}
+    </div>
+
+    <div class="mt-8 rounded-2xl border border-line bg-nioaque-white p-6">
+      <h2 class="font-editorial text-sm font-semibold leading-tight text-ink mb-3">Como usar</h2>
+      <ul class="space-y-2 text-sm text-ink-soft">
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+          <span>Materias do Radar Oficial: use como capa oficial quando nao houver foto de camera.</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+          <span>Colunas: aplique a arte correspondente ao tema do colunista.</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+          <span>Baixe o SVG para editar no Illustrator, Figma ou Inkscape.</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+          <span>Use o PNG 1080x1080 para postagens no Instagram.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</MainLayout>

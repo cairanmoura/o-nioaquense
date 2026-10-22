@@ -9,6 +9,7 @@ import { getArticlePage, getHomeFeed } from '../../lib/content';
 import { excerpt } from '../../lib/seo';
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { SCOPE_LABEL } from '../../lib/types';
+import { getArteFallback } from '../../lib/rss';
 import type { Profile } from '../../lib/types';
 
 /**
@@ -276,12 +277,15 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       />
     </div>
 
-    {/* Capa */}
+    {/* Capa: usa foto da materia ou arte geometrica como fallback */}
     {
-      article.cover_image_url && (
+      (
         <figure class="mx-auto mt-8 max-w-4xl">
           <img
-            src={article.cover_image_url}
+            src={
+              article.cover_image_url ??
+              getArteFallback(article.scope as import('../../lib/types').ArticleScope)
+            }
             alt={article.cover_image_caption ?? article.title}
             width="1600"
             height="900"
