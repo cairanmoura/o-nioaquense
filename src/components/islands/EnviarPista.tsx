@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '../../lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-type Status = 'idle' | 'sending' | 'sent' | 'demo' | 'error';
+type Status = 'idle' | 'loading' | 'sending' | 'sent' | 'demo' | 'error';
 
 interface FormState {
   sender_name: string;
@@ -26,10 +27,32 @@ const EMPTY_FORM: FormState = {
  */
 export default function EnviarPista() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [status, setStatus] = useState<Status>('idle');
+  const [status, setStatus] = useState<Status>('loading');
   const [message, setMessage] = useState('');
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-  const supabase = createSupabaseBrowserClient();
+  useEffect(() => {
+    let mounted = true;
+
+    createSupabaseBrowserClient().then((client) => {
+      if (mounted) {
+        setSupabase(client);
+        setStatus(client ? 'idle' : 'demo');
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (status === 'loading') {
+    return (
+      <div className="rounded-2xl border border-line bg-nioaque-white p-6 text-center text-sm text-ink-muted">
+        Carregando configuracao...
+      </div>
+    );
+  }
 
   function update(field: keyof FormState, value: string) {
     setForm((previous) => ({ ...previous, [field]: value }));

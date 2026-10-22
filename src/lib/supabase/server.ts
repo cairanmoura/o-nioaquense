@@ -40,8 +40,11 @@ export function readEnv(
 export function getSupabaseCredentials(
   locals: App.Locals,
 ): { url: string; anonKey: string } | null {
-  const url = readEnv(locals, 'PUBLIC_SUPABASE_URL');
-  const anonKey = readEnv(locals, 'PUBLIC_SUPABASE_ANON_KEY');
+  // Variaveis de servidor (sem prefixo PUBLIC_) - configuradas como secrets no
+  // Cloudflare Worker e no .env local.
+  const url = readEnv(locals, 'SUPABASE_URL') ?? readEnv(locals, 'PUBLIC_SUPABASE_URL');
+  const anonKey =
+    readEnv(locals, 'SUPABASE_ANON_KEY') ?? readEnv(locals, 'PUBLIC_SUPABASE_ANON_KEY');
 
   if (!url || !anonKey) return null;
   return { url, anonKey };

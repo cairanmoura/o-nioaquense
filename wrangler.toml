@@ -42,8 +42,6 @@ invocation_logs = true
 # -----------------------------------------------------------------------------
 [vars]
 PUBLIC_SITE_URL = "https://onioaquense.com"
-PUBLIC_SUPABASE_URL = ""
-PUBLIC_SUPABASE_ANON_KEY = ""
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
 PUBLIC_REDACAO_WHATSAPP = "5567999990000"
@@ -59,8 +57,6 @@ name = "o-nioaquense"
 
 [env.production.vars]
 PUBLIC_SITE_URL = "https://onioaquense.com"
-PUBLIC_SUPABASE_URL = ""
-PUBLIC_SUPABASE_ANON_KEY = ""
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
 PUBLIC_REDACAO_WHATSAPP = "5567999990000"
