@@ -27,21 +27,22 @@ const isEditorChefe = user?.profile.role === 'admin';
 const pathname = Astro.url.pathname;
 
 /** Itens da barra inferior (mobile): no maximo 5, para o polegar alcancar. */
-const bottomNav = [
+const navItems = [
   { href: '/admin', label: 'Inicio', icon: 'home', adminOnly: false },
   { href: '/admin/artigos/novo', label: 'Escrever', icon: 'pen', adminOnly: false },
   { href: '/admin/revisao', label: 'Revisao', icon: 'check', adminOnly: true },
   { href: '/admin/leitores', label: 'Leitores', icon: 'bell', adminOnly: true },
   { href: '/admin/perfil', label: 'Perfil', icon: 'profile', adminOnly: false },
-].filter((item) => !item.adminOnly || isEditorChefe);
-
-/** Itens da barra lateral (desktop): painel completo. */
-const sidebarNav = [
-  ...bottomNav,
   { href: '/admin/utilidade-publica', label: 'Utilidade Publica', icon: 'pill', adminOnly: true },
   { href: '/admin/colunistas', label: 'Colunistas', icon: 'users', adminOnly: true },
   { href: '/admin/anuncios', label: 'Anuncios', icon: 'megaphone', adminOnly: true },
 ];
+
+/** A barra inferior e enxuta (no maximo 5 itens) e so mostra o que o papel pode usar. */
+const bottomNav = navItems.filter((item) => !item.adminOnly || isEditorChefe).slice(0, 5);
+
+/** A barra lateral mostra o painel completo do Editor-Chefe. */
+const sidebarNav = navItems.filter((item) => !item.adminOnly || isEditorChefe);
 
 const isActive = (href: string) =>
   href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
