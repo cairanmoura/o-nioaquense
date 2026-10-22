@@ -120,5 +120,5 @@ export function excerpt(text: string, max = 160): string {
   const cut = clean.slice(0, max);
   const lastSpace = cut.lastIndexOf(' ');
 
-  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim()}â€¦`;
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim()}…`;
 }

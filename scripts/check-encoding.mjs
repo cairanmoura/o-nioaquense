@@ -7,7 +7,9 @@ const files = execFileSync(
   { encoding: 'utf8' },
 )
   .split('\n')
-  .filter(Boolean);
+  .filter(Boolean)
+  // o proprio script de checagem contem os padroes que procura
+  .filter((file) => !file.endsWith('check-encoding.mjs'));
 
 const MOJIBAKE = /Ã[-¿]|â€|Â[^\s]|ï¿½/;
 const broken = [];
