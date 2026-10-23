@@ -1,15 +1,15 @@
 ---
 import ArticleCard from '../../components/ArticleCard.astro';
 import AudioPlayer from '../../components/AudioPlayer.tsx';
+import CoverArt from '../../components/CoverArt.astro';
 import GoogleAdSlot from '../../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../../components/LocalAdBanner.astro';
 import MainLayout from '../../layouts/MainLayout.astro';
-import ScopePill from '../../components/ScopePill.astro';
 import { getArticlePage, getHomeFeed } from '../../lib/content';
 import { excerpt } from '../../lib/seo';
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { SCOPE_LABEL } from '../../lib/types';
-import { getArteFallback } from '../../lib/rss';
+import { isPhotoCover } from '../../lib/rss';
 import type { Profile } from '../../lib/types';
 
 /**
@@ -51,6 +51,21 @@ const related = page.related.length
   ? page.related
   : feed.byScope.nioaque.filter((item) => item.id !== article.id).slice(0, 3);
 
+const words = article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+const readingMinutes = Math.max(1, Math.round(words / 200));
+const sourceName = article.source_name ?? null;
+const sourceUrl = article.source_url ?? null;
+const sourceInitials = sourceName
+  ? sourceName
+      .split(/\s+/)
+      .map((part) => part.charAt(0))
+      .slice(0, 2)
+      .join('')
+      .toUpperCase()
+  : '';
+// Arte geometrica nao e' foto: nao vale como imagem de compartilhamento.
+const photoCover = isPhotoCover(article.cover_image_url) ? article.cover_image_url : null;
+
 const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
 const telegramShare = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
 const facebookShare = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
@@ -60,7 +75,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
 <MainLayout
   title={article.title}
   description={description}
-  image={article.cover_image_url ?? undefined}
+  image={photoCover ?? undefined}
 >
   {/* Metadados e Schema.org NewsArticle */}
   <Fragment slot="head">
@@ -73,7 +88,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
     <meta property="og:title" content={article.title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {article.cover_image_url && <meta property="og:image" content={article.cover_image_url} />}
+    {photoCover && <meta property="og:image" content={photoCover} />}
     <meta property="article:published_time" content={article.published_at ?? ''} />
     <meta property="article:modified_time" content={article.updated_at} />
     <meta property="article:section" content={SCOPE_LABEL[article.scope]} />
@@ -82,7 +97,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={article.title} />
     <meta name="twitter:description" content={description} />
-    {article.cover_image_url && <meta name="twitter:image" content={article.cover_image_url} />}
+    {photoCover && <meta name="twitter:image" content={photoCover} />}
 
     {
       article.category_label && (
@@ -97,7 +112,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
         '@type': 'NewsArticle',
         headline: article.title,
         description,
-        image: article.cover_image_url ? [article.cover_image_url] : ['/icons/icon-512.png'],
+        image: photoCover ? [photoCover] : ['/icons/icon-512.png'],
         datePublished: article.published_at,
         dateModified: article.updated_at,
         author: author
@@ -123,9 +138,12 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
   <article class="container-editorial py-8 sm:py-10">
     {/* Cabecalho */}
     <header class="mx-auto max-w-3xl">
-      <div class="flex flex-wrap items-center gap-2">
-        <ScopePill scope={article.scope} category={article.category_label} />
-        {article.is_featured && <span class="pill-scope bg-ink text-white">Destaque</span>}
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold">
+        <span class="h-1.5 w-1.5 rounded-full bg-nioaque-green" aria-hidden="true" />
+        <span class="text-nioaque-green-dark">
+          {article.category_label ?? SCOPE_LABEL[article.scope]}
+        </span>
+        <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>
       </div>
 
       <h1 class="mt-4 text-display font-semibold leading-[1.04] text-ink">
@@ -141,45 +159,60 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
         class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-line py-4"
       >
         {
-          author && (
-            <a
-              href={`/colunistas/${author.slug}`}
-              class="group flex min-w-0 items-center gap-3"
-            >
-              {author.avatar_url ? (
-                <img
-                  src={author.avatar_url}
-                  alt=""
-                  width="44"
-                  height="44"
-                  loading="lazy"
-                  decoding="async"
-                  class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green transition-transform group-hover:scale-105"
-                />
-              ) : (
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-base font-semibold text-white">
-                  {author.full_name.charAt(0)}
-                </span>
-              )}
+          sourceName ? (
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-sm font-semibold text-white">
+                {sourceInitials}
+              </span>
               <span class="min-w-0">
                 <span class="block truncate font-editorial text-base font-semibold leading-tight text-ink">
-                  {author.column_name ?? author.full_name}
+                  {sourceName}
                 </span>
-                <span class="block truncate text-xs text-ink-muted">
-                  {author.column_name ? author.full_name : 'Redação O Nioaquense'}
-                </span>
+                <span class="block truncate text-xs text-ink-muted">Conteúdo de agência</span>
               </span>
-            </a>
+            </div>
+          ) : (
+            author && (
+              <a
+                href={`/colunistas/${author.slug}`}
+                class="group flex min-w-0 items-center gap-3"
+              >
+                {author.avatar_url ? (
+                  <img
+                    src={author.avatar_url}
+                    alt=""
+                    width="44"
+                    height="44"
+                    loading="lazy"
+                    decoding="async"
+                    class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green transition-transform group-hover:scale-105"
+                  />
+                ) : (
+                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-base font-semibold text-white">
+                    {author.full_name.charAt(0)}
+                  </span>
+                )}
+                <span class="min-w-0">
+                  <span class="block truncate font-editorial text-base font-semibold leading-tight text-ink">
+                    {author.column_name ?? author.full_name}
+                  </span>
+                  <span class="block truncate text-xs text-ink-muted">
+                    {author.column_name ? author.full_name : 'Redação O Nioaquense'}
+                  </span>
+                </span>
+              </a>
+            )
           )
         }
 
         <div class="ml-auto flex items-center gap-3">
-          <time
-            datetime={article.published_at ?? undefined}
-            class="text-xs font-medium uppercase tracking-[0.1em] text-ink-muted"
-          >
-            {formatDateTime(article.published_at)}
-          </time>
+          <p class="text-xs font-medium text-ink-muted">
+            <time datetime={article.published_at ?? undefined}>
+              {formatDateTime(article.published_at)}
+            </time>
+            <span aria-hidden="true"> · </span>
+            {readingMinutes} min de leitura
+          </p>
 
           {/* Compartilhamento rapido */}
           <div class="flex items-center gap-1.5">
@@ -236,28 +269,45 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       </div>
     </header>
 
+    {/* Capa: foto da materia ou capa desenhada (arte com a editoria) */}
+    <figure class="mx-auto mt-8 max-w-4xl">
+      {isPhotoCover(article.cover_image_url) ? (
+        <img
+          src={article.cover_image_url}
+          alt={article.cover_image_caption ?? article.title}
+          width="1600"
+          height="900"
+          loading="eager"
+          decoding="async"
+          class="aspect-[16/9] w-full rounded-xl object-cover"
+        />
+      ) : (
+        <CoverArt
+          label={article.category_label ?? SCOPE_LABEL[article.scope]}
+          scope={SCOPE_LABEL[article.scope]}
+          alt={article.title}
+          class="aspect-[16/9] w-full rounded-xl"
+        />
+      )}
+      {article.cover_image_caption && (
+        <figcaption class="mt-2 px-1 text-xs leading-relaxed text-ink-muted">
+          {article.cover_image_caption}
+        </figcaption>
+      )}
+    </figure>
+
     {/* Direto ao Ponto */}
     {
       article.summary_bullets.length > 0 && (
-        <aside
-          class="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-nioaque-green-100 bg-nioaque-white"
-          aria-label="Direto ao ponto"
-        >
-          <header class="flex items-center gap-2 bg-nioaque-green px-5 py-3">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="text-white" aria-hidden="true">
-              <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
-            </svg>
-            <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-white">
-              Direto ao ponto
-            </h2>
-          </header>
-          <ul class="divide-y divide-line">
-            {article.summary_bullets.map((bullet, index) => (
-              <li class="flex gap-4 px-5 py-4">
-                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nioaque-red-50 font-editorial text-sm font-semibold text-nioaque-red">
-                  {index + 1}
-                </span>
-                <p class="text-[1.0625rem] leading-relaxed text-ink">{bullet}</p>
+        <aside class="box-resumo mx-auto mt-8 max-w-3xl p-5 sm:p-6" aria-label="Direto ao Ponto">
+          <h2 class="font-sans text-xs font-bold uppercase tracking-[0.08em] text-nioaque-green">
+            Direto ao Ponto
+          </h2>
+          <ul class="mt-3 space-y-2.5">
+            {article.summary_bullets.map((bullet) => (
+              <li class="flex gap-2.5 text-base leading-relaxed text-ink">
+                <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+                <span>{bullet}</span>
               </li>
             ))}
           </ul>
@@ -277,30 +327,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       />
     </div>
 
-    {/* Capa: usa foto da materia ou arte geometrica como fallback */}
-    {
-      (
-        <figure class="mx-auto mt-8 max-w-4xl">
-          <img
-            src={
-              article.cover_image_url ??
-              getArteFallback(article.scope as import('../../lib/types').ArticleScope)
-            }
-            alt={article.cover_image_caption ?? article.title}
-            width="1600"
-            height="900"
-            loading="eager"
-            decoding="async"
-            class="aspect-[16/9] w-full rounded-2xl object-cover ring-1 ring-line"
-          />
-          {article.cover_image_caption && (
-            <figcaption class="mt-2 px-1 text-xs leading-relaxed text-ink-muted">
-              {article.cover_image_caption}
-            </figcaption>
-          )}
-        </figure>
-      )
-    }
+    {/* Capa antiga removida: agora fica logo abaixo do cabecalho */}
 
     {/* Corpo + lateral */}
     <div class="mx-auto mt-10 grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
@@ -309,6 +336,21 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           class="prose-editorial space-y-5 font-editorial text-[1.125rem] leading-[1.8] text-ink sm:text-[1.1875rem]"
           set:html={article.content}
         />
+
+        {sourceName && sourceUrl && (
+          <p class="mt-8 border-t border-line pt-4 text-sm leading-relaxed text-ink-soft">
+            <strong class="font-semibold text-ink">Fonte:</strong>{' '}
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="link-underline font-semibold text-nioaque-green"
+            >
+              {sourceName}
+            </a>
+            . O Nioaquense publica a chamada e a foto; a íntegra está no veículo original.
+          </p>
+        )}
 
         {/* Anuncio intercalado: o do comercio local (slot "Dentro da materia")
             e, abaixo, o espaco do Google AdSense. O banner local so aparece
@@ -322,7 +364,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
         {/* Assinatura */}
         {
           author && (
-            <aside class="mt-10 flex items-start gap-4 rounded-2xl border border-line bg-nioaque-white p-5">
+            <aside class="mt-10 flex items-start gap-4 rounded-xl border border-line bg-nioaque-white p-5">
               {author.avatar_url ? (
                 <img
                   src={author.avatar_url}
@@ -341,7 +383,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
               <div class="min-w-0">
                 <p class="font-editorial text-lg font-semibold text-ink">{author.full_name}</p>
                 {author.column_name && (
-                  <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-red">
+                  <p class="text-xs font-semibold text-nioaque-red">
                     {author.column_name}
                   </p>
                 )}
@@ -350,7 +392,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
                 )}
                 <a
                   href={`/colunistas/${author.slug}`}
-                  class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+                  class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
                 >
                   Ver todos os textos
                   <span aria-hidden="true">→</span>
@@ -368,7 +410,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
                 id="relacionadas"
                 class="border-b-2 border-nioaque-green pb-3 font-editorial text-2xl font-semibold tracking-tight text-ink"
               >
-                Mais sobre Nioaque
+                Leia também
               </h2>
               <div class="grid gap-6 pt-6 sm:grid-cols-3">
                 {related.map((item) => (
@@ -387,28 +429,25 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       {/* Lateral */}
       <aside class="lg:sticky lg:top-32 lg:self-start">
         <LocalAdBanner ad={feed.ads.sidebar} />
-        <p class="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted/70">
-          Publicidade
-        </p>
 
-        <div class="mt-8 rounded-2xl border border-line bg-nioaque-white p-5">
-          <p class="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
-            Tem uma dica?
-          </p>
+        <div class="mt-8 rounded-xl border border-line bg-nioaque-white p-5">
+          <p class="text-xs font-semibold text-nioaque-green">Tem uma dica?</p>
           <p class="mt-2 text-sm leading-relaxed text-ink-soft">
             Mande a sua para a redação. Toda pista é apurada antes de virar notícia.
           </p>
           <a
             href="/mande-sua-noticia"
-            class="mt-4 inline-flex items-center gap-2 rounded-full bg-nioaque-red px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-red-dark"
+            class="mt-4 inline-flex items-center gap-2 rounded-full bg-nioaque-red px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
           >
             Boca no Trombone
           </a>
         </div>
 
-        <p class="mt-6 text-xs text-ink-muted">
-          {formatNumber(article.views_count)} leituras
-        </p>
+        {article.views_count > 0 && (
+          <p class="mt-6 text-xs text-ink-muted">
+            {formatNumber(article.views_count)} leituras
+          </p>
+        )}
       </aside>
     </div>
   </article>

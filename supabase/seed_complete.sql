@@ -524,7 +524,7 @@ on conflict (id) do nothing;
 insert into public.articles (id, title, subtitle, slug, summary_bullets, content, cover_image_url, cover_image_caption, scope, category_label, is_breaking, is_featured, author_id, status, views_count, published_at, created_at, updated_at) values
   (
     '20000000-0000-4000-8000-000000000001',
-    'Frigorífico de Nioaque, o Frigocampo, volta a paralisar atividades por falta de matéria-prima',
+    'Frigocampo paralisa e afeta 150 empregos',
     'Unidade havia retomado as atividades em agosto após um período parado.',
     'frigorifico-nioaque-frigocampo-paralisa-falta-materia-prima',
     ARRAY[

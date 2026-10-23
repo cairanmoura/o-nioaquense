@@ -55,6 +55,8 @@ function normalizeArticle(row: Record<string, unknown>): Article {
     published_at: row.published_at ? String(row.published_at) : null,
     created_at: String(row.created_at ?? new Date().toISOString()),
     updated_at: String(row.updated_at ?? new Date().toISOString()),
+    source_name: row.source_name ? String(row.source_name) : null,
+    source_url: row.source_url ? String(row.source_url) : null,
   };
 }
 
@@ -71,6 +73,17 @@ function normalizeUtility(row: Record<string, unknown>): PublicUtility {
     bus_schedule_html: row.bus_schedule_html ? String(row.bus_schedule_html) : null,
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   };
+}
+
+/*
+ * O painel guarda o plantao de varios dias. A home precisa mostrar o de hoje
+ * (ou o ultimo que passou), nunca o mais distante cadastrado. A lista chega em
+ * ordem decrescente: o primeiro com data <= hoje e' o plantao corrente; sem
+ * nenhum passado, cai no proximo (a menor data futura, ultima da lista).
+ */
+function pickCurrentUtility(utilities: PublicUtility[], today: string): PublicUtility | null {
+  if (utilities.length === 0) return null;
+  return utilities.find((utility) => utility.duty_date <= today) ?? utilities[utilities.length - 1] ?? null;
 }
 
 function normalizeAd(row: Record<string, unknown>): LocalAd {
@@ -165,11 +178,60 @@ function groupByScope(articles: Article[]): Record<ArticleScope, Article[]> {
   return grouped;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Noticias de agencia (RSS)                                                  */
+/* -------------------------------------------------------------------------- */
+
+const AGENCY_TTL_MS = 5 * 60 * 1000;
+let agencyCache: { at: number; articles: Article[] } | null = null;
+
+function normalizeTitle(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+async function getAgencyArticles(): Promise<Article[]> {
+  const now = Date.now();
+  if (agencyCache && now - agencyCache.at < AGENCY_TTL_MS) return agencyCache.articles;
+
+  try {
+    const items = await fetchRSSArticles(8);
+    const articles = items.map((item) => rssToArticle(item, 'brasil'));
+    agencyCache = { at: Date.now(), articles };
+    return articles;
+  } catch {
+    return agencyCache?.articles ?? [];
+  }
+}
+
+/** Mescla as noticias das agencias ao feed local, sem repetir titulos. */
+async function mergeAgencyNews(articles: Article[]): Promise<Article[]> {
+  const seen = new Set(articles.map((article) => normalizeTitle(article.title)));
+  const extra = (await getAgencyArticles()).filter(
+    (article) => !seen.has(normalizeTitle(article.title)),
+  );
+
+  if (!extra.length) return articles;
+
+  return [...articles, ...extra].sort((a, b) => {
+    const dateA = new Date(a.published_at ?? a.created_at ?? '').getTime();
+    const dateB = new Date(b.published_at ?? b.created_at ?? '').getTime();
+    return dateB - dateA;
+  });
+}
+
 /** Monta o feed da home. Cai no mock quando o Supabase nao responde. */
 export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
   const supabase = locals.supabase;
 
   if (supabase) {
+    // O plantao e' o de hoje no fuso de Nioaque, nao o ultimo cadastrado.
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Campo_Grande' }).format(new Date());
+
     const [articles, profiles, utilities, ads] = await Promise.all([
       query(
         supabase,
@@ -181,7 +243,7 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
       query(
         supabase,
         'public_utilities',
-        (q) => q.order('duty_date', { ascending: false }).limit(1),
+        (q) => q.order('duty_date', { ascending: false }).limit(31),
         normalizeUtility,
       ),
       query(
@@ -200,13 +262,18 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
         if (!adsBySlot[ad.slot_position]) adsBySlot[ad.slot_position] = ad;
       }
 
+      // Noticias de agencia entram no feed de producao, com foto e link para a
+      // materia original. Sem isso a home ficaria so com as artes locais.
+      const feedArticles = await mergeAgencyNews(articles);
+      const utility = pickCurrentUtility(utilities ?? [], today);
+
       return {
-        articles,
-        featured: articles.filter((article) => article.is_featured),
-        breaking: articles.filter((article) => article.is_breaking),
-        byScope: groupByScope(articles),
+        articles: feedArticles,
+        featured: feedArticles.filter((article) => article.is_featured),
+        breaking: feedArticles.filter((article) => article.is_breaking),
+        byScope: groupByScope(feedArticles),
         profiles: profiles ?? [],
-        utility: utilities?.[0] ?? null,
+        utility,
         ads: adsBySlot,
         source: 'supabase',
       };
@@ -223,20 +290,7 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
         new Date(a.published_at ?? a.created_at).getTime(),
     );
 
-  // Busca artigos reais via RSS (Agencia Brasil etc.) e mescla ao feed
-  try {
-    const rssArticles = await fetchRSSArticles();
-    const rssConverted = rssArticles.map((rss) => rssToArticle(rss, 'brasil'));
-    articles = [...articles, ...rssConverted].sort(
-      (a, b) => {
-        const dateA = new Date(a.published_at ?? a.created_at ?? '').getTime();
-        const dateB = new Date(b.published_at ?? b.created_at ?? '').getTime();
-        return dateB - dateA;
-      },
-    );
-  } catch {
-    /* Se o RSS falhar, segue apenas com os artigos mock */
-  }
+  articles = await mergeAgencyNews(articles);
 
   const adsBySlot: Partial<Record<AdSlotPosition, LocalAd>> = {};
 
@@ -451,6 +505,21 @@ export async function getArticlePage(
         article,
         author: authorRows?.[0] ?? null,
         related: (relatedRows ?? []).filter((item) => item.id !== article.id).slice(0, 3),
+        source: 'supabase',
+      };
+    }
+  }
+
+  /* ---- Materia de agencia (RSS): nao esta no banco ---- */
+  if (slug.startsWith('rss-')) {
+    const agency = await getAgencyArticles();
+    const found = agency.find((item) => item.slug === slug) ?? null;
+
+    if (found) {
+      return {
+        article: found,
+        author: null,
+        related: agency.filter((item) => item.slug !== slug).slice(0, 3),
         source: 'supabase',
       };
     }

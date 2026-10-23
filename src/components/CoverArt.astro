@@ -1,0 +1,162 @@
+---
+/**
+ * CoverArt.astro
+ * -----------------------------------------------------------------------------
+ * Capa desenhada para materias sem foto.
+ *
+ * As artes oficiais de /artes-nioarquense sao o ponto de partida (faixas verde
+ * e vermelha, circulo e caixa branca). Aqui a caixa branca recebe a editoria,
+ * para a capa nao parecer um espaco vazio. O desenho e' SVG inline: escala sem
+ * perder nitidez e nao gera requisicao extra.
+ */
+
+interface Props {
+  /** Editoria que aparece em destaque (ex.: "Saúde"). */
+  label: string;
+  /** Escopo editorial (ex.: "Nioaque"). */
+  scope: string;
+  /** Nome acessivel; quando vazio, a capa e' decorativa. */
+  alt?: string;
+  /** `cover` preenche o quadro; `contain` mostra a arte inteira (miniaturas). */
+  fit?: 'cover' | 'contain';
+  class?: string;
+}
+
+const { label, scope, alt, fit = 'cover', class: className = '' } = Astro.props;
+
+/*
+ * Nem todo `category_label` e' uma editoria (o banco de demonstracao chega a
+ * gravar nome de empresa). Quando o rotulo nao e' uma editoria conhecida, a
+ * capa usa o escopo - que e' sempre verdadeiro - em vez de inventar secoes.
+ */
+const EDITORIAS = new Set([
+  'saúde',
+  'saude',
+  'educação',
+  'educacao',
+  'política',
+  'politica',
+  'obras',
+  'obras públicas',
+  'obras publicas',
+  'infraestrutura',
+  'cidade',
+  'esporte',
+  'cultura',
+  'economia',
+  'segurança',
+  'seguranca',
+  'prefeitura',
+  'câmara',
+  'camara',
+  'câmara municipal',
+  'camara municipal',
+  'concursos',
+  'diário oficial',
+  'diario oficial',
+  'meio ambiente',
+  'agricultura',
+  'agricultura familiar',
+  'emprego',
+  'empregos',
+  'assistência social',
+  'assistencia social',
+  'trânsito',
+  'transito',
+  'radar oficial',
+  'coluna',
+  'opinião',
+  'opiniao',
+]);
+
+const rotulo = label.trim();
+const ehEditoria = EDITORIAS.has(rotulo.toLowerCase());
+const titulo = (ehEditoria ? rotulo : scope.trim()).slice(0, 24);
+const kicker = (ehEditoria ? scope : 'O NIOAQUENSE').trim().toUpperCase().slice(0, 22);
+const tituloSize = titulo.length > 16 ? 58 : titulo.length > 11 ? 68 : 76;
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 675"
+  class:list={['block', className]}
+  role={alt ? 'img' : undefined}
+  aria-label={alt}
+  aria-hidden={alt ? undefined : 'true'}
+  preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
+>
+  <rect width="1200" height="675" fill="#FAF9F6" />
+
+  {/* Faixas da bandeira de Nioaque */}
+  <rect width="1200" height="96" fill="#008026" />
+  <rect y="579" width="1200" height="96" fill="#E60000" />
+
+  {/* Marca d'agua geometrica */}
+  <circle cx="930" cy="338" r="170" fill="#008026" opacity="0.12" />
+  <circle cx="1030" cy="250" r="56" fill="#E60000" opacity="0.1" />
+
+  {/* Assinatura no topo */}
+  <text
+    x="72"
+    y="60"
+    fill="#FFFFFF"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="22"
+    font-weight="700"
+    letter-spacing="5">O NIOAQUENSE</text
+  >
+  <text
+    x="1128"
+    y="60"
+    fill="#FFFFFF"
+    text-anchor="end"
+    opacity="0.75"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="18"
+    font-weight="500"
+    letter-spacing="2">NIOAQUE · MS</text
+  >
+
+  {/* Caixa branca: antes vazia, agora com a editoria */}
+  <rect x="72" y="188" width="720" height="300" rx="20" fill="#FFFFFF" />
+
+  <text
+    x="116"
+    y="254"
+    fill="#008026"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="22"
+    font-weight="700"
+    letter-spacing="3">{kicker}</text
+  >
+
+  <text
+    x="112"
+    y="352"
+    fill="#1E293B"
+    font-family="Newsreader, Georgia, 'Times New Roman', serif"
+    font-size={tituloSize}
+    font-weight="600"
+    letter-spacing="-1">{titulo}</text
+  >
+
+  <rect x="116" y="386" width="72" height="7" rx="3.5" fill="#E60000" />
+
+  <text
+    x="116"
+    y="446"
+    fill="#64748B"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="21"
+    font-weight="500">Jornalismo hiperlocal, apurado na fonte.</text
+  >
+
+  {/* Cruz da bandeira, no canto inferior direito */}
+  <g transform="translate(1092 616) scale(0.42)">
+    <rect x="0" y="0" width="100" height="18" fill="#008026" />
+    <rect x="0" y="18" width="100" height="64" fill="#FFFFFF" />
+    <rect x="0" y="82" width="100" height="18" fill="#E60000" />
+    <rect x="26" y="28" width="8" height="44" fill="#E60000" />
+    <rect x="18" y="37" width="24" height="8" fill="#E60000" />
+  </g>
+</svg>

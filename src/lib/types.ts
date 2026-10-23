@@ -63,6 +63,10 @@ export interface Article {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Veiculo de origem, quando a materia vem de agencia (ex.: Agencia Brasil). */
+  source_name?: string | null;
+  /** Link para a materia original no veiculo de origem. */
+  source_url?: string | null;
 }
 
 export interface PublicUtility {
