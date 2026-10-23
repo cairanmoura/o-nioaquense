@@ -1,0 +1,15 @@
+<svg id="svg-13" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="64" height="64">
+            <rect width="80" height="80" rx="18" fill="#FAF9F6"></rect>
+            <!-- Capa Dura Inferior -->
+            <path d="M12 28 C22 24, 34 26, 40 31 C46 26, 58 24, 68 28 L68 60 C58 56, 46 58, 40 63 C34 58, 22 56, 12 60 Z" fill="#008026"></path>
+            <!-- Páginas Brancas Internas com Curva de Livro Real -->
+            <path d="M15 24 C24 20, 34 22, 40 27 C46 22, 56 20, 65 24 L65 54 C56 50, 46 52, 40 57 C34 52, 24 50, 15 54 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="2.5" stroke-linejoin="round"></path>
+            <!-- Dobra Central e Linhas de Texto -->
+            <line x1="40" y1="27" x2="40" y2="57" stroke="#1E293B" stroke-width="2.5"></line>
+            <path d="M21 32 Q28 30, 34 33" fill="none" stroke="#008026" stroke-width="2.2" stroke-linecap="round"></path>
+            <path d="M21 39 Q28 37, 34 40" fill="none" stroke="#008026" stroke-width="2.2" stroke-linecap="round"></path>
+            <path d="M46 33 Q52 30, 59 32" fill="none" stroke="#008026" stroke-width="2.2" stroke-linecap="round"></path>
+            <path d="M46 40 Q52 37, 59 39" fill="none" stroke="#008026" stroke-width="2.2" stroke-linecap="round"></path>
+            <!-- Fita Marcadora Vermelha Saindo de Baixo -->
+            <polygon points="37,56 43,56 43,69 40,65 37,69" fill="#E60000"></polygon>
+          </svg>

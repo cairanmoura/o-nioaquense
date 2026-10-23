@@ -1,0 +1,19 @@
+<svg id="svg-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="64" height="64">
+            <rect width="80" height="80" rx="18" fill="#FAF9F6"></rect>
+            <!-- Bandeirolas no topo -->
+            <path d="M10,18 Q40,26 70,16" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"></path>
+            <polygon points="16,19 25,21 20,31" fill="#008026"></polygon>
+            <polygon points="34,22 43,22 38,32" fill="#E60000"></polygon>
+            <polygon points="52,20 61,18 56,29" fill="#008026"></polygon>
+            <!-- Violão Inclinado -->
+            <g transform="rotate(-35 42 52)">
+              <!-- Braço e Mão do Violão -->
+              <rect x="39.5" y="22" width="5" height="22" rx="1.5" fill="#1E293B"></rect>
+              <rect x="38.5" y="17" width="7" height="6" rx="1.5" fill="#E60000"></rect>
+              <!-- Corpo em 8 do Violão -->
+              <path d="M42 38 C35 38, 32 43, 35 48 C37 51, 37 52, 34 55 C30 59, 32 67, 42 67 C52 67, 54 59, 50 55 C47 52, 47 51, 49 48 C52 43, 49 38, 42 38 Z" fill="#008026"></path>
+              <!-- Boca do Violão e Cavalete -->
+              <circle cx="42" cy="49" r="3.8" fill="#FAF9F6" stroke="#E60000" stroke-width="1.8"></circle>
+              <rect x="37" y="58" width="10" height="2.5" rx="1" fill="#FAF9F6"></rect>
+            </g>
+          </svg>

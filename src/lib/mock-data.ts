@@ -5,11 +5,11 @@
  *
  * Objetivo: permitir que a home, a materia e o painel /admin sejam developidos
  * e revisados (design, layout, mobile-first) ANTES de conectar as chaves de
- * producao do Supabase.
+ * produção do Supabase.
  *
- * Os titulos e resumos abaixo sao de Matters de Nioaque (MS), MS e Brasil
+ * Os títulos e resumos abaixo são de Matters de Nioaque (MS), MS e Brasil
  * publicados nos portais locais de referencia, usados aqui como semente de
- * desenvolvimento. Sao seeds de demonstracao, nao acervo proprio do portal.
+ * desenvolvimento. São seeds de demonstracao, não acervo proprio do portal.
  *
  * IMPORTANTE: todo o conteudo abaixo e' FICTICIO e serve apenas como
  * semente. Ao conectar o Supabase, `src/lib/content.ts` passa a ler do
@@ -78,7 +78,7 @@ export const mockProfiles: Profile[] = [
     slug: 'rafael-prado',
     role: 'columnist',
     column_name: 'Radar MS',
-    bio: 'Correspondente regional. Acompanha as decisoes do governo estadual e os numeros que impactam o interior de MS.',
+    bio: 'Correspondente regional. Acompanha as decisoes do governo estadual e os números que impactam o interior de MS.',
     avatar_url: '/covers/avatar-rafael.svg',
     social_links: { linkedin: 'https://linkedin.com/in/radarms' },
     can_publish_directly: true,
@@ -90,7 +90,7 @@ export const mockProfiles: Profile[] = [
     slug: 'vinicius-prado',
     role: 'columnist',
     column_name: 'Bastidores',
-    bio: 'Fica nos bastidores da Camera, da Prefeitura e das entidades do municipio. O que o anuncio nao conta.',
+    bio: 'Fica nos bastidores da Camera, da Prefeitura e das entidades do municipio. O que o anuncio não conta.',
     avatar_url: '/covers/avatar-vinicius.svg',
     social_links: {},
     can_publish_directly: false,
@@ -106,20 +106,20 @@ export const mockArticles: Article[] = [
   {
     id: '20000000-0000-4000-8000-000000000001',
     title:
-      'Motociclista de 28 anos morre apos grave acidente entre moto e Fiorino no ultimo sabado, em Nioaque',
-    subtitle: 'Colisao frontal ocorreu na BR-060; vítima foi socorrida em estado grave',
+      'Motociclista de 28 anos morre após grave acidente entre moto e Fiorino no último sábado, em Nioaque',
+    subtitle: 'Colisão frontal ocorreu na BR-060; vítima foi socorrida em estado grave',
     slug: 'motociclista-28-anos-morre-acidente-moto-fiorino-br-060-nioaque',
     summary_bullets: [
-      'A colisao frontal aconteceu na BR-060, no ultimo sabado (17), em Nioaque.',
+      'A colisão frontal aconteceu na BR-060, no último sábado (17), em Nioaque.',
       'Wellington Henrique foi socorrido em estado grave e encaminhado para Campo Grande.',
-      'A vitima nao resistiu aos ferimentos e o caso foi registrado como morte no local.',
+      'A vítima não resistiu aos ferimentos e o caso foi registrado como morte no local.',
     ],
-    content: `<p>Um motociclista de 28 anos morreu na noite do sabado (17) apos se envolver em uma colisao frontal entre uma moto e um Fiorino na BR-060, em Nioaque.</p>
-<p>Wellington Henrique foi socorrido ainda no local, em estado grave, e encaminhado para uma unidade hospitalar de Campo Grande. Nao resistiu aos ferimentos.</p>
-<p>A Policia Militar atendeu a chamada e iniciou o resgate. A prova de crash foi recolhida pela pericia.</p>
-<p>Segundo informacoes da corporacao, a pista estava molhada no momento da colisao. A apuracao das causas segue em andamento.</p>`,
+    content: `<p>Um motociclista de 28 anos morreu na noite do sábado (17) após se envolver em uma colisão frontal entre uma moto e um Fiorino na BR-060, em Nioaque.</p>
+<p>Wellington Henrique foi socorrido ainda no local, em estado grave, e encaminhado para uma unidade hospitalar de Campo Grande. Não resistiu aos ferimentos.</p>
+<p>A Polícia Militar atendeu a chamada e iniciou o resgate. A prova de crash foi recolhida pela pericia.</p>
+<p>Segundo informações da corporacao, a pista estava molhada no momento da colisão. A apuracao das causas segue em andamento.</p>`,
     cover_image_url: '/covers/cap-01.svg',
-    cover_image_caption: 'Trecho da BR-060 onde aconteceu a colisao',
+    cover_image_caption: 'Trecho da BR-060 onde aconteceu a colisão',
     scope: 'nioaque',
     category_label: 'Acidente Nioaque',
     is_breaking: false,
@@ -133,21 +133,21 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000002',
-    title: 'De Nioaque para Portugal: pratica de inclusao da rede municipal ganha projecao internacional',
+    title: 'De Nioaque para Portugal: prática de inclusao da rede municipal ganha projecao internacional',
     subtitle: 'Experiencia em escolas municipais virou estudo de caso apresentado em Braga',
     slug: 'de-nioaque-para-portugal-pratica-inclusao-rede-municipal',
     summary_bullets: [
-      "A experiencia desenvolvida nas escolas municipais virou estudo de caso em um livro sobre educacao de estudantes autistas.",
+      "A experiencia desenvolvida nas escolas municipais virou estudo de caso em um livro sobre educação de estudantes autistas.",
       'O material foi apresentado em Braga, Portugal, para uma plateia de professores.',
-      'A rede municipal earned o reconhecimento por meio de uma pratica de acompanhamento pedagogico.',
+      'A rede municipal earned o reconhecimento por meio de uma prática de acompanhamento pedagogico.',
     ],
-    content: `<p>Uma pratica desenvolvida nas escolas municipais de Nioaque sobre educacao de estudantes autistas virou estudo de caso de um livro publicado no exterior. O trabalho foi apresentado em Braga, Portugal.</p>
-<p>A iniciativa da rede municipal earned o destaque por adotar um acompanhamento pedagogico que combina avaliacao continua e participacao da familia no plano de ensino de cada aluno.</p>
-<p>Segundo a Secretaria de Educacao, o reconhecimento internacional abre porta para intercambio de formacao com outras redes municipais do pais.</p>`,
+    content: `<p>Uma prática desenvolvida nas escolas municipais de Nioaque sobre educação de estudantes autistas virou estudo de caso de um livro publicado no exterior. O trabalho foi apresentado em Braga, Portugal.</p>
+<p>A iniciativa da rede municipal earned o destaque por adotar um acompanhamento pedagogico que combina avaliacao continua e participação da familia no plano de ensino de cada aluno.</p>
+<p>Segundo a Secretaria de Educação, o reconhecimento internacional abre porta para intercambio de formação com outras redes municipais do pais.</p>`,
     cover_image_url: '/covers/cap-02.svg',
-    cover_image_caption: 'Presentation da pratica em Braga, Portugal',
+    cover_image_caption: 'Presentation da prática em Braga, Portugal',
     scope: 'nioaque',
-    category_label: 'Educacao Nioaque',
+    category_label: 'Educação Nioaque',
     is_breaking: false,
     is_featured: true,
     author_id: '10000000-0000-4000-8000-000000000001',
@@ -159,17 +159,17 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000003',
-    title: 'Produtores rurais de Nioaque recebem fertilizante organico para ampliar producao',
-    subtitle: 'Distribuicao busca reduzir custos, ampliar a producao e fortalecer a renda das familias rurais',
+    title: 'Produtores rurais de Nioaque recebem fertilizante organico para ampliar produção',
+    subtitle: 'Distribuicao busca reduzir custos, ampliar a produção e fortalecer a renda das familias rurais',
     slug: 'produtores-rurais-nioaque-recebem-fertilizante-organico',
     summary_bullets: [
       'A entrega do fertilizante organico foi feita a familias produtoras do municipio.',
-      'A acao busca reduzir o custo de producao e ampliar a produtividade na lavoura.',
+      'A acao busca reduzir o custo de produção e ampliar a produtividade na lavoura.',
       'Produtores apontam que a medida fortalece a renda e a permanencia das familias no campo.',
     ],
-    content: `<p>Produtores rurais de Nioaque receberam fertilizante organico em uma acao promovida com apoio do poder publico. A distribuicao tem como meta reduzir custos, ampliar a producao e fortalecer a renda das familias.</p>
-<p>O material, de origem organica, foi distribuido conforme a area de cada propriedade e o tipo de cultura. Para quem vive da lavoura, a reducao do custo de insumo e' o principal ganho.</p>
-<p>A expectativa e' de que a producao local aumente e que mais familias permaneçam no campo, em um municipio que tem a agricultura familiar como base da economia.</p>`,
+    content: `<p>Produtores rurais de Nioaque receberam fertilizante organico em uma acao promovida com apoio do poder público. A distribuição tem como meta reduzir custos, ampliar a produção e fortalecer a renda das familias.</p>
+<p>O material, de origem organica, foi distribuido conforme a área de cada propriedade e o tipo de cultura. Para quem vive da lavoura, a redução do custo de insumo e' o principal ganho.</p>
+<p>A expectativa e' de que a produção local aumente e que mais familias permaneçam no campo, em um municipio que tem a agricultura familiar como base da economia.</p>`,
     cover_image_url: '/covers/cap-03.svg',
     cover_image_caption: 'Entrega do fertilizante as familias produtoras',
     scope: 'nioaque',
@@ -189,15 +189,15 @@ export const mockArticles: Article[] = [
     subtitle: 'Novo grupo monitora resultados, apoia professores e define estrategias de desempenho',
     slug: 'nioaque-institui-comite-alfabetizacao-aprendizagem-alunos',
     summary_bullets: [
-      'O novo comite terá participacao de profissionais da educacao da rede municipal.',
+      'O novo comite terá participação de profissionais da educação da rede municipal.',
       'O grupo vai monitorar resultados, apoiar professores e definir estrategias de melhoria.',
       'A acao mira direto no desempenho dos estudantes nos primeiros anos do ensino fundamental.',
     ],
-    content: `<p>Nioaque instituiu um comite para acompanhar a alfabetizacao e a aprendizagem dos alunos da rede municipal. O grupo tera participacao de profissionais da educacao.</p>
+    content: `<p>Nioaque instituiu um comite para acompanhar a alfabetizacao e a aprendizagem dos alunos da rede municipal. O grupo tera participação de profissionais da educação.</p>
 <p>Entre as atribuicoes estao monitorar os resultados, apoiar os professores e definir estrategias para melhorar o desempenho dos estudantes.</p>
 <p>A medida foi apresentada como parte do trabalho de recuperacao da aprendizagem, que concentra o esforco nos primeiros anos do ensino fundamental.</p>`,
     cover_image_url: '/covers/cap-04.svg',
-    cover_image_caption: 'Reuniao de apresentacao do novo comite',
+    cover_image_caption: 'Reunião de apresentacao do novo comite',
     scope: 'nioaque',
     category_label: 'Nioaque',
     is_breaking: false,
@@ -215,13 +215,13 @@ export const mockArticles: Article[] = [
     subtitle: 'Unidade havia retomado as atividades em agosto e anunciou nova paralisacao',
     slug: 'frigorifico-nioaque-frigocampo-paralisa-falta-materia-prima',
     summary_bullets: [
-      'O frigorifico havia retomado as atividades em agosto, apos um periodo parado.',
+      'O frigorifico havia retomado as atividades em agosto, após um período parado.',
       'A empresa anunciou nova paralisacao diante das dificuldades no abastecimento de materia-prima.',
-      'A situacao affects o emprego e o abastecimento de carne na regiao.',
+      'A situação affects o emprego e o abastecimento de carne na região.',
     ],
     content: `<p>O Frigorifico de Nioaque, o Frigocampo, voltou a paralisar suas atividades por falta de materia-prima. A unidade, que havia retomado o trabalho em agosto, anunciou uma nova suspensao.</p>
-<p>O abastecimento irregular temReachado o municipio eDivide a regiao. A empresa informou que tenta regularizar o fluxo de insumos.</p>
-<p>Trabalhadores da unidade foram orientados sobre a situacao. A Camera Municipal deve convocar representantes para clarear o cronograma.</p>`,
+<p>O abastecimento irregular temReachado o municipio eDivide a região. A empresa informou que tenta regularizar o fluxo de insumos.</p>
+<p>Trabalhadores da unidade foram orientados sobre a situação. A Camera Municipal deve convocar representantes para clarear o cronograma.</p>`,
     cover_image_url: '/covers/cap-05.svg',
     cover_image_caption: 'Frigocampo, frigorifico de Nioaque',
     scope: 'nioaque',
@@ -243,10 +243,10 @@ export const mockArticles: Article[] = [
     summary_bullets: [
       "A feira e' realizada duas vezes por semana nas proximidades da Rodoviaria.",
       "A proximidade do consumidor e' do produtor ajuda a movimentar a agricultura familiar.",
-      'A resolucao dafeira amplia o comercio local e a oferta de produtos frescos na cidade.',
+      'A resolucao dafeira amplia o comércio local e a oferta de produtos frescos na cidade.',
     ],
     content: `<p>A Feira do Produtor movimenta Nioaque com produtos frescos e ajuda a fortalecer os agricultores locais. A feira acontece duas vezes por semana nas proximidades da Rodoviaria.</p>
-<p>A proximidade entre consumidor e produtor e' apontada como o principal trunfo da iniciativa, que amplia o comercio local e a oferta de produtos frescos na cidade.</p>
+<p>A proximidade entre consumidor e produtor e' apontada como o principal trunfo da iniciativa, que amplia o comércio local e a oferta de produtos frescos na cidade.</p>
 <p>Produtores da agricultura familiarParticipam com verduras, frutas, queijo,___
 </p>`.replace('\n', ''),
     cover_image_url: '/covers/cap-06.svg',
@@ -264,17 +264,17 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000007',
-    title: 'Crianca de 3 anos morre apos descarga eletrica em propriedade rural de Nioaque',
-    subtitle: 'Salomao Eduardo Rodrigues foi encontrado proximo a um galinheiro, em contato com fio solto',
+    title: 'Crianca de 3 anos morre após descarga eletrica em propriedade rural de Nioaque',
+    subtitle: 'Salomao Eduardo Rodrigues foi encontrado próximo a um galinheiro, em contato com fio solto',
     slug: 'crianca-3-anos-morre-descarga-eletrica-propriedade-rural-nioaque',
     summary_bullets: [
-      'A crianca de 3 anos foi encontrada caida proximo a um galinheiro, em contato com um fio de energia solto.',
+      'A crianca de 3 anos foi encontrada caida próximo a um galinheiro, em contato com um fio de energia solto.',
       'As circunstancias da morte serao investigadas pela authorities locais.',
-      "O caso foi encaminhado a Policia Civil.",
+      "O caso foi encaminhado a Polícia Civil.",
     ],
-    content: `<p>Uma crianca de 3 anos morreu apos descarga eletrica em uma propriedade rural de Nioaque. Salomão Eduardo Rodrigues foi encontrado caido proximo a um galinheiro e em contato com um fio de energia solto.</p>
-<p>As circunstancias da morte serao investigadas. O caso foi encaminhado a Policia Civil e o corpo foi enviado ao IML de Jardim.</p>
-<p>A comunidade rural pediu reforco na manutencao da rede eletrica na regiao, que tem historico de outages em areas deetti.</p>`,
+    content: `<p>Uma crianca de 3 anos morreu após descarga eletrica em uma propriedade rural de Nioaque. Salomão Eduardo Rodrigues foi encontrado caido próximo a um galinheiro e em contato com um fio de energia solto.</p>
+<p>As circunstancias da morte serao investigadas. O caso foi encaminhado a Polícia Civil e o corpo foi enviado ao IML de Jardim.</p>
+<p>A comunidade rural pediu reforco na manutenção da rede eletrica na região, que tem histórico de outages em áreas deetti.</p>`,
     cover_image_url: '/covers/cap-07.svg',
     cover_image_caption: 'Propriedade rural onde aconteceu a fatalidade',
     scope: 'nioaque',
@@ -291,16 +291,16 @@ export const mockArticles: Article[] = [
   {
     id: '20000000-0000-4000-8000-000000000008',
     title: '70 municipios de MS estao em alerta para tempestade; Nioaque esta entre as cidades',
-    subtitle: 'Aviso do INMET predicts chuva de ate 50 mm por dia, ventos de 60 km/h e granizo',
+    subtitle: 'Aviso do INMET predicts chuva de até 50 mm por dia, ventos de 60 km/h e granizo',
     slug: '70-municipios-ms-alerta-tempestade-nioaque-inmet',
     summary_bullets: [
       'O aviso do INMET cobre 70 municipios de Mato Grosso do Sul, Nioaque entre eles.',
-      'A previsao indica chuva de ate 50 mm por dia e ventos de ate 60 km/h.',
-      'Existe possibilidade de granizo; a populacao deve se proteger em caso de temporal.',
+      'A previsao indica chuva de até 50 mm por dia e ventos de até 60 km/h.',
+      'Existe possibilidade de granizo; a população deve se proteger em caso de temporal.',
     ],
-    content: `<p>O INMET emitiu aviso de tempestade para 70 municipios de Mato Grosso do Sul, e Nioaque esta entre as cidades incluidas. O alerta predicts chuva de ate 50 mm por dia, ventos de ate 60 km/h e possibilidade de granizo.</p>
-<p>A Defesa Civil orientou a populacao a se abrigar em construcoes seguras, evitar areas de grande circulacao de veiculos e observar o risco de queda de arvores.</p>
-<p>Antes, o INMET tinha emitido alerta vermelho com grande perigo para 33 cidades do Estado, com ventos de ate 100 km/h.</p>`,
+    content: `<p>O INMET emitiu aviso de tempestade para 70 municipios de Mato Grosso do Sul, e Nioaque esta entre as cidades incluidas. O alerta predicts chuva de até 50 mm por dia, ventos de até 60 km/h e possibilidade de granizo.</p>
+<p>A Defesa Civil orientou a população a se abrigar em construcoes seguras, evitar áreas de grande circulacao de veículos e observar o risco de queda de arvores.</p>
+<p>Antes, o INMET tinha emitido alerta vermelho com grande perigo para 33 cidades do Estado, com ventos de até 100 km/h.</p>`,
     cover_image_url: '/covers/cap-08.svg',
     cover_image_caption: 'Céu sobre a região durante o temporal',
     scope: 'nioaque',
@@ -325,7 +325,7 @@ export const mockArticles: Article[] = [
       'A competicao envolve as equipes do municipio e movimenta o esporte local.',
     ],
     content: `<p>Nioaque tera Campeonato Municipal de Futebol com premio total de R$ 18,4 mil. O decreto foi publicado no Diario Oficial do Municipio.</p>
-<p>O cronograma preve o inicio da competicao para o dia 27 de setembro, com R$ 10 mil destinados ao campeao. As inscricoes das equipes ficam abertas ate a data limite prevista no decreto.</p>
+<p>O cronograma preve o inicio da competicao para o dia 27 de setembro, com R$ 10 mil destinados ao campeao. As inscricoes das equipes ficam abertas até a data limite prevista no decreto.</p>
 <p>A iniciativa movimenta o esporte amador e dao mais espaco para os atletas do municipio.</p>`,
     cover_image_url: '/covers/cap-09.svg',
     cover_image_caption: 'Campo onde será disputada a competição',
@@ -342,19 +342,19 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000010',
-    title: 'Nioaque instala Conselho Municipal dos Direitos da Mulher e amplia participacao feminina',
-    subtitle: 'Novo orgao reune Poder Publico e sociedade civil para acompanhar politicas publicas',
+    title: 'Nioaque instala Conselho Municipal dos Direitos da Mulher e amplia participação feminina',
+    subtitle: 'Novo órgão reune Poder Público e sociedade civil para acompanhar politicas publicas',
     slug: 'nioaque-instala-conselho-direitos-da-mulher',
     summary_bullets: [
-      'O novo orgao reune o Poder Publico e a sociedade civil.',
+      'O novo órgão reune o Poder Público e a sociedade civil.',
       "A ideia e' acompanhar e contribuir com politicas publicas voltadas as mulheres.",
-      'A instalacao amplia a participacao feminina na tomada de decisoes do municipio.',
+      'A instalação amplia a participação feminina na tomada de decisoes do municipio.',
     ],
-    content: `<p>Nioaque instalou o Conselho Municipal dos Direitos da Mulher. O novo orgao reune o Poder Publico e a sociedade civil.</p>
-<p>A competencia do conselho e' acompanhar e contribuir com as politicas publicas voltadas as mulheres do municipio, dando mais peso a participacao feminina nas decisoes do municipio.</p>
-<p>A instalacao foi acompanhada por representatives do municipio e por entidades da sociedade civil.</p>`,
+    content: `<p>Nioaque instalou o Conselho Municipal dos Direitos da Mulher. O novo órgão reune o Poder Público e a sociedade civil.</p>
+<p>A competencia do conselho e' acompanhar e contribuir com as politicas publicas voltadas as mulheres do municipio, dando mais peso a participação feminina nas decisoes do municipio.</p>
+<p>A instalação foi acompanhada por representatives do municipio e por entidades da sociedade civil.</p>`,
     cover_image_url: '/covers/cap-10.svg',
-    cover_image_caption: 'Sessao de instalacao do conselho',
+    cover_image_caption: 'Sessao de instalação do conselho',
     scope: 'nioaque',
     category_label: 'Nioaque',
     is_breaking: false,
@@ -369,20 +369,20 @@ export const mockArticles: Article[] = [
   {
     id: '20000000-0000-4000-8000-000000000011',
     title: "Suspeito de duplo homicide em Nioaque informa onde teria deixado a arma; revolver e' apreendido",
-    subtitle: 'Diligencias da Policia Civil encontraram revólver calibre .38',
+    subtitle: 'Diligencias da Polícia Civil encontraram revólver calibre .38',
     slug: 'suspeito-duplo-homicidio-nioaque-revolver-apreendido',
     summary_bullets: [
-      'O homem se apresentou na Brigada de Policia Civil de Nioaque e indicou o local da arma.',
+      'O homem se apresentou na Brigada de Polícia Civil de Nioaque e indicou o local da arma.',
       'A equipe policial realizo diligencias e encontrou um revolver calibre .38.',
       'O crime uninsured no Assentamento Colonia Conceicao, na ultima sexta-feira (17).',
     ],
-    content: `<p>Apos se apresentar na.SUPP de Policia Civil de Nioaque, o homem apontado como suspeito pelo duploFILES indicou aos policiais o local onde teria se desfeito da arma utilizada no crime.</p>
+    content: `<p>Após se apresentar na.SUPP de Polícia Civil de Nioaque, o homem apontado como suspeito pelo duploFILES indicou aos policiais o local onde teria se desfeito da arma utilizada no crime.</p>
 <p>A equipe policial realizou diligencias e encontrou o revolver calibre .38 no local apontado. O crime uninsured no Assentamento Colonia Conceicao, na ultima sexta-feira (17).</p>
 <p>As apuracoes seguem em andamento.</p>`,
     cover_image_url: '/covers/cap-11.svg',
     cover_image_caption: 'Revólver apreendido pela Polícia Civil',
     scope: 'nioaque',
-    category_label: 'Policia Nioaque',
+    category_label: 'Polícia Nioaque',
     is_breaking: false,
     is_featured: false,
     author_id: '10000000-0000-4000-8000-000000000001',
@@ -395,19 +395,19 @@ export const mockArticles: Article[] = [
   {
     id: '20000000-0000-4000-8000-000000000012',
     title: 'Urgente: possivel morte por afogamento mobiliza autoridades no bairro Baia, em Nioaque',
-    subtitle: 'Policia Militar e Civil confirmaram a ocorrencia; Policia Cientifica foi acionada',
+    subtitle: 'Polícia Militar e Civil confirmaram a ocorrencia; Polícia Cientifica foi acionada',
     slug: 'urgente-possivel-morte-por-afogamento-bairro-baia-nioaque',
     summary_bullets: [
-      'A Policia Militar e a Policia Civil confirmaram a ocorrencia a reportagem.',
-      'A Policia Cientifica foi acionada para realizar a pericia.',
+      'A Polícia Militar e a Polícia Civil confirmaram a ocorrencia a reportagem.',
+      'A Polícia Cientifica foi acionada para realizar a pericia.',
       'As autoridades trabalham para esclarecer as circunstancias da morte.',
     ],
-    content: `<p>Possivel morte por afogamento mobilizou autoridades no bairro Baia, em Nioaque. A Policia Militar e a Policia Civil confirmaram a ocorrencia a reportagem.</p>
-<p>A Policia Cientifica foi acionada para realizar a pericia e esclarecer as circunstancias da morte. Equipes também trabalharam na busca na regiao.</p>`,
+    content: `<p>Possivel morte por afogamento mobilizou autoridades no bairro Baia, em Nioaque. A Polícia Militar e a Polícia Civil confirmaram a ocorrencia a reportagem.</p>
+<p>A Polícia Cientifica foi acionada para realizar a pericia e esclarecer as circunstancias da morte. Equipes também trabalharam na busca na região.</p>`,
     cover_image_url: '/covers/cap-12.svg',
     cover_image_caption: 'Área da ocorrência no bairro Baía',
     scope: 'nioaque',
-    category_label: 'Policia Nioaque',
+    category_label: 'Polícia Nioaque',
     is_breaking: true,
     is_featured: false,
     author_id: '10000000-0000-4000-8000-000000000001',
@@ -429,10 +429,10 @@ export const mockArticles: Article[] = [
     summary_bullets: [
       'A Agehab-MS notificou moradores de 19 cidades de Mato Grosso do Sul.',
       'Os mutuarios relacionados tem cinco dias uteis para quitar os atrasados.',
-      'A notificacao trata de dividas de casas populares do programa estadual.',
+      'A notificação trata de dividas de casas populares do programa estadual.',
     ],
     content: `<p>A Agehab-MS notify moradores de 19 cidades de Mato Grosso do Sul sobre dividas de casas populares. Os mutuarios relacionados tem cinco dias uteis para quitar os atrasados.</p>
-<p>A notificacao e' etapa de regularizacao do programa estadual de moradias. Quem nao quitar no prazo pode ter o contrato reavaliado.</p>`,
+<p>A notificação e' etapa de regularizacao do programa estadual de moradias. Quem não quitar no prazo pode ter o contrato reavaliado.</p>`,
     cover_image_url: '/covers/cap-13.svg',
     cover_image_caption: 'Conjunto habitacional do programa estadual',
     scope: 'ms',
@@ -454,10 +454,10 @@ export const mockArticles: Article[] = [
     summary_bullets: [
       'A Agesul formalizou contrato com empreiteira para asfalto e drenagem.',
       "O valor do contrato e' de R$ 12 milhoes para obras em vias urbanas de Aquidauana.",
-      'A intervencao responde a uma das principais demandas da cidade vizinha.',
+      'A intervenção responde a uma das principais demandas da cidade vizinha.',
     ],
     content: `<p>Uma empresa foi contratada por R$ 12 milhoes para_execucao de obras de asfalto e drenagem em vias urbanas de Aquidauana. A Agesul formalizou o contrato com a empreiteira.</p>
-<p>O pacote responde a uma das principais demandas de circulacao da cidade vizinha e faz parte do ritmo de intervencoes na regiao.</p>`,
+<p>O pacote responde a uma das principais demandas de circulacao da cidade vizinha e faz parte do ritmo de intervencoes na região.</p>`,
     cover_image_url: '/covers/cap-14.svg',
     cover_image_caption: 'Obra de asfalto em via urbana de Aquidauana',
     scope: 'ms',
@@ -473,15 +473,15 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000022',
-    title: 'Mato Grosso do Sul entra em alerta amarelo para tempestades com granizo ate domingo',
+    title: 'Mato Grosso do Sul entra em alerta amarelo para tempestades com granizo até domingo',
     subtitle: 'Sul do Estado tem previsao de temporais mais intensos na sexta-feira (23)',
     slug: 'ms-alerta-amarelo-tempestades-com-granizo-ate-domingo',
     summary_bullets: [
-      'O Estado entrou em alerta amarelo para tempestades com granizo ate domingo.',
+      'O Estado entrou em alerta amarelo para tempestades com granizo até domingo.',
       'O Sul de MS tem previsao de temporais mais intensos na sexta-feira (23).',
       'A populace deve se proteger de raios, ventos fortes e queda de arvores.',
     ],
-    content: `<p>Mato Grosso do Sul entrou em alerta amarelo para tempestades com granizo ate domingo. O Sul do Estado tem previsao de temporais mais intensos na sexta-feira (23).</p>
+    content: `<p>Mato Grosso do Sul entrou em alerta amarelo para tempestades com granizo até domingo. O Sul do Estado tem previsao de temporais mais intensos na sexta-feira (23).</p>
 <p>O aviso indica rajadas de vento, chuva intensa e possibilidade de granizo. A orientacao e' evitar locais expostos e atividades ao ar livre.</p>`,
     cover_image_url: '/covers/cap-15.svg',
     cover_image_caption: 'Céu de tempestade sobre a região',
@@ -498,15 +498,15 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000023',
-    title: 'Semifinais do Estadual Sub-17 comecam neste sabado com duelos de ida',
+    title: 'Semifinais do Estadual Sub-17 comecam neste sábado com duelos de ida',
     subtitle: 'Nautico encara o Pantanal e Colorado enfrenta o Operario',
     slug: 'semifinais-estadual-sub-17-comecam-neste-sabado',
     summary_bullets: [
-      'As semifinais do Estadual Sub-17 comecam neste sabado com jogos de ida.',
+      'As semifinais do Estadual Sub-17 comecam neste sábado com jogos de ida.',
       'Nautico encara o Pantanal; Colorado enfrenta o Operario.',
       'Os classificados disputam a final no domingo seguinte.',
     ],
-    content: `<p>As semifinais do Estadual Sub-17 comecam neste sabado, com os duelos de ida. Nautico encara o Pantanal e Colorado enfrenta o Operario.</p>
+    content: `<p>As semifinais do Estadual Sub-17 comecam neste sábado, com os duelos de ida. Nautico encara o Pantanal e Colorado enfrenta o Operario.</p>
 <p>Quem vencer somando as duas partidas avanca para a final. A tabela e' disputada no domingo seguinte.</p>`,
     cover_image_url: '/covers/cap-16.svg',
     cover_image_caption: 'Estádio onde acontecem as semifinais',
@@ -532,9 +532,9 @@ export const mockArticles: Article[] = [
       "Para o produtor rural, a leitura e' de custo de capital mais previsivel.",
     ],
     content: `<p>As taxas de juros encerraram de lado de olho, em meio a disputa eleitoral e ao alivio no cenario externo. Os vencimentos medios e longos chegaram a virar para o terreno positivo.</p>
-<p>Para quem produz no campo, a traducao pratica e' de custo de capital mais previsivel na proxima safra.</p>`,
+<p>Para quem produz no campo, a traducao prática e' de custo de capital mais previsivel na proxima safra.</p>`,
     cover_image_url: '/covers/cap-17.svg',
-    cover_image_caption: 'Safra financiada pela linha de credito rural',
+    cover_image_caption: 'Safra financiada pela linha de crédito rural',
     scope: 'ms',
     category_label: 'Economia',
     is_breaking: false,
@@ -552,16 +552,16 @@ export const mockArticles: Article[] = [
   /* ------------------------------------------------------------------ */
   {
     id: '20000000-0000-4000-8000-000000000030',
-    title: 'PF investiga esquema de fraude em investimentos que deixou mais de 10 mil vitimas',
-    subtitle: 'Diligencias sao cumpridas em municipios de cinco estados diferentes',
+    title: 'PF investiga esquema de fraude em investimentos que deixou mais de 10 mil vítimas',
+    subtitle: 'Diligencias são cumpridas em municipios de cinco estados diferentes',
     slug: 'pf-investiga-esquema-fraude-investimentos-10-mil-vitimas',
     summary_bullets: [
-      'A Policia Federal investiga esquema de fraude em investimentos.',
-      'As diligencias sao cumpridas em municipios de cinco estados.',
-      'O numero de vitimas ja ultrapassa 10 mil pessoas.',
+      'A Polícia Federal investiga esquema de fraude em investimentos.',
+      'As diligencias são cumpridas em municipios de cinco estados.',
+      'O número de vítimas ja ultrapassa 10 mil pessoas.',
     ],
-    content: `<p>A Policia Federal investiga um esquema de fraude em investimentos que deixou mais de 10 mil vitimas. As diligencias estao sendo cumpridas em municipios de cinco estados diferentes.</p>
-<p>As autoridades ouviram os envolvidos e analisam documentos e sistemas para determinar a origem dos recursos e o numero de vitimas.</p>`,
+    content: `<p>A Polícia Federal investiga um esquema de fraude em investimentos que deixou mais de 10 mil vítimas. As diligencias estao sendo cumpridas em municipios de cinco estados diferentes.</p>
+<p>As autoridades ouviram os envolvidos e analisam documentos e sistemas para determinar a origem dos recursos e o número de vítimas.</p>`,
     cover_image_url: '/covers/cap-18.svg',
     cover_image_caption: 'Operação da Polícia Federal',
     scope: 'brasil',
@@ -577,16 +577,16 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000031',
-    title: 'Homem morre apos cair no tumulo do pai em cemiterio no Espirito Santo',
-    subtitle: 'A vitima tinha ido ao local para o sepultamento de um amigo que morreu em acidente',
+    title: 'Homem morre após cair no tumulo do pai em cemiterio no Espirito Santo',
+    subtitle: 'A vítima tinha ido ao local para o sepultamento de um amigo que morreu em acidente',
     slug: 'homem-morre-cair-tumulo-pai-cemiterio-espirito-santo',
     summary_bullets: [
-      'A vitima tinha ido ao cemiterio para o sepultamento de um amigo.',
+      'A vítima tinha ido ao cemiterio para o sepultamento de um amigo.',
       'A queda no tumulo do pai causou a morte.',
-      'O caso foi registrado pela Policia Civil local.',
+      'O caso foi registrado pela Polícia Civil local.',
     ],
-    content: `<p>Um homem morreu apos cair no tumulo do pai em um cemiterio do Espirito Santo. A vitima tinha ido ao local para o sepultamento de um amigo que morreu em acidente.</p>
-<p>O caso foi registrado pela Policia Civil local, que apura as circunstancias da queda.</p>`,
+    content: `<p>Um homem morreu após cair no tumulo do pai em um cemiterio do Espirito Santo. A vítima tinha ido ao local para o sepultamento de um amigo que morreu em acidente.</p>
+<p>O caso foi registrado pela Polícia Civil local, que apura as circunstancias da queda.</p>`,
     cover_image_url: '/covers/cap-19.svg',
     cover_image_caption: 'Cemitério onde aconteceu o caso',
     scope: 'brasil',
@@ -611,7 +611,7 @@ export const mockArticles: Article[] = [
       'Fluminense mostrou postura corajosa no inicio do jogo.',
     ],
     content: `<p>O Palmeiras sofreu em casa, mas venceu o Fluminense nos penaltis e avanca para a final da Libertadores. O Fluminense mostrou uma postura corajosa no inicio do jogo e chegou a abrir o placar.</p>
-<p>Foi necessario o roketa de GK para a vitoria paulista. O jogo de ida da final esta marcado para a proxima semana.</p>`,
+<p>Foi necessario o roketa de GK para a vitória paulista. O jogo de ida da final esta marcado para a proxima semana.</p>`,
     cover_image_url: '/covers/cap-20.svg',
     cover_image_caption: 'Estádio onde foi disputada a semifinal',
     scope: 'brasil',
@@ -635,7 +635,7 @@ export const mockArticles: Article[] = [
       'A Russia atacou uma refinaria da Ucrania.',
       'Sera o maior ataque em um dia em Ormuz desde fevereiro, se confirmado.',
     ],
-    content: `<p>O Ira atingiu sete navios e passou a ameacar os EUA no Oriente, enquanto a Russia atacou uma refinaria da Ucrania. Se o numero for confirmado, sera o maior ataque em um dia em Ormuz desde fevereiro.</p>
+    content: `<p>O Ira atingiu sete navios e passou a ameacar os EUA no Oriente, enquanto a Russia atacou uma refinaria da Ucrania. Se o número for confirmado, sera o maior ataque em um dia em Ormuz desde fevereiro.</p>
 <p>O mercado de petroleo reage a tensao, com alta na cotacao do barril.</p>`,
     cover_image_url: '/covers/cap-21.svg',
     cover_image_caption: 'Tensao no Oriente Medio',
@@ -660,12 +660,12 @@ export const mockArticles: Article[] = [
     subtitle: 'Coluna Visao de Nioaque',
     slug: 'coluna-visao-nioaque-municipio-que-aprendeu-do-medo',
     summary_bullets: [
-      'A resposta a alertas de tempestade em Nioaque virou rotina de protecao da populacao.',
-      'Defesa Civil,_INMET e comunicacao local trabalhando na mesma direcao.',
-      'O que era reacao de urgencia virou plano.',
+      'A resposta a alertas de tempestade em Nioaque virou rotina de protecao da população.',
+      'Defesa Civil,_INMET e comunicação local trabalhando na mesma direcao.',
+      'O que era reação de urgencia virou plano.',
     ],
     content: `<p>Toda cidade do interior aprende a ler o ceu. O que Nioaque aprendeu a fazer melhor foi transformar o alerta em rotina.</p>
-<p>Em poucas semanas, a comunicacao do municipio passou a repassar os avisos do INMET com a mesma frequencia com que avisa sobre o transporte ou a farmacia de plantao. Isso parece pequeno, nao e: e' a diferenca entre a pessoa se assustar e a pessoa se preparar.</p>
+<p>Em poucas semanas, a comunicação do municipio passou a repassar os avisos do INMET com a mesma frequencia com que avisa sobre o transporte ou a farmacia de plantao. Isso parece pequeno, não e: e' a diferenca entre a pessoa se assustar e a pessoa se preparar.</p>
 <p>Tem preco, tem protocolo, tem quem cuide. E' assim que se construtor de Confianca entre quem produz e quem decide.</p>`,
     cover_image_url: '/covers/cap-22.svg',
     cover_image_caption: 'Ilustracao sobre preparo para temporais',
@@ -687,11 +687,11 @@ export const mockArticles: Article[] = [
     slug: 'coluna-giro-de-bairro-feira-do-produtor-sustenta-cidade',
     summary_bullets: [
       'Duas manhas por semana a feira aproxima produtor e consumidor.',
-      'A agricultura familiar movimenta o comercio do municipio inteiro.',
+      'A agricultura familiar movimenta o comércio do municipio inteiro.',
       'Quem produz em Nioaque precisa de quem compra perto de casa.',
     ],
     content: `<p>Toda cidade que quer ser grande precisa de uma base que a sustente. Em Nioaque, essa base tem nome e horario: a Feira do Produtor, duas vezes por semana na Rodoviaria.</p>
-<p>Quem passa la na manha ve o que o campo produz e, no mesmo minuto, ve quem compra. E' essa proximidade que sustenta a agricultura familiar e, com ela, boa parte do comercio local.</p>
+<p>Quem passa la na manha ve o que o campo produz e, no mesmo minuto, ve quem compra. E' essa proximidade que sustenta a agricultura familiar e, com ela, boa parte do comércio local.</p>
 <p>Feira e' onde a cidade ve a si mesma. Bom sinal.</p>`,
     cover_image_url: '/covers/cap-23.svg',
     cover_image_caption: 'Bancas da Feira do Produtor',
@@ -708,17 +708,17 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000042',
-    title: 'Asfalto em Aquidauana e o que diz sobre a regiao',
+    title: 'Asfalto em Aquidauana e o que diz sobre a região',
     subtitle: 'Coluna Radar MS',
     slug: 'coluna-radar-ms-asfalto-aquidauana-regiao',
     summary_bullets: [
       'Contrato de R$ 12 milhoes para asfalto e drenagem em Aquidauana foi formalizado.',
-      'A intervencao mostra a prioridade do Estado na regiao de Aquidauana.',
+      'A intervenção mostra a prioridade do Estado na região de Aquidauana.',
       "Para Nioaque, a licao e' sobre a ordem das obras.",
     ],
     content: `<p>R$ 12 milhoes em asfalto e drenagem em Aquidauana: o contrato foi formalizado e diz bastante sobre como o Estado esta olhando para o Sul.</p>
-<p>Aquidauana e' a referencia regional para Nioaque em logistica, saude e comercio. Quando a cidade vizinha recebe obra de pavimentacao, o efeito chega aqui em horas.</p>
-<p>A licao pratica e' simples: quem tem projeto pronto espera menos. Nossas obras, por menorem, precisam de um passo a mais - e esse passo comeca no papel, nao nainauguracao.</p>`,
+<p>Aquidauana e' a referencia regional para Nioaque em logistica, saude e comércio. Quando a cidade vizinha recebe obra de pavimentacao, o efeito chega aqui em horas.</p>
+<p>A licao prática e' simples: quem tem projeto pronto espera menos. Nossas obras, por menorem, precisam de um passo a mais - e esse passo comeca no papel, não nainauguracao.</p>`,
     cover_image_url: '/covers/cap-24.svg',
     cover_image_caption: 'Máquina de pavimentação em via de Aquidauana',
     scope: 'coluna',
@@ -738,13 +738,13 @@ export const mockArticles: Article[] = [
     subtitle: 'Coluna Bastidores',
     slug: 'coluna-bastidores-quem-apaga-o-vazio-do-quadro-de-avisos',
     summary_bullets: [
-      'No municipio, muita informacao existe apenas em papel colado na porta.',
+      'No municipio, muita informação existe apenas em papel colado na porta.',
       'Diario Oficial, editais e contratos ficam acessiveis a quem sabe onde olhar.',
       'Transparencia so vale se o cidadao encontra.',
     ],
-    content: `<p>Existe uma informacao que quase nunca chega a quem precisa: a que esta afixada na porta da secretaria, em papel, defasada de duas semanas.</p>
-<p>Licitacao, contrato, parecer tecnico, ata de comissao. Tudo isso existe, e tudo isso esta no Diario Oficial do municipio. O problema e' a distancia entre o documento e a pessoa que precisa dele.</p>
-<p>Num municipio pequeno, transparencia nao e' um departing. E' a unica forma de o morador conferir se o que o municipio diz combina com o que ele fez.</p>`,
+    content: `<p>Existe uma informação que quase nunca chega a quem precisa: a que esta afixada na porta da secretaria, em papel, defasada de duas semanas.</p>
+<p>Licitacao, contrato, parecer técnico, ata de comissao. Tudo isso existe, e tudo isso esta no Diario Oficial do municipio. O problema e' a distancia entre o documento e a pessoa que precisa dele.</p>
+<p>Num municipio pequeno, transparencia não e' um departing. E' a unica forma de o morador conferir se o que o municipio diz combina com o que ele fez.</p>`,
     cover_image_url: '/covers/cap-25.svg',
     cover_image_caption: 'Quadro de avisos da secretaria',
     scope: 'coluna',
@@ -760,7 +760,7 @@ export const mockArticles: Article[] = [
   },
 
   /* ------------------------------------------------------------------ */
-  /* RADAR OFICIAL (Prefeitura, Camara, Concursos, Diario Oficial)      */
+  /* RADAR OFICIAL (Prefeitura, Câmara, Concursos, Diario Oficial)      */
   /* ------------------------------------------------------------------ */
   {
     id: '20000000-0000-4000-8000-000000000050',
@@ -772,8 +772,8 @@ export const mockArticles: Article[] = [
       "O valor e' de R$ 3.574.000,00 para uma Creche Pre-Escola Tipo 2 do FNDE.",
       'A obra sera construida no bairro Monte Alto.',
     ],
-    content: `<p>Foi homologada a empresa que vai construir a nova creche do bairro Monte Alto. A Dias Construtora e Empreendimentos LTDA foi declarada vencedora da concurrencia para construcao de uma Creche Pre-Escola Tipo 2 do FNDE.</p>
-<p>O valor contrato e' de R$ 3.574.000,00. O prazo de execucao consta no processo, consultado pela redacao junto a secretaria de Obras.</p>`,
+    content: `<p>Foi homologada a empresa que vai construir a nova creche do bairro Monte Alto. A Dias Construtora e Empreendimentos LTDA foi declarada vencedora da concurrencia para construção de uma Creche Pre-Escola Tipo 2 do FNDE.</p>
+<p>O valor contrato e' de R$ 3.574.000,00. O prazo de execução consta no processo, consultado pela redacao junto a secretaria de Obras.</p>`,
     cover_image_url: '/covers/cap-26.svg',
     cover_image_caption: 'Terreno da futura creche no bairro Monte Alto',
     scope: 'radar_oficial',
@@ -789,16 +789,16 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000051',
-    title: 'Camara de Campo Grande vota criacao do Conselho de Migrantes nesta quinta-feira',
+    title: 'Câmara de Campo Grande vota criação do Conselho de Migrantes nesta quinta-feira',
     subtitle: 'Radar Oficial',
     slug: 'radar-oficial-camara-campo-grande-conselho-migrantes-votacao',
     summary_bullets: [
-      'A Camara de Campo Grande vota nesta quinta-feira a criacao do Conselho de Migrantes.',
-      'Um projeto que revoga a doacao de imovel publico tambem sera analisado.',
-      'As sessoes sao transmitidas e podem ser acompanhadas pelo cidade.',
+      'A Câmara de Campo Grande vota nesta quinta-feira a criação do Conselho de Migrantes.',
+      'Um projeto que revoga a doacao de imovel público tambem sera analisado.',
+      'As sessoes são transmitidas e podem ser acompanhadas pelo cidade.',
     ],
-    content: `<p>A Camara de Campo Grande vota nesta quinta-feira a criacao do Conselho de Migrantes. Um projeto que revoga a doacao de imovel publico tambem sera analisado na mesma sessao.</p>
-<p>Sessoes da Camara sao transmitidas e podem ser acompanhadas pelo cidade, no site oficial.</p>`,
+    content: `<p>A Câmara de Campo Grande vota nesta quinta-feira a criação do Conselho de Migrantes. Um projeto que revoga a doacao de imovel público tambem sera analisado na mesma sessao.</p>
+<p>Sessoes da Câmara são transmitidas e podem ser acompanhadas pelo cidade, no site oficial.</p>`,
     cover_image_url: '/covers/cap-27.svg',
     cover_image_caption: 'Plenário da Câmara Municipal',
     scope: 'radar_oficial',
@@ -814,7 +814,7 @@ export const mockArticles: Article[] = [
   },
   {
     id: '20000000-0000-4000-8000-000000000052',
-    title: 'Camara de Paraiso das Aguas abre concurso com salarios de ate R$ 8,1 mil',
+    title: 'Câmara de Paraiso das Aguas abre concurso com salarios de até R$ 8,1 mil',
     subtitle: 'Radar Oficial',
     slug: 'radar-oficial-camara-paraiso-aguas-concurso-8-1-mil',
     summary_bullets: [
@@ -822,7 +822,7 @@ export const mockArticles: Article[] = [
       'Os salarios chegam a R$ 8,1 mil.',
       'As inscricoes seguem conforme o cronograma do edital.',
     ],
-    content: `<p>A Camara de Paraiso das Aguas abriu concurso com salarios de ate R$ 8,1 mil. O edital oferece vagas para candidatos com ensino medio e superior.</p>
+    content: `<p>A Câmara de Paraiso das Aguas abriu concurso com salarios de até R$ 8,1 mil. O edital oferece vagas para candidatos com ensino medio e superior.</p>
 <p>As inscricoes seguem conforme o cronograma publicado no edital, consultado pela redacao.</p>`,
     cover_image_url: '/covers/cap-28.svg',
     cover_image_caption: 'Edital publicado no Diário Oficial',
@@ -843,12 +843,12 @@ export const mockArticles: Article[] = [
     subtitle: 'Radar Oficial',
     slug: 'radar-oficial-campo-grande-600-vagas-emprego',
     summary_bullets: [
-      'Mais de 600 vagas sao ofertadas nesta quinta-feira em Campo Grande.',
-      '418 delas sao para pessoas sem experiencia.',
-      "A selecao e' feita em um unico dia, por ordem de chegada.",
+      'Mais de 600 vagas são ofertadas nesta quinta-feira em Campo Grande.',
+      '418 delas são para pessoas sem experiencia.',
+      "A selecao e' feita em um único dia, por ordem de chegada.",
     ],
-    content: `<p>De saladeiro a vigia: Campo Grande oferta mais de 600 vagas nesta quinta-feira. Do total, 418 sao para pessoas sem experiencia.</p>
-<p>A selecao acontece em um unico dia, por ordem de chegada. Quem busca a vaga precisa levar documento de identidade e comprovante de endereco.</p>`,
+    content: `<p>De saladeiro a vigia: Campo Grande oferta mais de 600 vagas nesta quinta-feira. Do total, 418 são para pessoas sem experiencia.</p>
+<p>A selecao acontece em um único dia, por ordem de chegada. Quem busca a vaga precisa levar documento de identidade e comprovante de endereco.</p>`,
     cover_image_url: '/covers/cap-29.svg',
     cover_image_caption: 'Fila de candidatos na seleção de vagas',
     scope: 'radar_oficial',
@@ -873,7 +873,7 @@ export const mockArticles: Article[] = [
       'Prazos para impugnacao vencem nesta sexta-feira.',
     ],
     content: `<p>A edicao desta semana do Diario Oficial do municipio reune portarias, editais e atos de licitacao. O gazeto pode ser lido online ou retirado em grafica no centro.</p>
-<p>Destaques: o regulamento do transporte escolar, a licitacao da obra de recapeamento e a tabela de onibus para o proximo trimestre. Os prazos para impugnacao vencem nesta sexta-feira.</p>`,
+<p>Destaques: o regulamento do transporte escolar, a licitacao da obra de recapeamento e a tabela de onibus para o próximo trimestre. Os prazos para impugnacao vencem nesta sexta-feira.</p>`,
     cover_image_url: '/covers/cap-30.svg',
     cover_image_caption: 'Edição semanal do Diário Oficial',
     scope: 'radar_oficial',
@@ -925,7 +925,7 @@ export const mockArticles: Article[] = [
       'Inscricoes de expositores terminam no fim do mes.',
       'O espaco da feira sera dividido em tres setores.',
     ],
-    content: `<p>A organizacao da Feira do Produtor confirmou 60 expositores para a proxima edicao. As inscricoes terminam no fim do mes e o espaco sera dividido em tres setores: alimentacao, artesanato e producao rural.</p>`,
+    content: `<p>A organização da Feira do Produtor confirmou 60 expositores para a proxima edicao. As inscricoes terminam no fim do mes e o espaco sera dividido em tres setores: alimentacao, artesanato e produção rural.</p>`,
     cover_image_url: '/covers/cap-32.svg',
     cover_image_caption: 'Montagem das bancas da feira municipal',
     scope: 'nioaque',
@@ -949,12 +949,12 @@ export const mockPublicUtilities: PublicUtility[] = [
   {
     id: '30000000-0000-4000-8000-000000000001',
     duty_date: '2026-10-22',
-    pharmacy_name: 'Drogaria Sao Lucas',
+    pharmacy_name: 'Drogaria São Lucas',
     pharmacy_phone: '(67) 3465-1122',
     pharmacy_address: 'Rua Pedro Celestino, 320 - Centro, Nioaque/MS',
     alert_active: true,
     alert_message:
-      'Mato Grosso do Sul em alerta amarelo para tempestades com granizo ate domingo. Chuva forte a partir das 16h em Nioaque; prefira a rota pela Avenida Afonso Arinos.',
+      'Mato Grosso do Sul em alerta amarelo para tempestades com granizo até domingo. Chuva forte a partir das 16h em Nioaque; prefira a rota pela Avenida Afonso Arinos.',
     alert_level: 'warning',
     bus_schedule_html: `<ul>
       <li><strong>Rio Brilhante</strong> - 06:30 e 18:00</li>
@@ -1005,7 +1005,7 @@ export const mockLocalAds: LocalAd[] = [
   {
     id: '40000000-0000-4000-8000-000000000002',
     client_name: 'Auto Pecas Silva',
-    title: 'Revisao completa e troca de oleo com preco especial para a regiao',
+    title: 'Revisao completa e troca de oleo com preco especial para a região',
     image_url: '/covers/ad-02.svg',
     target_url: '#',
     whatsapp_number: '5567998844210',
@@ -1020,8 +1020,8 @@ export const mockLocalAds: LocalAd[] = [
   },
   {
     id: '40000000-0000-4000-8000-000000000003',
-    client_name: 'Padaria Pao Quente',
-    title: 'Pao na chapa, cafe com receitas da casa e bolo de leite de quintal',
+    client_name: 'Padaria Pão Quente',
+    title: 'Pão na chapa, café com receitas da casa e bolo de leite de quintal',
     image_url: '/covers/ad-03.svg',
     target_url: '#',
     whatsapp_number: '5567977701234',
@@ -1037,7 +1037,7 @@ export const mockLocalAds: LocalAd[] = [
   {
     id: '40000000-0000-4000-8000-000000000004',
     client_name: 'Nioaque Imoveis',
-    title: 'Casas e lotes na regiao com financiamento facilitado',
+    title: 'Casas e lotes na região com financiamento facilitado',
     image_url: '/covers/ad-04.svg',
     target_url: '#',
     whatsapp_number: '5567996633001',
@@ -1253,7 +1253,7 @@ export const mockReaderSubmissions: ReaderSubmission[] = [
     sender_whatsapp: '5567911223344',
     neighborhood: 'Centro',
     message:
-      'A padaria da esquina esta vendendo pao com mofo. Gostaria que o portal publicasse a situacao para nao passar ninguem.',
+      'A padaria da esquina esta vendendo pão com mofo. Gostaria que o portal publicasse a situação para não passar ninguem.',
     media_urls: ['/covers/submission-01.svg'],
     status: 'pending',
     created_at: '2026-10-22T10:05:00Z',
