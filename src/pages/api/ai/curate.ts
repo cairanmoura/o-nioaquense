@@ -19,9 +19,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!url) throw new Error('URL vazia');
 
     // Extrai o HTML da URL original
-    const res = await fetch(url, { headers: { 'User-Agent': 'O-Nioaquense-Bot/1.0' } });
-    if (!res.ok) throw new Error(`Falha ao buscar URL: ${res.status}`);
-    const html = await res.text();
+    const pageRes = await fetch(url, { headers: { 'User-Agent': 'O-Nioaquense-Bot/1.0' } });
+    if (!pageRes.ok) throw new Error(`Falha ao buscar URL: ${pageRes.status}`);
+    const html = await pageRes.text();
 
     // Extrai texto (remove tags)
     const text = html
@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const apiKey = (locals as any)?.runtime?.env?.GEMINI_API_KEY ?? (locals as any)?.runtime?.env?.GOOGLE_API_KEY;
     if (!apiKey) throw new Error('Google Gemini API key nao configurada (GEMINI_API_KEY)');
 
-    const res = await fetch(
+    const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
@@ -57,8 +57,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }),
       },
     );
-    if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
-    const data = await res.json();
+    if (!geminiRes.ok) throw new Error(`Gemini API error: ${geminiRes.status}`);
+    const data = await geminiRes.json();
     const draft = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
     return new Response(JSON.stringify({ draft, suggestedImage, sourceUrl: url }), {
       status: 200,
