@@ -30,6 +30,12 @@ export default defineConfig({
     // Imagens: sharp roda em tempo de build (o runtime do Cloudflare nao tem sharp).
     // As fotos do portal sao convertidas em WebP e servidas pelo R2/CDN.
     imageService: 'compile',
+    // Entrada customizada: reexporta o handler do Astro e adiciona o gatilho
+    // `scheduled` (cron) usado pelo extrator de noticias (Fase 2).
+    workerEntryPoint: {
+      path: 'src/worker.ts',
+      namedExports: ['scheduled'],
+    },
   }),
   integrations: [react()],
   // Sessoes: o portal usa cookies do Supabase (SSR). O driver 'memory' evita

@@ -26,12 +26,20 @@ placement = { mode = "smart" }
 binding = "ASSETS"
 directory = "./dist"
 
+# Cloudflare Workers AI (Fase 3)
+[ai]
+binding = "AI"
+
 [observability]
 enabled = true
 
 [observability.logs]
 enabled = true
 invocation_logs = true
+
+# Cron: extrator de noticias (Fase 2) - a cada hora
+[triggers]
+crons = ["0 * * * *"]
 
 # -----------------------------------------------------------------------------
 #  Variaveis publicas (nao secretas) - espelham o .env

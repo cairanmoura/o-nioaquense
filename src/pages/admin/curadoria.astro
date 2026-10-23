@@ -1,0 +1,69 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+---
+
+<AdminLayout title="Curadoria" subtitle="Reescreva notícias de sites privados com IA">
+  <div class="mx-auto max-w-3xl space-y-6">
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <header class="mb-4">
+        <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+          Colar URL de notícia
+        </h2>
+        <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+          Cole a URL de uma notícia de site privado (Campo Grande News, Midiamax, G1). O sistema extrai
+          o texto e gera uma versão inédita com IA, que cai como rascunho.
+        </p>
+      </header>
+
+      <form id="curate" class="space-y-3">
+        <input
+          name="url"
+          type="url"
+          placeholder="https://www.campograndenews.com.br/..."
+          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+          required
+        />
+        <button type="submit" class="rounded-full bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+          Extrair e reescrever com IA
+        </button>
+      </form>
+
+      <div id="result" class="mt-4 hidden space-y-3">
+        <h3 class="text-sm font-semibold text-ink">Resultado</h3>
+        <div id="result-content" class="rounded-xl border border-line bg-editorial p-4 text-sm text-ink"></div>
+        <p class="text-xs text-ink-muted">
+          A mídia original é exibida como sugestão. O upload final para o Supabase deve ser aprovado pelo editor.
+        </p>
+      </div>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById('curate');
+  const result = document.getElementById('result');
+  const content = document.getElementById('result-content');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form as HTMLFormElement);
+    const url = fd.get('url');
+    if (content) content.textContent = 'Processando...';
+    result?.classList.remove('hidden');
+    try {
+      const res = await fetch('/api/ai/curate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (content) content.innerHTML = data?.draft ?? data?.error ?? 'Sem resultado';
+    } catch (err) {
+      if (content) content.textContent = 'Erro ao processar.';
+    }
+  });
+</script>

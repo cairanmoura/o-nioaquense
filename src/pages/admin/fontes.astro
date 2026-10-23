@@ -1,0 +1,90 @@
+---
+import ToggleSwitch from '../../components/admin/ToggleSwitch.tsx';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+// Busca fontes via Supabase (service role via API)
+let sources: any[] = [];
+try {
+  const res = await fetch(new URL('/api/admin/news-sources', Astro.url).href, {
+    headers: { Cookie: Astro.request.headers.get('cookie') ?? '' },
+  });
+  if (res.ok) sources = await res.json();
+} catch {}
+---
+
+<AdminLayout title="Fontes de Notícias" subtitle="Gerencie as fontes RSS do robô extrator">
+  <div class="mx-auto max-w-3xl space-y-6">
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <header class="mb-4">
+        <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+          Fontes ativas
+        </h2>
+        <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+          O robô extrator busca estas fontes a cada hora e cria rascunhos na tabela de matérias.
+        </p>
+      </header>
+
+      {sources.length === 0 && (
+        <p class="text-sm text-ink-muted">Nenhuma fonte cadastrada. Rode a migration 002_news_sources.sql.</p>
+      )}
+
+      <ul class="space-y-3">
+        {sources.map((s: any) => (
+          <li class="flex items-center justify-between gap-3 rounded-xl border border-line bg-editorial px-4 py-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">{s.name}</p>
+              <p class="truncate text-xs text-ink-muted">{s.rss_url}</p>
+              <p class="mt-0.5 text-xs text-ink-muted">
+                Categoria: {s.default_category ?? '—'} · Última busca: {s.last_fetched_at ?? 'nunca'}
+              </p>
+            </div>
+            <ToggleSwitch
+              client:load
+              endpoint={`/api/admin/news-sources/${s.id}`}
+              field="is_active"
+              checked={Boolean(s.is_active)}
+              label="Ativa"
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <header class="mb-4">
+        <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+          Adicionar nova fonte
+        </h2>
+      </header>
+      <form id="add-source" class="space-y-3">
+        <input name="name" placeholder="Nome da fonte" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" required />
+        <input name="rss_url" placeholder="URL do RSS" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" required />
+        <input name="default_category" placeholder="Categoria padrão (ms, brasil, nioaque)" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" />
+        <button type="submit" class="rounded-full bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+          Adicionar fonte
+        </button>
+      </form>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById('add-source');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form as HTMLFormElement);
+    const payload = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/admin/news-sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) window.location.reload();
+    else alert('Erro ao adicionar fonte');
+  });
+</script>
