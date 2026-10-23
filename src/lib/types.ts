@@ -114,6 +114,27 @@ export interface BusSchedule {
   updated_at: string;
 }
 
+/** Guia de utilidade publica de Nioaque (ESF, secretarias, escolas). */
+export interface UtilityGuide {
+  id: string;
+  name: string;
+  category: 'saude' | 'educacao' | 'secretaria' | 'emergencia' | 'outro';
+  address: string | null;
+  phone: string | null;
+  hours: string | null;
+  notes: string | null;
+}
+
+/** Autoridade municipal de Nioaque. */
+export interface Authority {
+  id: string;
+  name: string;
+  role: string;
+  party: string | null;
+  photo_url: string | null;
+  contact: string | null;
+}
+
 /** Resultado de uma modalidade de loteria. */
 export interface LotteryResult {
   id: string;

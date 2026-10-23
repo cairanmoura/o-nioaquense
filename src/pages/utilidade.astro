@@ -1,0 +1,56 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import { mockUtilityGuides, mockAuthorities } from '../lib/mock-data';
+
+const guides = mockUtilityGuides;
+const authorities = mockAuthorities;
+---
+
+<MainLayout title="Guia de Utilidade Pública" description="Serviços, secretarias, escolas e autoridades de Nioaque (MS).">
+  <div class="container-editorial py-8 sm:py-10">
+    <h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Guia de Utilidade Pública</h1>
+    <p class="mt-2 text-sm text-ink-muted">Serviços, secretarias, escolas e autoridades de Nioaque (MS).</p>
+
+    <section class="mt-8">
+      <h2 class="font-editorial text-2xl font-semibold text-ink">Serviços e Secretarias</h2>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-line text-left">
+              <th class="py-2 pr-4 font-semibold text-ink">Nome</th>
+              <th class="py-2 pr-4 font-semibold text-ink">Categoria</th>
+              <th class="py-2 pr-4 font-semibold text-ink">Endereço</th>
+              <th class="py-2 pr-4 font-semibold text-ink">Telefone</th>
+              <th class="py-2 font-semibold text-ink">Horário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {guides.map((g) => (
+              <tr class="border-b border-line/50">
+                <td class="py-2 pr-4 font-medium text-ink">{g.name}</td>
+                <td class="py-2 pr-4 text-ink-soft">{g.category}</td>
+                <td class="py-2 pr-4 text-ink-soft">{g.address ?? '—'}</td>
+                <td class="py-2 pr-4 text-ink-soft">{g.phone ?? '—'}</td>
+                <td class="py-2 text-ink-soft">{g.hours ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="font-editorial text-2xl font-semibold text-ink">Autoridades Municipais</h2>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {authorities.map((a) => (
+          <div class="rounded-xl border border-line bg-nioaque-white p-4">
+            <p class="font-semibold text-ink">{a.name}</p>
+            <p class="text-sm text-nioaque-green">{a.role}</p>
+            {a.party && <p class="text-xs text-ink-muted">{a.party}</p>}
+            {a.contact && <p class="mt-1 text-xs text-ink-muted">{a.contact}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+</MainLayout>

@@ -20,6 +20,7 @@
 
 import type {
   Article,
+  Authority,
   BusSchedule,
   LocalAd,
   LotteryResult,
@@ -27,6 +28,7 @@ import type {
   Profile,
   PublicUtility,
   ReaderSubmission,
+  UtilityGuide,
 } from './types';
 
 /* =============================================================================
@@ -1256,6 +1258,32 @@ export const mockReaderSubmissions: ReaderSubmission[] = [
     status: 'pending',
     created_at: '2026-10-22T10:05:00Z',
   },
+];
+
+/* =============================================================================
+ *  Guias de utilidade publica de Nioaque (ESF, secretarias, escolas)
+ * ============================================================================= */
+
+export const mockUtilityGuides: UtilityGuide[] = [
+  { id: 'ug-001', name: 'ESF Centro', category: 'saude', address: 'Rua das Flores, 120 - Centro', phone: '(67) 3236-1000', hours: 'Seg a Sex, 07h-17h', notes: 'Atendimento basico e vacinacao' },
+  { id: 'ug-002', name: 'ESF Vila Nova', category: 'saude', address: 'Av. Principal, 450 - Vila Nova', phone: '(67) 3236-1001', hours: 'Seg a Sex, 07h-17h', notes: null },
+  { id: 'ug-003', name: 'Secretaria de Saude', category: 'secretaria', address: 'Prefeitura Municipal - Centro', phone: '(67) 3236-1010', hours: 'Seg a Sex, 07h30-13h30', notes: null },
+  { id: 'ug-004', name: 'Secretaria de Educacao', category: 'secretaria', address: 'Prefeitura Municipal - Centro', phone: '(67) 3236-1020', hours: 'Seg a Sex, 07h30-13h30', notes: null },
+  { id: 'ug-005', name: 'Escola Municipal Jose Pereira', category: 'educacao', address: 'Rua da Escola, 80 - Centro', phone: '(67) 3236-1030', hours: 'Seg a Sex, 07h-17h', notes: 'Ensino Fundamental' },
+  { id: 'ug-006', name: 'SAMU 192', category: 'emergencia', address: 'Atendimento movel', phone: '192', hours: '24h', notes: 'Emergencias medicas' },
+  { id: 'ug-007', name: 'Bombeiros', category: 'emergencia', address: 'Quartel - Centro', phone: '193', hours: '24h', notes: null },
+];
+
+/* =============================================================================
+ *  Autoridades municipais de Nioaque
+ * ============================================================================= */
+
+export const mockAuthorities: Authority[] = [
+  { id: 'aut-001', name: 'Prefeito Municipal', role: 'Prefeito', party: null, photo_url: null, contact: '(67) 3236-1000' },
+  { id: 'aut-002', name: 'Vice-Prefeito', role: 'Vice-Prefeito', party: null, photo_url: null, contact: null },
+  { id: 'aut-003', name: 'Secretario de Saude', role: 'Secretario de Saude', party: null, photo_url: null, contact: '(67) 3236-1010' },
+  { id: 'aut-004', name: 'Secretario de Educacao', role: 'Secretario de Educacao', party: null, photo_url: null, contact: '(67) 3236-1020' },
+  { id: 'aut-005', name: 'Presidente da Camara', role: 'Vereador / Presidente', party: null, photo_url: null, contact: null },
 ];
 
 /* =============================================================================
