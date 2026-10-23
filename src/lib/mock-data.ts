@@ -1265,13 +1265,16 @@ export const mockReaderSubmissions: ReaderSubmission[] = [
  * ============================================================================= */
 
 export const mockUtilityGuides: UtilityGuide[] = [
-  { id: 'ug-001', name: 'ESF Centro', category: 'saude', address: 'Rua das Flores, 120 - Centro', phone: '(67) 3236-1000', hours: 'Seg a Sex, 07h-17h', notes: 'Atendimento basico e vacinacao' },
-  { id: 'ug-002', name: 'ESF Vila Nova', category: 'saude', address: 'Av. Principal, 450 - Vila Nova', phone: '(67) 3236-1001', hours: 'Seg a Sex, 07h-17h', notes: null },
-  { id: 'ug-003', name: 'Secretaria de Saude', category: 'secretaria', address: 'Prefeitura Municipal - Centro', phone: '(67) 3236-1010', hours: 'Seg a Sex, 07h30-13h30', notes: null },
-  { id: 'ug-004', name: 'Secretaria de Educacao', category: 'secretaria', address: 'Prefeitura Municipal - Centro', phone: '(67) 3236-1020', hours: 'Seg a Sex, 07h30-13h30', notes: null },
-  { id: 'ug-005', name: 'Escola Municipal Jose Pereira', category: 'educacao', address: 'Rua da Escola, 80 - Centro', phone: '(67) 3236-1030', hours: 'Seg a Sex, 07h-17h', notes: 'Ensino Fundamental' },
-  { id: 'ug-006', name: 'SAMU 192', category: 'emergencia', address: 'Atendimento movel', phone: '192', hours: '24h', notes: 'Emergencias medicas' },
-  { id: 'ug-007', name: 'Bombeiros', category: 'emergencia', address: 'Quartel - Centro', phone: '193', hours: '24h', notes: null },
+  { id: 'ug-001', name: 'Secretaria de Saúde', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Cristiane Sousa' },
+  { id: 'ug-002', name: 'Secretaria de Educação', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Maria Brito' },
+  { id: 'ug-003', name: 'Secretaria de Finanças', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Rafael Amaral' },
+  { id: 'ug-004', name: 'Secretaria de Governo', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Hermenegildo Neto' },
+  { id: 'ug-005', name: 'Secretaria de Assistência Social', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Tessalonica Ribeiro' },
+  { id: 'ug-006', name: 'SEMDITEC', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'César Santos' },
+  { id: 'ug-007', name: 'Secretaria de Cultura, Esporte, Turismo e Lazer', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Dionas Souza' },
+  { id: 'ug-008', name: 'Secretaria de Desenvolvimento Rural', category: 'secretaria', address: 'Av. General Klinger, 377 - Centro', phone: '(67) 3236-1011', hours: 'Seg a Sex, 07h-13h', notes: 'Ademar Michalski' },
+  { id: 'ug-009', name: 'SAMU 192', category: 'emergencia', address: 'Atendimento móvel', phone: '192', hours: '24h', notes: 'Emergências médicas' },
+  { id: 'ug-010', name: 'Bombeiros', category: 'emergencia', address: 'Quartel - Centro', phone: '193', hours: '24h', notes: null },
 ];
 
 /* =============================================================================
@@ -1279,11 +1282,25 @@ export const mockUtilityGuides: UtilityGuide[] = [
  * ============================================================================= */
 
 export const mockAuthorities: Authority[] = [
-  { id: 'aut-001', name: 'Prefeito Municipal', role: 'Prefeito', party: null, photo_url: null, contact: '(67) 3236-1000' },
+  { id: 'aut-001', name: 'André Guimarães', role: 'Prefeito', party: null, photo_url: null, contact: '(67) 3236-1011' },
   { id: 'aut-002', name: 'Vice-Prefeito', role: 'Vice-Prefeito', party: null, photo_url: null, contact: null },
-  { id: 'aut-003', name: 'Secretario de Saude', role: 'Secretario de Saude', party: null, photo_url: null, contact: '(67) 3236-1010' },
-  { id: 'aut-004', name: 'Secretario de Educacao', role: 'Secretario de Educacao', party: null, photo_url: null, contact: '(67) 3236-1020' },
-  { id: 'aut-005', name: 'Presidente da Camara', role: 'Vereador / Presidente', party: null, photo_url: null, contact: null },
+  { id: 'aut-003', name: 'Ademar Michalski', role: 'Secretário de Desenvolvimento Rural', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-004', name: 'Maria Brito', role: 'Secretária de Educação', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-005', name: 'Dionas Souza', role: 'Secretário de Cultura, Esporte, Turismo e Lazer', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-006', name: 'Rafael Amaral', role: 'Secretário de Finanças', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-007', name: 'Hermenegildo Neto', role: 'Secretário de Governo', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-008', name: 'César Santos', role: 'Secretário SEMDITEC', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-009', name: 'Cristiane Sousa', role: 'Secretária de Saúde', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-010', name: 'Tessalonica Ribeiro', role: 'Secretária de Assistência Social', party: null, photo_url: null, contact: '(67) 3236-1011' },
+  { id: 'aut-011', name: 'Reinaldo Andréa', role: 'Vereador / Presidente', party: 'PP', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-012', name: 'Sérgio Marques', role: 'Vereador / Vice-Presidente', party: 'PT', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-013', name: 'João Gonçalves', role: 'Vereador / 1º Secretário', party: 'PL', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-014', name: 'Silas Ferreira', role: 'Vereador / 2º Secretário', party: 'PSDB', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-015', name: 'Jeuzimar Araújo', role: 'Vereador', party: 'PSDB', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-016', name: 'Jorge Lemes', role: 'Vereador', party: 'PP', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-017', name: 'Pablo Corrêa', role: 'Vereador', party: 'PSDB', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-018', name: 'Paulo Simão', role: 'Vereador', party: 'PV', photo_url: null, contact: '(67) 3236-1255' },
+  { id: 'aut-019', name: 'Rosemeire Arruda', role: 'Vereadora', party: 'PP', photo_url: null, contact: '(67) 3236-1255' },
 ];
 
 /* =============================================================================
