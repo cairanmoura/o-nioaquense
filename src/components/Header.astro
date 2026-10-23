@@ -11,7 +11,6 @@ import LogoNioaquense from './LogoNioaquense.astro';
 const editorias = [
   { href: '/editoria/nioaque', label: 'Nioaque', accent: true },
   { href: '/radar-oficial', label: 'Radar Oficial' },
-  { href: '/editoria/coluna', label: 'Colunistas' },
   { href: '/editoria/ms', label: 'MS' },
   { href: '/editoria/brasil', label: 'Brasil' },
 ];
@@ -88,7 +87,7 @@ const activeScope = Astro.url.searchParams.get('escopo');
                 aria-current={activeScope === item.href.split('/').pop() ? 'page' : undefined}
                 class:list={[
                   'inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-colors',
-                  item.accent
+                  activeScope === item.href.split('/').pop() || (activeScope === null && item.accent)
                     ? 'bg-nioaque-green text-white hover:bg-nioaque-green-dark'
                     : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
                 ]}
@@ -142,7 +141,7 @@ const activeScope = Astro.url.searchParams.get('escopo');
                   href={item.href}
                   class:list={[
                     'block rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                    item.accent
+                    activeScope === item.href.split('/').pop() || (activeScope === null && item.accent)
                       ? 'bg-nioaque-green text-white'
                       : 'bg-nioaque-white text-ink ring-1 ring-line hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
                   ]}

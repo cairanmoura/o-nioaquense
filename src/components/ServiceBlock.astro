@@ -37,7 +37,7 @@ const pharmacyWhatsapp = pharmacyDigits ? `https://wa.me/${pharmacyDigits}` : '#
       }
     </header>
 
-    <div class="grid md:grid-cols-3">
+    <div class="grid md:grid-cols-2">
       {/* Farmacia de plantao */}
       <div class="p-5">
         <h3 class="text-xs font-semibold text-ink-muted">Farmácia de plantão</h3>
@@ -88,22 +88,6 @@ const pharmacyWhatsapp = pharmacyDigits ? `https://wa.me/${pharmacyDigits}` : '#
             </>
           ) : (
             <p class="mt-3 text-sm text-ink-soft">Sem informacao disponivel hoje.</p>
-          )
-        }
-      </div>
-
-      {/* Onibus */}
-      <div class="p-5">
-        <h3 class="text-xs font-semibold text-ink-muted">Horários de ônibus</h3>
-
-        {
-          utility?.bus_schedule_html ? (
-            <div
-              class="mt-3 space-y-1.5 text-sm leading-relaxed text-ink-soft [&_strong]:font-semibold [&_strong]:text-ink [&_li]:flex [&_li]:justify-between [&_li]:gap-3 [&_ul]:space-y-1.5"
-              set:html={utility.bus_schedule_html}
-            />
-          ) : (
-            <p class="mt-3 text-sm text-ink-soft">Consulte a empresa de transporte.</p>
           )
         }
       </div>

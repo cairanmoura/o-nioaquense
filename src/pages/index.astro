@@ -1,6 +1,6 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
-import ColumnistShowcase from '../components/ColumnistShowcase.astro';
+// import ColumnistShowcase from '../components/ColumnistShowcase.astro'; // desativado temporariamente (sem colunistas)
 import GoogleAdSlot from '../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../components/LocalAdBanner.astro';
 import LocalDailyDeal from '../components/LocalDailyDeal.astro';
@@ -11,7 +11,7 @@ import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
 import ServiceBlock from '../components/ServiceBlock.astro';
 import WeatherWidget from '../components/WeatherWidget.astro';
-import { getColumnistPicks, getHomeFeed, getLotteryResults, getMarketQuotes } from '../lib/content';
+import { getHomeFeed, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
 import type { ArticleScope, Profile } from '../lib/types';
 
@@ -24,8 +24,7 @@ import type { ArticleScope, Profile } from '../lib/types';
  */
 
 const feed = await getHomeFeed(Astro.locals);
-const [columnists, lotteries, quotes] = await Promise.all([
-  getColumnistPicks(Astro.locals),
+const [lotteries, quotes] = await Promise.all([
   getLotteryResults(Astro.locals),
   getMarketQuotes(Astro.locals),
 ]);
@@ -80,7 +79,7 @@ const sidebarTopId = secondary[0]?.id;
 const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTopId).slice(0, 3);
 ---
 
-<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil. Farmácia de plantão, clima, ônibus e Radar Oficial.">
+<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil. Farmácia de plantão, clima e Radar Oficial.">
   {/* Faixa de ultima hora */}
   {
     breaking.length > 0 && (
@@ -102,9 +101,15 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     )
   }
 
-  {/* Topo: billboard */}
-  <div class="container-editorial pt-5">
-    <GoogleAdSlot format="leaderboard" label="Publicidade" />
+  {/* Topo: chamada para anunciantes */}
+  <div class="container-editorial pt-3">
+    <a
+      href="/mande-sua-noticia"
+      class="flex items-center justify-center gap-2 rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-3 text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
+    >
+      <span>📣</span>
+      <span>Anuncie aqui — fale com a redação</span>
+    </a>
   </div>
 
   <div class="container-editorial py-8 sm:py-10">
@@ -183,7 +188,12 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
         <MostRead articles={feed.articles} authors={profilesById} limit={5} />
 
-        <LocalAdBanner ad={feed.ads.home_middle} />
+        <a
+          href="/mande-sua-noticia"
+          class="block rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-4 text-center text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
+        >
+          📣 Anuncie aqui — fale com a redação
+        </a>
       </aside>
     </div>
 
@@ -201,15 +211,18 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       <LotteryResults results={lotteries} />
     </div>
 
-    {/* Anuncio no meio */}
+    {/* Chamada para anunciantes */}
     <div class="mt-10">
-      <GoogleAdSlot format="horizontal" label="Publicidade" />
+      <a
+        href="/mande-sua-noticia"
+        class="flex items-center justify-center gap-2 rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-3 text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
+      >
+        <span>📣</span>
+        <span>Anuncie aqui — fale com a redação</span>
+      </a>
     </div>
 
-    {/* Colunistas em destaque */}
-    <div class="mt-12" data-reveal>
-      <ColumnistShowcase picks={columnists} />
-    </div>
+    {/* Colunistas em destaque — desativado temporariamente (sem colunistas) */}
 
     {/* Nioaque */}
     {
