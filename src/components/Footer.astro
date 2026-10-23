@@ -27,6 +27,7 @@ const columns = [
     title: 'O Nioaquense',
     links: [
       { label: 'Sobre o portal', href: '/expediente' },
+      { label: 'Política editorial', href: '/politica-editorial' },
       { label: 'Artes oficiais', href: '/artes' },
       { label: 'Mande sua noticia', href: '/mande-sua-noticia' },
       { label: 'Boca no Trombone', href: '/mande-sua-noticia' },
@@ -38,7 +39,7 @@ const columns = [
 ];
 ---
 
-<footer class="mt-16 border-t border-line bg-nioaque-white">
+<footer class="mt-16 bg-nioaque-white">
   <div class="container-editorial py-12">
     <div class="grid gap-10 md:grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,auto))]">
       <div id="sobre" class="max-w-sm scroll-mt-32">
@@ -52,7 +53,7 @@ const columns = [
       {
         columns.map((column) => (
           <nav aria-label={column.title}>
-            <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+            <h2 class="text-xs font-semibold text-nioaque-green">
               {column.title}
             </h2>
             <ul class="mt-4 space-y-2.5">
@@ -73,7 +74,7 @@ const columns = [
     </div>
 
     <div
-      class="mt-10 flex flex-col gap-3 border-t border-line pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between"
+      class="mt-10 flex flex-col gap-3 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between"
     >
       <p>&copy; {year} O Nioaquense. Todos os direitos reservados.</p>
       <p>Conteudo demonstrativo - Etapa 2 do projeto. Nao e' um veiculo em expediente.</p>

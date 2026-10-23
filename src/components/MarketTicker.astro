@@ -30,29 +30,24 @@ const formatValue = (quote: MarketQuote) => {
 {
   quotes.length > 0 && (
     <section
-      class:list={[
-        'overflow-hidden rounded-2xl border border-line bg-nioaque-white',
-        className,
-      ]}
-      aria-label="Cotacoes da economia"
+      class:list={['overflow-hidden rounded-xl bg-nioaque-white', className]}
+      aria-label="Cotações da economia"
     >
-      <ul class="divide-y divide-line">
+      <ul>
         {quotes.map((quote) => {
           const up = quote.change_percent >= 0;
 
           return (
             <li class="flex items-center justify-between gap-3 px-4 py-2.5">
-              <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-                {quote.label}
-              </span>
+              <span class="text-xs font-medium text-ink-muted">{quote.label}</span>
               <span class="flex items-baseline gap-2">
-                <span class="font-editorial text-sm font-semibold text-ink">
+                <span class="font-editorial text-base font-semibold text-ink">
                   {quote.symbol === 'dolar' ? 'R$ ' : ''}
                   {formatValue(quote)}
                 </span>
                 <span
                   class:list={[
-                    'text-[11px] font-bold',
+                    'text-xs font-semibold',
                     up ? 'text-nioaque-green' : 'text-nioaque-red',
                   ]}
                 >

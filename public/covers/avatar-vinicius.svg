@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img">
+
+    <rect width="400" height="400" fill="#6D28D9"/>
+    <circle cx="200" cy="200" r="168" fill="#FFFFFF" opacity="0.14"/>
+    <text x="50%" y="50%" dy="0.36em" text-anchor="middle" fill="#FFFFFF"
+      font-family="'Plus Jakarta Sans','Arial Black',Arial,sans-serif" font-weight="800"
+      font-size="136" letter-spacing="2">VP</text>
+</svg>

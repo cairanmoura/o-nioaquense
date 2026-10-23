@@ -56,3 +56,6 @@ Thumbs.db
 
 # typescript
 *.tsbuildinfo
+
+# artefatos locais do taste-skill (screenshots e relatorios de auditoria)
+.taste-skill/

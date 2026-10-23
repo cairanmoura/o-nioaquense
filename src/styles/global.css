@@ -38,6 +38,9 @@
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   /* --- Tipografia em escala fluida (mobile-first) --- */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+
   --text-display: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
   --text-display--line-height: 1.02;
   --text-display--letter-spacing: -0.03em;
@@ -140,6 +143,34 @@
     border-left: 4px solid var(--color-nioaque-green);
     background-color: var(--color-nioaque-white);
     border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  /* Entrada suave dos blocos ao rolar.
+     Sem JS: se o navegador nao suportar animation-timeline, o conteudo
+     aparece normalmente (nada fica escondido esperando script). */
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 22%;
+    }
+  }
+
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      animation: none;
+    }
   }
 
   /* Link sublinhado discreto, estilo editorial */

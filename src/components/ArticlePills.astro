@@ -1,35 +1,36 @@
 ---
-import CategoryPill from './CategoryPill.astro';
-import ScopePill from './ScopePill.astro';
+import { SCOPE_LABEL } from '../lib/types';
 import type { Article } from '../lib/types';
 
 /**
  * ArticlePills.astro
  * -----------------------------------------------------------------------------
- * Conjunto de pilulas de uma materia.
+ * Linha de editoria da materia.
  *
- * Materias de Nioaque ganham a pilula colorida de categoria (estilo BHAZ);
- * as demais editorias mantem a pilula de escopo (verde / vermelho / preto).
+ * Antes eram duas pilulas em caixa alta com muito espacamento entre letras.
+ * Agora e' uma linha curta, legivel, com o ponto colorido da marca: continua
+ * identificando a editoria sem competir com o titulo.
  */
 
 interface Props {
   article: Article;
-  /** Mostra a editoria alem da categoria (ex.: "Nioaque" + "Cidade"). */
+  /** Mostra a editoria alem da categoria (ex.: "Saude" + "Nioaque"). */
   showEditor?: boolean;
   class?: string;
 }
 
 const { article, showEditor = false, class: className = '' } = Astro.props;
+const label = article.category_label ?? SCOPE_LABEL[article.scope];
 ---
 
-<div class:list={['flex flex-wrap items-center gap-2', className]}>
-  {showEditor && <ScopePill scope={article.scope} />}
-  {
-    article.scope === 'nioaque' ? (
-      <CategoryPill category={article.category_label} />
-    ) : (
-      <ScopePill scope={article.scope} category={article.category_label} />
-    )
-  }
-  {article.is_breaking && <span class="pill-scope bg-nioaque-red text-white">Urgente</span>}
+<div
+  class:list={[
+    'flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-semibold leading-relaxed',
+    className,
+  ]}
+>
+  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+  <span class="text-nioaque-green-dark">{label}</span>
+  {showEditor && <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>}
+  {article.is_breaking && <span class="font-bold text-nioaque-red">&middot; Última hora</span>}
 </div>

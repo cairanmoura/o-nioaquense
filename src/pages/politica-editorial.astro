@@ -1,0 +1,116 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+/**
+ * /politica-editorial
+ * -----------------------------------------------------------------------------
+ * Regras publicas de apuracao, correcao e transparencia do portal.
+ * E' a pagina que um leitor (ou um anunciante) procura quando quer saber
+ * em quem esta confiando.
+ */
+
+const atualizadoEm = 'Outubro de 2026';
+
+const secoes = [
+  {
+    titulo: 'Princípios',
+    paragrafos: [
+      'O Nioaquense pratica jornalismo hiperlocal em Nioaque (MS). Nosso compromisso é com o leitor: publicar informação verificada, identificar claramente o que é notícia, o que é opinião e o que é publicidade.',
+      'Não publicamos informação que não possamos sustentar. Quando um fato ainda não está confirmado, dizemos isso na própria matéria.',
+    ],
+  },
+  {
+    titulo: 'Apuração e fontes',
+    paragrafos: [
+      'Toda matéria passa por checagem com fontes oficiais, documentos públicos ou pessoas diretamente envolvidas. Quando a informação vem de uma fonte que pediu sigilo, explicamos ao leitor por que o sigilo foi aceito.',
+      'Dados de órgãos públicos são conferidos na fonte original. Números, datas e nomes são revisados antes da publicação.',
+    ],
+  },
+  {
+    titulo: 'Conteúdo de agências',
+    paragrafos: [
+      'Parte da cobertura nacional vem da Agência Brasil (EBC). Nesses casos, publicamos a chamada, a foto com crédito e um link para a matéria original. O texto completo permanece no veículo de origem.',
+      'A fonte é sempre identificada na página e no crédito da imagem. Não nos atribuímos reportagem produzida por outra redação.',
+    ],
+  },
+  {
+    titulo: 'Notícia e opinião',
+    paragrafos: [
+      'Colunas assinadas expressam a opinião de quem assina, não a posição do portal. Textos de opinião são identificados como coluna e mantêm o nome do autor em destaque.',
+      'O leitor tem direito de resposta. Pedidos de resposta são publicados com o mesmo destaque da informação contestada.',
+    ],
+  },
+  {
+    titulo: 'Correções',
+    paragrafos: [
+      'Erros são corrigidos de forma explícita, com nota no fim da matéria informando o que mudou e quando. Não apagamos uma matéria para esconder um erro: corrigimos e registramos a correção.',
+      'Para apontar um erro, escreva para contato@onioaquense.com com o link da matéria e o trecho a ser verificado.',
+    ],
+  },
+  {
+    titulo: 'Publicidade',
+    paragrafos: [
+      'Conteúdo pago é identificado como publicidade. Anunciantes não têm acesso à apuração nem influência sobre o que publicamos.',
+      'A separação entre redação e comercial é uma regra da casa, não uma sugestão.',
+    ],
+  },
+  {
+    titulo: 'Transparência e inteligência artificial',
+    paragrafos: [
+      'Ferramentas de apoio — inclusive de inteligência artificial — podem ser usadas para transcrição, organização de dados e revisão. A decisão editorial, a checagem final e a responsabilidade pela publicação são humanas.',
+      'Nenhuma matéria é publicada apenas porque um sistema gerou um texto. Conteúdo de demonstração, quando existir, é identificado como tal.',
+    ],
+  },
+];
+---
+
+<MainLayout
+  title="Política editorial"
+  description="Como o O Nioaquense apura, publica, corrige e separa notícia, opinião e publicidade."
+>
+  <div class="container-editorial py-10 sm:py-14">
+    <header class="mx-auto max-w-3xl border-b-2 border-nioaque-green pb-5">
+      <h1 class="text-headline font-semibold leading-tight text-ink">Política editorial</h1>
+      <p class="mt-3 text-base leading-relaxed text-ink-soft">
+        As regras que seguimos para apurar, publicar e corrigir. Transparência não é um selo no
+        rodapé: é o que permite ao leitor confiar no que está lendo.
+      </p>
+      <p class="mt-3 text-xs font-medium text-ink-muted">Última atualização: {atualizadoEm}</p>
+    </header>
+
+    <div class="mx-auto mt-10 max-w-3xl space-y-10">
+      {
+        secoes.map((secao) => (
+          <section>
+            <h2 class="font-editorial text-2xl font-semibold text-ink">{secao.titulo}</h2>
+            <div class="mt-3 space-y-3">
+              {secao.paragrafos.map((paragrafo) => (
+                <p class="text-base leading-relaxed text-ink-soft">{paragrafo}</p>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+
+      <section class="rounded-xl border border-line bg-nioaque-white p-6">
+        <h2 class="font-editorial text-xl font-semibold text-ink">Fale com a redação</h2>
+        <p class="mt-2 text-base leading-relaxed text-ink-soft">
+          Dúvidas sobre apuração, pedidos de correção e direito de resposta:
+          <a href="mailto:contato@onioaquense.com" class="link-underline font-semibold text-nioaque-green">
+            contato@onioaquense.com
+          </a>
+          . Para enviar uma pauta, use o
+          <a href="/mande-sua-noticia" class="link-underline font-semibold text-nioaque-green">
+            Boca no Trombone
+          </a>
+          .
+        </p>
+        <p class="mt-3 text-sm text-ink-muted">
+          Veja também o <a href="/expediente" class="link-underline">expediente</a>,
+          os <a href="/termos" class="link-underline">termos de uso</a> e a
+          <a href="/privacidade" class="link-underline">política de privacidade</a>.
+        </p>
+      </section>
+    </div>
+  </div>
+</MainLayout>

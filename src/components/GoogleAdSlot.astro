@@ -46,48 +46,40 @@ const AD_FORMAT: Record<AdsenseFormat, string> = {
 };
 ---
 
-<div
-  class:list={[
-    'relative flex flex-col overflow-hidden rounded-2xl border border-line bg-nioaque-white',
-    className,
-  ]}
-  style={`min-height:${reservedHeight}`}
->
-  <span
-    class="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white"
-  >
-    {label}
-  </span>
+{
+  /* Sem cliente configurado nao existe anuncio: nao renderizamos uma caixa
+     vazia "Google AdSense". Isso tira ruido e melhora a credibilidade. */
+  client && slotId && (
+    <div
+      class:list={[
+        'relative flex flex-col overflow-hidden rounded-xl border border-line bg-nioaque-white',
+        className,
+      ]}
+      style={`min-height:${reservedHeight}`}
+    >
+      <span
+        class="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white"
+      >
+        {label}
+      </span>
 
-  {
-    client && slotId ? (
-      <>
-        <ins
-          class="adsbygoogle"
-          style="display:block; flex:1; min-height:inherit;"
-          data-ad-client={client}
-          data-ad-slot={slotId}
-          data-ad-format={AD_FORMAT[format]}
-          data-full-width-responsive="true"
-        />
-        <script is:inline async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`} crossorigin="anonymous" />
-        <script is:inline>
-          {`(adsbygoogle = window.adsbygoogle || []).push({});`}
-        </script>
-      </>
-    ) : (
-      /* Placeholder com a altura reservada: o layout nao muda quando o
-         AdSense for ativado em producao. */
-      <div class="flex flex-1 items-center justify-center p-6 text-center">
-        <div>
-          <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted/70">
-            {label}
-          </p>
-          <p class="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted/50">
-            Google AdSense
-          </p>
-        </div>
-      </div>
-    )
-  }
-</div>
+      <ins
+        class="adsbygoogle"
+        style="display:block; flex:1; min-height:inherit;"
+        data-ad-client={client}
+        data-ad-slot={slotId}
+        data-ad-format={AD_FORMAT[format]}
+        data-full-width-responsive="true"
+      />
+      <script
+        is:inline
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`}
+        crossorigin="anonymous"
+      />
+      <script is:inline>
+        {`(adsbygoogle = window.adsbygoogle || []).push({});`}
+      </script>
+    </div>
+  )
+}

@@ -22,31 +22,24 @@ const visible = results.slice(0, 5);
 {
   visible.length > 0 && (
     <section
-      class:list={['overflow-hidden rounded-2xl border border-line bg-nioaque-white', className]}
+      class:list={['overflow-hidden rounded-xl bg-nioaque-white', className]}
       aria-label="Resultados das loterias"
     >
-      <ul class="divide-y divide-line">
+      <ul>
         {visible.map((result) => (
           <li class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3">
             <div class="min-w-0 flex-1">
-              <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green">
+              <p class="text-xs font-semibold text-nioaque-green">
                 {result.modality}
               </p>
-              <p class="text-[10px] text-ink-muted">
+              <p class="text-xs text-ink-muted">
                 Concurso {result.contest_number} &middot; {result.contest_date.split('-').reverse().join('/')}
               </p>
             </div>
 
             <ul class="flex flex-wrap items-center gap-1.5">
-              {result.numbers.map((number, index) => (
-                <li
-                  class:list={[
-                    'flex h-7 w-7 items-center justify-center rounded-full font-editorial text-xs font-semibold',
-                    index === 0
-                      ? 'bg-nioaque-red text-white'
-                      : 'bg-nioaque-green-50 text-nioaque-green-dark',
-                  ]}
-                >
+              {result.numbers.map((number) => (
+                <li class="flex h-7 w-7 items-center justify-center rounded-full bg-nioaque-green-50 font-editorial text-xs font-semibold text-nioaque-green-dark">
                   {number}
                 </li>
               ))}

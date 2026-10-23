@@ -2,6 +2,15 @@
 
 const TZ = 'America/Campo_Grande';
 
+/*
+ * "2026-10-22" e' um dia do calendario, nao um instante UTC. O Date puro
+ * interpreta como meia-noite UTC e, ao formatar em Campo Grande (UTC-4), o
+ * dia recua para 21. O meio-dia UTC mantem a data em qualquer fuso do Brasil.
+ */
+function parseDate(iso: string): Date {
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '';
   return new Intl.DateTimeFormat('pt-BR', {
@@ -10,7 +19,7 @@ export function formatDate(iso: string | null | undefined): string {
     year: 'numeric',
     timeZone: TZ,
   })
-    .format(new Date(iso))
+    .format(parseDate(iso))
     .replace(/\./g, '');
 }
 
@@ -42,7 +51,7 @@ export function formatLongDate(iso: string | null | undefined): string {
     month: 'long',
     year: 'numeric',
     timeZone: TZ,
-  }).format(new Date(iso));
+  }).format(parseDate(iso));
 }
 
 export function formatNumber(value: number): string {
@@ -68,19 +77,19 @@ export function formatRelative(iso: string | null | undefined): string {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `há ${hours} h`;
 
-  const days = Math.round(hours / 24);
+  const days = Math.floor(hours / 24);
   if (days === 1) return 'ontem';
   if (days < 7) return `há ${days} dias`;
 
-  const weeks = Math.round(days / 7);
+  const weeks = Math.floor(days / 7);
   if (weeks === 1) return 'há 1 semana';
   if (weeks < 5) return `há ${weeks} semanas`;
 
-  const months = Math.round(days / 30);
+  const months = Math.floor(days / 30);
   if (months <= 1) return 'há 1 mês';
   if (months < 12) return `há ${months} meses`;
 
-  const years = Math.round(days / 365);
+  const years = Math.floor(days / 365);
   return years === 1 ? 'há 1 ano' : `há ${years} anos`;
 }
 

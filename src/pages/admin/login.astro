@@ -47,7 +47,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
           </div>
         </div>
 
-        <p class="mt-4 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
+        <p class="mt-4 text-center text-xs font-semibold text-white/50">
           Painel da redação
         </p>
 
@@ -76,7 +76,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
                 }
 
                 <label class="block">
-                  <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                  <span class="text-xs font-semibold text-ink-soft">
                     E-mail
                   </span>
                   <input
@@ -90,7 +90,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
                 </label>
 
                 <label class="block">
-                  <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                  <span class="text-xs font-semibold text-ink-soft">
                     Senha
                   </span>
                   <input
@@ -105,7 +105,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
 
                 <button
                   type="submit"
-                  class="flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+                  class="flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-green-dark"
                 >
                   <Icon name="logout" size={15} class="rotate-180" />
                   Entrar no painel
@@ -119,6 +119,19 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
                     Esqueci minha senha
                   </a>
                 </p>
+
+                <div class="rounded-xl border border-nioaque-green-100 bg-nioaque-green-50 px-4 py-3">
+                  <p class="text-xs leading-relaxed text-nioaque-green-dark">
+                    <strong class="font-bold">Primeiro acesso?</strong> Troque a senha temporária em
+                    <a
+                      href="/admin/perfil"
+                      class="font-semibold underline decoration-nioaque-green/40 underline-offset-2 hover:decoration-nioaque-green"
+                    >
+                      Meu perfil &gt; Senha de acesso
+                    </a>
+                    assim que entrar.
+                  </p>
+                </div>
               </form>
             ) : (
               <div>
@@ -184,7 +197,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
         <p class="mt-6 text-center">
           <a
             href="/"
-            class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/60 transition-colors hover:text-white"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-white/60 transition-colors hover:text-white"
           >
             <Icon name="eye" size={14} />
             Voltar ao portal
