@@ -1,5 +1,6 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
+import ScopePill from '../components/ScopePill.astro';
 // import ColumnistShowcase from '../components/ColumnistShowcase.astro'; // desativado temporariamente (sem colunistas)
 import GoogleAdSlot from '../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../components/LocalAdBanner.astro';
@@ -130,6 +131,29 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       </p>
     </div>
 
+    {/* Navegacao por editoria */}
+    <nav class="mt-4 flex flex-wrap gap-2 sm:gap-3" aria-label="Editorias">
+      {[
+        'nioaque',
+        'ms',
+        'brasil',
+        'coluna',
+        'radar_oficial',
+      ].map((scope) => {
+        const isActive = activeScope === scope;
+        return (
+          <ScopePill
+            scope={scope as ArticleScope}
+            class={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isActive
+                ? 'bg-nioaque-green text-white shadow-sm'
+                : 'bg-nioaque-white border border-line text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark'
+            }`}
+          />
+        );
+      })}
+    </nav>
+
     {/* Manchete + coluna lateral */}
     <div class="grid gap-8 pt-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:gap-10">
       <section aria-label="Manchete principal" class="min-w-0">
@@ -148,11 +172,13 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
         {
           subLeads.length > 0 && (
             <div class="mt-8 space-y-4 sm:mt-10">
-              {subLeads.map((article) => (
+              {subLeads.map((article, i) => (
                 <ArticleCard
                   article={article}
                   author={authorOf(article.author_id)}
-                  variant="compact"
+                  // Em desktop, a primeira submanchete ganha imagem (standard);
+                  // no celular, todas compactas para economizar espaco.
+                  variant={i === 0 ? 'standard' : 'compact'}
                 />
               ))}
             </div>
@@ -187,13 +213,6 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
         </div>
 
         <MostRead articles={feed.articles} authors={profilesById} limit={5} />
-
-        <a
-          href="/mande-sua-noticia"
-          class="block rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-4 text-center text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
-        >
-          📣 Anuncie aqui — fale com a redação
-        </a>
       </aside>
     </div>
 

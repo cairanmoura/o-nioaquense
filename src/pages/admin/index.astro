@@ -52,7 +52,7 @@ const shortcuts = editorChefe
         title: 'Anuncios Locais',
         description: `${dashboard.counts.activeAds} anuncio(s) no ar`,
         icon: 'megaphone',
-        tone: 'bg-amber-100 text-amber-900',
+        tone: 'bg-nioaque-red-50 text-nioaque-red-dark',
       },
       {
         href: '/admin/colunistas',
@@ -153,9 +153,12 @@ const greeting = (() => {
     </div>
     {
       !publishAllowed && (
-        <span class="pill-scope shrink-0 bg-amber-100 text-amber-900">
-          <Icon name="lock" size={11} />
-          Revisao obrigatoria
+        <span class="pill-scope shrink-0 bg-nioaque-red-50 text-nioaque-red-dark">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Revisão obrigatória
         </span>
       )
     }
@@ -288,6 +291,19 @@ const greeting = (() => {
             {dashboard.myArticles.length} no total
           </span>
         </div>
+
+        {
+          !editorChefe && !publishAllowed && (
+            <div class="mt-4 rounded-xl border border-nioaque-red-100 bg-nioaque-red-50 p-4">
+              <p class="text-sm font-semibold text-nioaque-red-dark">
+                Sem publicacao direta
+              </p>
+              <p class="mt-1 text-xs text-nioaque-red-dark">
+                Seus textos vao para a fila de revisao do Editor-Chefe antes de publicar. Use "Enviar para revisao" ao salvar.
+              </p>
+            </div>
+          )
+        }
 
         {
           !editorChefe && dashboard.myArticles.length === 0 && (

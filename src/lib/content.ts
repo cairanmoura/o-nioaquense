@@ -347,6 +347,9 @@ export async function getAdById(locals: App.Locals, id: string): Promise<LocalAd
 export async function getHeaderBillboard(locals: App.Locals): Promise<LocalAd | null> {
   const supabase = locals.supabase;
 
+  // Com o banco configurado, o topo e' decidido APENAS pelo painel. Se nao
+  // ha' anunciante no ar, nao ha' billboard -- nunca cair no anuncio de
+  // exemplo (que apareceria uma "Farmacia Popular" ficticia no portal).
   if (supabase) {
     const rows = await query(
       supabase,
@@ -359,11 +362,9 @@ export async function getHeaderBillboard(locals: App.Locals): Promise<LocalAd | 
       normalizeAd,
     );
 
-    if (rows?.length) {
-      // A lista vem do mais antigo para o mais novo: o ultimo e' o vencedor.
-      const live = rows.filter((ad) => isAdLive(ad));
-      return live.length > 0 ? live[live.length - 1]! : null;
-    }
+    // A lista vem do mais antigo para o mais novo: o ultimo e' o vencedor.
+    const live = (rows ?? []).filter((ad) => isAdLive(ad));
+    return live.length > 0 ? live[live.length - 1]! : null;
   }
 
   return pickLiveAd(demoStore.listAds(), 'header_billboard');

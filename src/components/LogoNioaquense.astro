@@ -4,16 +4,17 @@
  * -----------------------------------------------------------------------------
  * Marca do portal "O Nioaquense", inspirada na bandeira do municipio de Nioaque (MS).
  *
- * Regra da bandeira (e do AGENTS.md):
- *  - retangulo horizontal estreito, proporcao ~4:1  (viewBox 400 x 100)
- *  - faixa superior VERDE  #008026, ~18% da altura  (y   0 -> 18)
- *  - faixa central BRANCA #FFFFFF, ~64% da altura (y  18 -> 82)
- *  - faixa inferior VERMELHA #E60000, ~18% da altura (y 82 -> 100)
- *  - cruz latina VERMELHA na parte ESQUERDA da faixa central
- *  - wordmark "O NIOAQUENSE" em VERMELHO, caixa alta, tipografia forte e espacada,
- *    posicionada ao centro/direita da faixa central.
+ * Usa o lockup oficial em SVG externo (public/icons/01-logo-horizontal-bandeira.svg):
+ *  - faixa superior VERDE  #008026
+ *  - faixa central BRANCA #FFFFFF
+ *  - faixa inferior VERMELHA #E60000
+ *  - cruz latina VERMELHA na faixa central
+ *  - wordmark "O NIOAQUENSE" em vermelho e preto, com "PORTAL" acima
  *
- * O componente e' 100% SVG (sem PNG), responsivo e escala sem perda de nitidez.
+ * O componente mantém a mesma interface de antes (variant, textColor, invertBand,
+ * class, title) para nao quebrar usos existentes. O SVG externo ja contem as cores
+ * da marca embutidas, entao textColor e invertBand sao mantidos por compatibilidade
+ * mas nao alteram o desenho externo.
  */
 interface Props {
   /** Classes CSS adicionais (ex.: "h-10 w-auto" ou "w-40"). */
@@ -21,14 +22,14 @@ interface Props {
   /** Rotulo acessivel do logo. */
   title?: string;
   /**
-   * - `full`     : lockup completo (faixas + cruz + wordmark)
-   * - `mark`     : apenas o simbolo (faixas + cruz) - ideal para favicon/avatar
-   * - `wordmark` : apenas o texto "O NIOAQUENSE"
+   * - `full`     : lockup completo (SVG externo com grafico + texto)
+   * - `mark`     : apenas o simbolo (mesmo SVG externo, escalado pequeno pelo pai)
+   * - `wordmark` : apenas o texto (o SVG externo ja traz o texto junto)
    */
   variant?: 'full' | 'mark' | 'wordmark';
-  /** Cor do wordmark (padrao: vermelho Nioaque). */
+  /** Cor do wordmark (mantida por compatibilidade; o SVG externo ja tem cores fixas). */
   textColor?: string;
-  /** Desenha a moldura da faixa central em branco puro (fundos escuros). */
+  /** Desenha a moldura da faixa central em branco puro (mantido por compatibilidade). */
   invertBand?: boolean;
 }
 
@@ -36,110 +37,19 @@ const {
   class: className = '',
   title = 'O Nioaquense',
   variant = 'full',
-  textColor = '#E60000',
-  invertBand = false,
 } = Astro.props;
 
-// Cores oficiais (duplicadas aqui para manter o SVG autocontido)
-const GREEN = '#008026';
-const RED = '#E60000';
-const WHITE = '#FFFFFF';
-
-// Geometria das faixas (viewBox base 400 x 100 = 4:1)
-const BAND_GREEN_H = 18;
-const BAND_RED_H = 18;
-const BAND_WHITE_Y = BAND_GREEN_H;
-const BAND_WHITE_H = 100 - BAND_GREEN_H - BAND_RED_H; // 64
-const BAND_RED_Y = BAND_WHITE_Y + BAND_WHITE_H; // 82
-
-// Cruz latina (vertical + haste) centrada verticalmente na faixa branca
-const CROSS_X = 30; // eixo central do simbolo
-const CROSS_BAR_W = 8;
-const CROSS_BAR_H = 44;
-const CROSS_BAR_Y = 28; // 28 -> 72 (centro = 50 = centro da faixa branca)
-const CROSS_ARM_W = 24;
-const CROSS_ARM_H = 8;
-const CROSS_ARM_Y = 37; // haste superior (terco superior de uma cruz latina)
-
-const VIEWBOX: Record<NonNullable<Props['variant']>, string> = {
-  full: '0 0 400 100',
-  mark: '0 0 62 100',
-  wordmark: '0 0 400 100',
-};
-
-const showBands = variant !== 'wordmark';
-const showText = variant !== 'mark';
-const showCross = variant !== 'wordmark';
 ---
-
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox={VIEWBOX[variant]}
-  role="img"
-  aria-label={title}
+<img
+  src="/icons/01-logo-horizontal-bandeira.svg"
+  alt={variant === 'mark' ? 'Marca O Nioaquense' : title}
   class={className}
-  preserveAspectRatio="xMidYMid meet"
+  loading="eager"
+  decoding="async"
+  width="470"
+  height="100"
   style="display:block;height:auto;width:100%;max-width:100%;"
->
-  <title>{title}</title>
-
-  {
-    showBands && (
-      <>
-        {/* Faixa superior - Verde Nioaque (~18%) */}
-        <rect x="0" y="0" width="400" height={BAND_GREEN_H} fill={GREEN} />
-
-        {/* Faixa central - Branco puro (~64%) */}
-        <rect
-          x="0"
-          y={BAND_WHITE_Y}
-          width="400"
-          height={BAND_WHITE_H}
-          fill={invertBand ? 'rgba(255,255,255,0.10)' : WHITE}
-        />
-
-        {/* Faixa inferior - Vermelho Nioaque (~18%) */}
-        <rect x="0" y={BAND_RED_Y} width="400" height={BAND_RED_H} fill={RED} />
-      </>
-    )
-  }
-
-  {
-    showCross && (
-      <g fill={RED}>
-        {/* Cruz latina: haste vertical */}
-        <rect
-          x={CROSS_X - CROSS_BAR_W / 2}
-          y={CROSS_BAR_Y}
-          width={CROSS_BAR_W}
-          height={CROSS_BAR_H}
-        />
-        {/* Cruz latina: haste horizontal (superior) */}
-        <rect
-          x={CROSS_X - CROSS_ARM_W / 2}
-          y={CROSS_ARM_Y}
-          width={CROSS_ARM_W}
-          height={CROSS_ARM_H}
-        />
-      </g>
-    )
-  }
-
-  {
-    showText && (
-      <text
-        x={variant === 'wordmark' ? 200 : 216}
-        y="59"
-        text-anchor="middle"
-        fill={textColor}
-        font-family="'Plus Jakarta Sans', 'Archivo Black', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
-        font-weight="800"
-        font-size="26"
-        letter-spacing="3.2"
-        style="font-kerning:normal;"
-      >
-        O NIOAQUENSE
-      </text>
-    )
-  }
-</svg>
+  aria-hidden={variant === 'mark' ? 'true' : undefined}
+  role={variant === 'mark' ? undefined : 'img'}
+  aria-label={variant === 'mark' ? undefined : title}
+/>

@@ -391,12 +391,12 @@ export default function QuickPublishWizard({
       <div className="space-y-5">
         <div
           className={`rounded-2xl p-5 ${
-            published ? 'bg-nioaque-green-50' : 'bg-amber-100'
+            published ? 'bg-nioaque-green-50' : 'bg-nioaque-red-50'
           }`}
         >
           <p
             className={`font-editorial text-xl font-semibold ${
-              published ? 'text-nioaque-green-dark' : 'text-amber-900'
+              published ? 'text-nioaque-green-dark' : 'text-nioaque-red-dark'
             }`}
           >
             {published ? 'Materia publicada!' : 'Enviada para a revisao'}
@@ -697,6 +697,18 @@ export default function QuickPublishWizard({
               </span>
             </label>
           </section>
+
+          {/* Avançar no desktop: a barra fixa com "Continuar" é só mobile (lg:hidden). */}
+          <div className="hidden gap-3 lg:flex">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={!form.title.trim()}
+              className="h-12 w-full rounded-full bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-50"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       )}
 
@@ -838,6 +850,24 @@ export default function QuickPublishWizard({
               </>
             )}
           </section>
+
+          {/* Voltar/Avançar no desktop: a barra fixa é só mobile (lg:hidden). */}
+          <div className="hidden gap-3 lg:flex">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="h-12 shrink-0 rounded-full border border-line px-6 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:bg-editorial"
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="h-12 flex-1 rounded-full bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       )}
 
@@ -899,13 +929,13 @@ export default function QuickPublishWizard({
             className={`rounded-2xl border p-4 sm:p-5 ${
               canPublish
                 ? 'border-nioaque-green-100 bg-nioaque-green-50'
-                : 'border-amber-200 bg-amber-50'
+                : 'border-nioaque-red-100 bg-nioaque-red-50'
             }`}
           >
             <div className="flex items-start gap-3">
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                  canPublish ? 'bg-nioaque-green text-white' : 'bg-amber-500 text-white'
+                  canPublish ? 'bg-nioaque-green text-white' : 'bg-nioaque-red text-white'
                 }`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -922,7 +952,7 @@ export default function QuickPublishWizard({
               <div>
                 <p
                   className={`text-sm font-semibold ${
-                    canPublish ? 'text-nioaque-green-dark' : 'text-amber-900'
+                    canPublish ? 'text-nioaque-green-dark' : 'text-nioaque-red-dark'
                   }`}
                 >
                   {canPublish

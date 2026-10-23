@@ -1,0 +1,59 @@
+---
+/**
+ * IconePauta.astro
+ * -----------------------------------------------------------------------------
+ * Mapeia categorias de materia para os icones tematicos da marca Nioaque
+ * (public/icons/*-pauta-*.svg e public/icons/*-icone-*.svg).
+ *
+ * Cada categoria recebe sempre o mesmo icone, mantendo a identidade visual
+ * consistente em toda a navegação do portal.
+ *
+ * Uso:
+ *   <IconePauta categoria="Saude" class="w-6 h-6" />
+ *
+ * Quando a categoria nao tem mapeamento direto, usa um icone generico
+ * de noticia (bandeira de Nioaque).
+ */
+interface Props {
+  /** Nome da categoria (ex.: "Saude", "Educacao", "Cultura"). */
+  categoria?: string | null;
+  /** Rotulo alternativo para acessibilidade. */
+  label?: string;
+  class?: string;
+}
+
+const { categoria, label: labelProp = 'Icone da categoria', class: className = '' } = Astro.props;
+
+const normalized = (categoria ?? '').trim().toLowerCase();
+
+const ICON_BY_CATEGORY: Record<string, string> = {
+  educacao: '/icons/13-pauta-educacao-livro.svg',
+  saude: '/icons/23-pauta-saude-ambulancia.svg',
+  'meio ambiente': '/icons/10-icone-serra-nioaque.svg',
+  infraestrutura: '/icons/28-pauta-obras-infraestrutura.svg',
+  cultura: '/icons/12-pauta-cultura-violao.svg',
+  economia: '/icons/21-pauta-financas-saco-dinheiro.svg',
+  estado: '/icons/25-pauta-poder-politica.svg',
+  prefeitura: '/icons/25-pauta-poder-politica.svg',
+  camara: '/icons/25-pauta-poder-politica.svg',
+  'diario oficial': '/icons/25-pauta-poder-politica.svg',
+  concursos: '/icons/27-pauta-financas-grafico.svg',
+  turismo: '/icons/11-icone-nascer-do-sol.svg',
+  cidade: '/icons/29-pauta-alerta-utilidade.svg',
+  esportes: '/icons/18-pauta-esporte-trofeu.svg',
+};
+
+const src = ICON_BY_CATEGORY[normalized] ?? '/icons/03-icone-bandeira-on.svg';
+const alt = labelProp ?? (categoria ? `Categoria: ${categoria}` : 'Categoria');
+
+---
+<img
+  src={src}
+  alt={alt}
+  class={className}
+  loading="lazy"
+  decoding="async"
+  width="80"
+  height="80"
+  style="display:block;height:auto;width:100%;max-width:100%;"
+/>

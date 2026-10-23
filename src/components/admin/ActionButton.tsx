@@ -14,6 +14,8 @@ interface Props {
   endpoint: string;
   /** Corpo JSON enviado no POST. */
   payload?: Record<string, unknown>;
+  /** Metodo HTTP. `DELETE` nao envia corpo (usado para excluir anuncios/colunistas). */
+  method?: 'POST' | 'DELETE';
   label: string;
   /** Texto curto exibido no mobile (o `label` vira o titulo accessible). */
   shortLabel?: string;
@@ -21,6 +23,8 @@ interface Props {
   variant?: 'primary' | 'ghost' | 'danger' | 'success';
   /** Pede confirmacao antes de enviar. */
   confirm?: string;
+  /** Recarrega a pagina apos a acao (ex.: quando o item sai da lista). */
+  reload?: boolean;
   /** Callbackapos a acao (ex.: atualizar a lista no pai). */
   onDone?: (result: Record<string, unknown>) => void;
 }
@@ -45,11 +49,13 @@ const VARIANTS: Record<string, string> = {
 export default function ActionButton({
   endpoint,
   payload = {},
+  method = 'POST',
   label,
   shortLabel,
   icon,
   variant = 'primary',
   confirm,
+  reload = false,
   onDone,
 }: Props) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
@@ -63,9 +69,10 @@ export default function ActionButton({
 
     try {
       const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method,
+        ...(method === 'POST'
+          ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+          : {}),
       });
 
       const data = (await response.json()) as Record<string, unknown>;
@@ -79,6 +86,10 @@ export default function ActionButton({
       setState('done');
       setMessage('Pronto!');
       onDone?.(data);
+      if (reload) {
+        window.location.reload();
+        return;
+      }
     } catch {
       setState('error');
       setMessage('Falha de conexao. Tente novamente.');

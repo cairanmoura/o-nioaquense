@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T00:00:00Z",
+  "title": "Design System: O Nioaquense",
+  "extensions": {
+    "colorMeta": {
+      "nioaque-green": {
+        "role": "primary",
+        "displayName": "Verde Nioaque",
+        "canonical": "#008026",
+        "tonalRamp": ["#002e10", "#004d1a", "#006020", "#008026", "#00a233", "#5cc27d", "#c9e9d4", "#eaf6ee"]
+      },
+      "nioaque-red": {
+        "role": "secondary",
+        "displayName": "Vermelho Nioaque",
+        "canonical": "#e60000",
+        "tonalRamp": ["#4d0000", "#800000", "#b30000", "#e60000", "#ff3333", "#ff8080", "#fdeaea", "#fdf5f5"]
+      },
+      "nioaque-white": {
+        "role": "neutral",
+        "displayName": "Branco Puro",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"]
+      },
+      "editorial": {
+        "role": "neutral",
+        "displayName": "Fundo Editorial",
+        "canonical": "#faf9f6",
+        "tonalRamp": ["#e8e4d8", "#efeae0", "#f4f2ea", "#faf9f6", "#faf9f6", "#faf9f6", "#faf9f6", "#faf9f6"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Texto Principal",
+        "canonical": "#1e293b",
+        "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"]
+      },
+      "nioaque-green-dark": {
+        "role": "primary",
+        "displayName": "Verde Escuro (Hover)",
+        "canonical": "#006020",
+        "tonalRamp": ["#003d14", "#004d1a", "#006020", "#008026", "#00a233", "#5cc27d", "#c9e9d4", "#eaf6ee"]
+      },
+      "nioaque-red-dark": {
+        "role": "secondary",
+        "displayName": "Vermelho Escuro (Hover)",
+        "canonical": "#b30000",
+        "tonalRamp": ["#4d0000", "#800000", "#b30000", "#e60000", "#ff3333", "#ff8080", "#fdeaea", "#fdf5f5"]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Borda",
+        "canonical": "#e4e2dc",
+        "tonalRamp": ["#b7b1a3", "#c9c4b7", "#d3d0c8", "#e4e2dc", "#e4e2dc", "#e4e2dc", "#e4e2dc", "#e4e2dc"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Manchetes editoriais e titulos de destaque apenas."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Interface, rotulos, dados de servico e corpo de materia."
+      }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px rgb(30 41 59 / 0.04), 0 8px 24px -12px rgb(30 41 59 / 0.12)", "purpose": "Elevação sutil e constante de cards e blocos de serviço." },
+      { "name": "lift", "value": "0 2px 4px rgb(30 41 59 / 0.05), 0 18px 40px -18px rgb(30 41 59 / 0.22)", "purpose": "Elevação mais forte em estados de foco e interação." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Easing padrão de transições de estado." },
+      { "name": "reveal", "value": "reveal-up linear both; animation-timeline: view(); animation-range: entry 4% cover 22%", "purpose": "Entrada suave de blocos ao rolar, sem JS; respeita prefers-reduced-motion." },
+      { "name": "cover-hover", "value": "transform scale(1.02) / (1.03), 500ms", "purpose": "Aumento sutil da capa de materia ao passar o mouse." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botão primário de chamada (CTA), forma de pílula, usado em 'Mande sua notícia' e ações de serviço.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Mande sua notícia</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; border: none; border-radius: 999px; background: #e60000; color: #ffffff; padding: 0.25rem 0.75rem; font-size: 0.875rem; font-weight: 600; line-height: 1.25; cursor: pointer; transition: background 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { background: #b30000; } .ds-btn-primary:focus-visible { outline: 2px solid #008026; outline-offset: 2px; border-radius: 2px; } .ds-btn-primary:active { transform: translateY(0.5px); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Botão secundário de serviço (ex.: 'Ligar'), forma de pílula, fundo verde Nioaque.",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">Ligar</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; border: none; border-radius: 999px; background: #008026; color: #ffffff; padding: 0.25rem 0.75rem; font-size: 0.875rem; font-weight: 600; line-height: 1.25; cursor: pointer; transition: background 150ms ease; } .ds-btn-secondary:hover { background: #006020; } .ds-btn-secondary:focus-visible { outline: 2px solid #008026; outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Scope Chip",
+      "kind": "chip",
+      "refersTo": "chip-pill",
+      "description": "Pílula de editoria (Nioaque, MS, Brasil, Coluna, Radar Oficial), texto maiúsculo espaçado, nunca estoura o container.",
+      "html": "<span class=\"ds-chip-pill ds-chip-nioaque\">Nioaque</span>",
+      "css": ".ds-chip-pill { display: inline-flex; align-items: center; gap: 0.375rem; border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.4; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; } .ds-chip-nioaque { background: #008026; color: #ffffff; } .ds-chip-ms { background: #eaf6ee; color: #006020; border: 1px solid #c9e9d4; } .ds-chip-brasil { background: #1e293b; color: #ffffff; } .ds-chip-coluna { background: #e60000; color: #ffffff; } .ds-chip-radar { background: #fdeaea; color: #b30000; border: 1px solid #fdeaea; }"
+    },
+    {
+      "name": "Article Card",
+      "kind": "card",
+      "refersTo": "card-article",
+      "description": "Card de matéria padrão: imagem de capa 16:9, título, subtítulo opcional, linha de metadados com avatar do colunista.",
+      "html": "<article class=\"ds-card-article group\"><a href=\"#\" class=\"ds-card-cover\"><img src=\"https://example.com/cover.webp\" alt=\"Capa da matéria\" class=\"ds-card-cover-img\"/></a><div class=\"ds-card-body\"><h3 class=\"ds-card-title\"><a href=\"#\">Título da matéria</a></h3><p class=\"ds-card-subtitle\">Subtítulo explicativo da matéria.</p><div class=\"ds-card-meta\"><img src=\"https://example.com/avatar.webp\" alt=\"\" class=\"ds-card-avatar\"/><span class=\"ds-card-author\">Colunista</span> <span class=\"ds-card-dot\">·</span> <time class=\"ds-card-time\">2h atrás</time></div></div></article>",
+      "css": ".ds-card-article { display: flex; flex-direction: column; background: #ffffff; border-radius: 1rem; overflow: hidden; } .ds-card-cover { display: block; overflow: hidden; background: #eaf6ee; } .ds-card-cover-img { width: 100%; height: auto; display: block; aspect-ratio: 16/9; object-fit: cover; transition: transform 500ms ease; } .ds-card-article.group:hover .ds-card-cover-img { transform: scale(1.03); } .ds-card-body { display: flex; flex: 1; flex-direction: column; padding: 1.25rem; } .ds-card-title { margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem); font-weight: 600; line-height: 1.35; } .ds-card-title a { color: #1e293b; text-decoration: none; transition: color 150ms ease; } .ds-card-article.group:hover .ds-card-title a { color: #008026; } .ds-card-subtitle { margin: 0.5rem 0 0; font-size: 0.9375rem; line-height: 1.6; color: #475569; } .ds-card-meta { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.25rem; padding-top: 1rem; font-size: 0.75rem; font-weight: 500; color: #64748b; } .ds-card-avatar { width: 1.5rem; height: 1.5rem; border-radius: 999px; object-fit: cover; } .ds-card-dot { color: #94a3b8; }"
+    },
+    {
+      "name": "Article Card Lead",
+      "kind": "card",
+      "refersTo": "card-article",
+      "description": "Variante destaque da capa: título grande primeiro, imagem 16:9 abaixo e caixa 'Direto ao Ponto' opcional.",
+      "html": "<article class=\"ds-card-lead group\"><div class=\"ds-card-lead-text\"><h2 class=\"ds-card-lead-title\"><a href=\"#\">Manchete da matéria principal</a></h2><p class=\"ds-card-lead-sub\">Subtítulo da matéria com mais contexto.</p><div class=\"ds-card-lead-meta\"><span class=\"ds-card-lead-scope\">Nioaque</span> <span class=\"ds-card-lead-dot\">·</span> <time>5 min de leitura</time></div></div><a href=\"#\" class=\"ds-card-lead-cover\"><img src=\"https://example.com/cover.webp\" alt=\"Capa\" class=\"ds-card-lead-cover-img\"/></a><div class=\"ds-card-summary\"><h3 class=\"ds-card-summary-title\">Direto ao Ponto</h3><ul class=\"ds-card-summary-list\"><li class=\"ds-card-summary-item\"><span class=\"ds-card-summary-dot\"></span><span>Primeiro ponto do resumo.</span></li><li class=\"ds-card-summary-item\"><span class=\"ds-card-summary-dot\"></span><span>Segundo ponto do resumo.</span></li></ul></div></article>",
+      "css": ".ds-card-lead { display: flex; flex-direction: column; } .ds-card-lead-title { margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.03em; } .ds-card-lead-title a { color: #1e293b; text-decoration: none; transition: color 150ms ease; } .ds-card-lead.group:hover .ds-card-lead-title a { color: #008026; } .ds-card-lead-sub { margin: 0.75rem 0 0; font-size: 1rem; line-height: 1.7; color: #475569; } .ds-card-lead-meta { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.25rem; font-size: 0.75rem; font-weight: 500; color: #64748b; } .ds-card-lead-scope { color: #006020; font-weight: 600; } .ds-card-lead-cover { display: block; overflow: hidden; background: #eaf6ee; margin-top: 1.25rem; } .ds-card-lead-cover-img { width: 100%; height: auto; display: block; aspect-ratio: 16/9; object-fit: cover; transition: transform 500ms ease; } .ds-card-lead.group:hover .ds-card-lead-cover-img { transform: scale(1.02); } .ds-card-summary { margin-top: 1.25rem; border-left: 4px solid #008026; background: #ffffff; border-radius: 0 1.125rem 1.125rem 0; padding: 1.25rem; } .ds-card-summary-title { margin: 0 0 0.75rem; font-size: 0.875rem; font-weight: 600; color: #006020; text-transform: none; letter-spacing: normal; } .ds-card-summary-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.625rem; } .ds-card-summary-item { display: flex; gap: 0.625rem; align-items: flex-start; font-size: 1rem; line-height: 1.7; color: #1e293b; } .ds-card-summary-dot { width: 0.375rem; height: 0.375rem; border-radius: 999px; background: #e60000; margin-top: 0.5rem; flex-shrink: 0; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Campo de busca do cabeçalho, fundo editorial, pílula, foco com borda verde.",
+      "html": "<form class=\"ds-search-form\" role=\"search\"><svg class=\"ds-search-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20 -3.5 -3.5\"/></svg><input class=\"ds-search-input\" type=\"search\" name=\"q\" placeholder=\"Buscar notícia...\" aria-label=\"Buscar no O Nioaquense\"/></form>",
+      "css": ".ds-search-form { display: flex; align-items: center; gap: 0.5rem; border: 1px solid #e4e2dc; border-radius: 999px; background: #faf9f6; padding: 0.25rem 1rem; } .ds-search-icon { color: #64748b; flex-shrink: 0; } .ds-search-input { width: 100%; background: transparent; border: none; outline: none; font-size: 0.875rem; color: #1e293b; } .ds-search-input::placeholder { color: rgba(100, 116, 139, 0.8); } .ds-search-form:focus-within { border-color: #008026; background: #ffffff; }"
+    },
+    {
+      "name": "Navigation Pill",
+      "kind": "nav",
+      "refersTo": "chip-pill",
+      "description": "Item de menu de editorias no cabeçalho desktop, pílula ativa em verde ou inativa com hover.",
+      "html": "<a class=\"ds-nav-pill ds-nav-pill-active\" href=\"/editoria/nioaque\" aria-current=\"page\">Nioaque</a>",
+      "css": ".ds-nav-pill { display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 999px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; color: #475569; text-decoration: none; transition: background 150ms ease, color 150ms ease; } .ds-nav-pill:hover { background: #eaf6ee; color: #006020; } .ds-nav-pill-active { background: #008026; color: #ffffff; } .ds-nav-pill-active:hover { background: #006020; } .ds-nav-pill:focus-visible { outline: 2px solid #008026; outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Direto ao Ponto Box",
+      "kind": "custom",
+      "refersTo": "box-resumo",
+      "description": "Caixa de resumo didática da matéria (assinatura Nexo): linha esquerda verde 4px, fundo branco, pontos vermelhos nos bullets.",
+      "html": "<section class=\"ds-summary-box\"><h3 class=\"ds-summary-title\">Direto ao Ponto</h3><ul class=\"ds-summary-list\"><li class=\"ds-summary-item\"><span class=\"ds-summary-dot\"></span><span>O resumo da notícia em um ponto.</span></li><li class=\"ds-summary-item\"><span class=\"ds-summary-dot\"></span><span>O segundo ponto essencial.</span></li></ul></section>",
+      "css": ".ds-summary-box { border-left: 4px solid #008026; background: #ffffff; border-radius: 0 1.125rem 1.125rem 0; padding: 1.25rem; } .ds-summary-title { margin: 0 0 0.75rem; font-size: 0.875rem; font-weight: 600; color: #006020; } .ds-summary-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.625rem; } .ds-summary-item { display: flex; gap: 0.625rem; align-items: flex-start; font-size: 1rem; line-height: 1.7; color: #1e293b; } .ds-summary-dot { width: 0.375rem; height: 0.375rem; border-radius: 999px; background: #e60000; margin-top: 0.5rem; flex-shrink: 0; }"
+    },
+    {
+      "name": "Skip Link",
+      "kind": "nav",
+      "refersTo": "input-search",
+      "description": "Link de acessibilidade 'Pular para o conteúdo', oculto até receber foco, âncora topo-esquerda com fundo verde.",
+      "html": "<a class=\"ds-skip-link\" href=\"#conteudo\">Pular para o conteúdo</a>",
+      "css": ".ds-skip-link { position: absolute; left: 4px; top: 4px; z-index: 50; background: #008026; color: #ffffff; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; border-radius: 0.5rem; text-decoration: none; } .ds-skip-link:not(:focus) { clip: rect(0 0 0 0); clip-path: inset(100%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; } .ds-skip-link:focus-visible { outline: 2px solid #008026; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Ponto da Cidade",
+    "overview": "O portal se comporta como a praça central de Nioaque: o lugar onde o morador encontra, em segundos, a notícia do dia e os serviços úteis (farmácia de plantão, clima, ônibus, alerta da cidade). O tom é editorial, calmo e confiável — solidez de leitura tipo Nexo Jornal (fundo off-white #FAF9F6, títulos serifados em Newsreader, caixa 'Direto ao Ponto') — com pontuação vibrante de serviço no espírito BHAZ (pílulas de editoria coloridas, cards arredondados, avatares de colunistas em destaque). Tudo cabe em telas de 360px a 430px; o desktop só acrescenta, nunca reescreve. O vermelho é reservado a urgência e ações primárias; nunca é decoração.",
+    "keyCharacteristics": ["Fundo editorial #FAF9F6 em toda a página; cards e modais em #FFFFFF puro.", "Títulos editoriais em Newsreader (serif); interface, rótulos e dados em Plus Jakarta Sans (sans).", "Escala de texto fluida mobile-first (clamp) para títulos; tamanhos fixos para corpo e rótulos.", "Raio generoso: cards 1rem (16px), pílulas e botões 999px.", "Profundidade por camadas tonais e bordas de 1px; sombras sutis apenas em estado (hover/focus).", "Zero CLS em anúncios: altura reservada antes do criativo carregar.", "Símbolo da marca: releitura da bandeira de Nioaque (faixas 18% / 64% / 18%, cruz vermelha esquerda, wordmark 'O NIOAQUENSE' vermelho caixa alta)."],
+    "rules": [
+      { "name": "The One Red Rule", "body": "Vermelho Nioaque ocupa no máximo 10% de qualquer tela. Sua raridade é o que faz o alerta funcionar; pintar mais que isso desqualifica o sinal de urgência.", "section": "colors" },
+      { "name": "The Flat-By-Default Rule", "body": "Superfícies são planas em repouso. Sombra aparece apenas como resposta a estado (hover, focus, elevado) — nunca como decoração estática.", "section": "elevation" },
+      { "name": "The Flag-Band Rule", "body": "Logo na proporção 18% / 64% / 18% (verde, branco central, vermelho), cruz vermelha à esquerda, wordmark 'O NIOAQUENSE' vermelho em caixa alta.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do reserve a altura mínima de cada slot de anúncio antes do criativo carregar (zero CLS): header_billboard 160px, home_middle 220px, article_inline 280px, sidebar 260px, daily_deal 340px; AdSense leaderboard 120px, rectangle 280px, horizontal 140px, mobileBanner 100px. Sem cliente configurado, o slot não é renderizado vazio.",
+      "Do mantenha a medida do corpo entre 65 e 75 caracteres, com leading-relaxed.",
+      "Do use #FAF9F6 como fundo de página e #FFFFFF em cards; jamais misture outros fundos de superfície.",
+      "Do restrinja o vermelho a urgência e chamada primária (regra dos 10%).",
+      "Do use Newsreader apenas para títulos editoriais; Plus Jakarta Sans para tudo o que é interface, rótulo ou dado."
+    ],
+    "donts": [
+      "Don't use texto em degradado ou vidro/desfoque como decoração.",
+      "Don't use sombras de deslocamento duro (4px 4px 0) — não é um mundo neobrutalista.",
+      "Don't renderize slots de anúncio vazios; oculte o slot inteiro quando não houver cliente.",
+      "Don't coloque sobremesa (kicker/eyebrow) acima de títulos; o título carrega seu próprio peso.",
+      "Don't use preto puro (#000000) em texto; o tom de corpo é #1E293B."
+    ]
+  }
+}

@@ -24,7 +24,9 @@ interface Props {
 const { ad, class: className = '', label = 'Publicidade local' } = Astro.props;
 // Capas geométricas de template (caixa branca vazia) não servem como criativo.
 const adImage = ad?.image_url && !/\.svg(\?|$)/i.test(ad.image_url) ? ad.image_url : null;
-const reservedHeight = adImage ? AD_MIN_HEIGHT[ad?.slot_position ?? 'home_middle'] : undefined;
+/* Zero CLS: reserva a altura mínima do slot sempre que existe anúncio,
+   mesmo sem imagem, para o layout nunca saltar quando o criativo carrega. */
+const reservedHeight = ad ? AD_MIN_HEIGHT[ad?.slot_position ?? 'home_middle'] : undefined;
 ---
 
 {

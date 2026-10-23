@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { readPayload, requireSession, jsonOk, toErrorResponse } from '../../../../lib/api';
-import { updateColumnist } from '../../../../lib/admin';
+import { deleteColumnist, updateColumnist } from '../../../../lib/admin';
 
 /**
  * POST /api/admin/profiles/[id]
@@ -36,6 +36,25 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const profile = await updateColumnist(locals, session, id, patch);
     return jsonOk({ profile });
+  } catch (error) {
+    return toErrorResponse(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/profiles/[id]
+ * -----------------------------------------------------------------------------
+ * Exclui um colunista (somente Editor-Chefe). Os artigos dele sao reatribuidos
+ * a quem exclui, preservando as materias ja publicadas.
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    const session = requireSession(locals);
+    const id = params.id ?? '';
+    if (!id) throw new Error('Colunista invalido.');
+
+    const deleted = await deleteColumnist(locals, session, id);
+    return jsonOk({ deleted });
   } catch (error) {
     return toErrorResponse(error);
   }

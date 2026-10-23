@@ -78,19 +78,23 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
               </div>
 
               <div class="mt-3 space-y-3 rounded-xl bg-editorial p-4">
-                <ToggleSwitch
-                  client:load
-                  endpoint={`/api/admin/profiles/${columnist.id}`}
-                  field="can_publish_directly"
-                  checked={columnist.can_publish_directly}
-                  label="Pode publicar direto sem revisao"
-                  description={
-                    columnist.can_publish_directly
-                      ? 'Os textos dele vao direto ao ar.'
-                      : 'Os textos dele passam por voce antes de publicar.'
-                  }
-                  highlight="red"
-                />
+                {
+                  !(columnist.id === session.id && session.profile.role === 'admin') && (
+                    <ToggleSwitch
+                      client:load
+                      endpoint={`/api/admin/profiles/${columnist.id}`}
+                      field="can_publish_directly"
+                      checked={columnist.can_publish_directly}
+                      label="Pode publicar direto sem revisao"
+                      description={
+                        columnist.can_publish_directly
+                          ? 'Os textos dele vao direto ao ar.'
+                          : 'Os textos dele passam por voce antes de publicar.'
+                      }
+                      highlight="red"
+                    />
+                  )
+                }
 
                 <div class="border-t border-line pt-3">
                   <ToggleSwitch
@@ -103,6 +107,23 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
                   />
                 </div>
               </div>
+
+              {/* Excluir colunista (o botao do proprio editor nao aparece). */}
+              {columnist.id !== session.id && (
+                <div class="mt-4 flex justify-end border-t border-line pt-4">
+                  <ActionButton
+                    client:visible
+                    endpoint={`/api/admin/profiles/${columnist.id}`}
+                    method="DELETE"
+                    label="Excluir colunista"
+                    shortLabel="Excluir"
+                    icon="trash"
+                    variant="danger"
+                    confirm="Excluir este colunista? Os artigos publicados por ele passam a ser do editor-chefe. Esta ação não pode ser desfeita."
+                    reload
+                  />
+                </div>
+              )}
             </li>
           ))
         }

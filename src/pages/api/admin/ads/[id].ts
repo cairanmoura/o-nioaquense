@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { readPayload, requireSession, jsonOk, toErrorResponse } from '../../../../lib/api';
-import { updateAd, type AdInput } from '../../../../lib/admin';
+import { deleteAd, updateAd, type AdInput } from '../../../../lib/admin';
 import type { AdOfferType, AdSlotPosition } from '../../../../lib/types';
 
 /**
@@ -49,6 +49,24 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const ad = await updateAd(locals, session, id, patch);
     return jsonOk({ ad });
+  } catch (error) {
+    return toErrorResponse(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/ads/[id]
+ * -----------------------------------------------------------------------------
+ * Exclui definitivamente um anuncio local.
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    const session = requireSession(locals);
+    const id = params.id ?? '';
+    if (!id) throw new Error('Anuncio invalido.');
+
+    const deleted = await deleteAd(locals, session, id);
+    return jsonOk({ deleted });
   } catch (error) {
     return toErrorResponse(error);
   }

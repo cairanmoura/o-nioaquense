@@ -1,6 +1,7 @@
 ---
 import ArticleCard from '../../components/ArticleCard.astro';
 import AudioPlayer from '../../components/AudioPlayer.tsx';
+import CategoryPill from '../../components/CategoryPill.astro';
 import CoverArt from '../../components/CoverArt.astro';
 import GoogleAdSlot from '../../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../../components/LocalAdBanner.astro';
@@ -132,10 +133,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
     {/* Cabecalho */}
     <header class="mx-auto max-w-3xl">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold">
-        <span class="h-1.5 w-1.5 rounded-full bg-nioaque-green" aria-hidden="true" />
-        <span class="text-nioaque-green-dark">
-          {article.category_label ?? SCOPE_LABEL[article.scope]}
-        </span>
+        <CategoryPill category={article.category_label} fallback={SCOPE_LABEL[article.scope]} />
         <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>
       </div>
 
@@ -410,7 +408,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
                   <ArticleCard
                     article={item}
                     author={profilesById.get(item.author_id) ?? null}
-                    variant="standard"
+                    variant="compact"
                   />
                 ))}
               </div>

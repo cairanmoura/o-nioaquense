@@ -21,6 +21,34 @@ interface Props {
 
 const { article, showEditor = false, class: className = '' } = Astro.props;
 const label = article.category_label ?? SCOPE_LABEL[article.scope];
+const normalized = label.toLowerCase().trim();
+
+function hash(value: string): number {
+  let result = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    result = (result * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return result;
+}
+
+/* Somente cores da identidade Nioaque (verde, vermelho, preto editorial). */
+const BRAND_TONES = [
+  { bg: 'bg-nioaque-green text-white', dot: 'bg-nioaque-green', text: 'text-white' },
+  { bg: 'bg-nioaque-red text-white', dot: 'bg-nioaque-red', text: 'text-white' },
+  { bg: 'bg-ink text-white', dot: 'bg-ink', text: 'text-white' },
+  {
+    bg: 'bg-nioaque-green-50 ring-1 ring-inset ring-nioaque-green-100',
+    dot: 'bg-nioaque-green',
+    text: 'text-nioaque-green-dark',
+  },
+  {
+    bg: 'bg-nioaque-red-50 ring-1 ring-inset ring-red-100',
+    dot: 'bg-nioaque-red',
+    text: 'text-nioaque-red-dark',
+  },
+];
+
+const tone = BRAND_TONES[hash(normalized) % BRAND_TONES.length];
 ---
 
 <div
@@ -29,8 +57,8 @@ const label = article.category_label ?? SCOPE_LABEL[article.scope];
     className,
   ]}
 >
-  <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
-  <span class="text-nioaque-green-dark">{label}</span>
+  <span class:list={['h-1.5 w-1.5 shrink-0 rounded-full', tone.dot]} aria-hidden="true" />
+  <span class:list={['font-semibold', tone.text]}>{label}</span>
   {showEditor && <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>}
   {article.is_breaking && <span class="font-bold text-nioaque-red">&middot; Última hora</span>}
 </div>

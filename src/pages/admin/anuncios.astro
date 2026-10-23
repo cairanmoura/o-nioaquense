@@ -1,4 +1,5 @@
 ---
+import ActionButton from '../../components/admin/ActionButton.tsx';
 import Icon from '../../components/admin/Icon.astro';
 import ToggleSwitch from '../../components/admin/ToggleSwitch.tsx';
 import AdminLayout from '../../layouts/AdminLayout.astro';
@@ -325,6 +326,20 @@ const inputClass =
                 </button>
               </form>
             </details>
+
+            <div class="mt-4 flex justify-end border-t border-line pt-4">
+              <ActionButton
+                client:visible
+                endpoint={`/api/admin/ads/${ad.id}`}
+                method="DELETE"
+                label="Excluir anúncio"
+                shortLabel="Excluir"
+                icon="trash"
+                variant="danger"
+                confirm="Excluir este anúncio permanentemente? Esta ação não pode ser desfeita."
+                reload
+              />
+            </div>
           </article>
         ))
       }

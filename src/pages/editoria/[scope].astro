@@ -2,6 +2,7 @@
 import ArticleCard from '../../components/ArticleCard.astro';
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getHomeFeed } from '../../lib/content';
+import { SCOPE_BADGE_CLASS, SCOPE_LABEL } from '../../lib/types';
 import type { ArticleScope } from '../../lib/types';
 
 /**
@@ -77,6 +78,33 @@ const rest = articles.filter((article) => article.id !== featured?.id);
         {articles.length} {articles.length === 1 ? 'matéria' : 'matérias'}
       </p>
     </header>
+
+    {/* Navegacao entre editorias */}
+    <nav class="mt-6 flex flex-wrap gap-2 sm:gap-3" aria-label="Trocar de editoria">
+      {[
+        'nioaque',
+        'ms',
+        'brasil',
+        'coluna',
+        'radar_oficial',
+      ].map((editoriaScope) => {
+        const isActive = scope === editoriaScope;
+        const href =
+          editoriaScope === 'radar_oficial' ? '/radar-oficial' : `/editoria/${editoriaScope}`;
+        return (
+          <a
+            href={href}
+            class={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+              isActive
+                ? SCOPE_BADGE_CLASS[editoriaScope as ArticleScope]
+                : 'bg-nioaque-white border border-line text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark'
+            }`}
+          >
+            {SCOPE_LABEL[editoriaScope as ArticleScope]}
+          </a>
+        );
+      })}
+    </nav>
 
     {
       articles.length === 0 ? (

@@ -694,6 +694,43 @@ export async function updateColumnist(
   return demoStore.updateProfile(id, patch)!;
 }
 
+/**
+ * Exclui um colunista (somente Editor-Chefe).
+ *
+ * Antes de remover o perfil, os artigos do colunista sao reatribuidos a quem
+ * esta excluindo: assim a FK `articles.author_id` nao quebra e nenhuma materia
+ * ja publicada se perde no caminho.
+ */
+export async function deleteColumnist(
+  locals: App.Locals,
+  session: AdminSession,
+  id: string,
+): Promise<boolean> {
+  if (!isAdmin(session)) {
+    throw new ForbiddenError('Somente o Editor-Chefe pode excluir colunistas.');
+  }
+
+  // Ninguem exclui a propria conta: evita deixar o painel sem editor-chefe.
+  if (session.id === id) {
+    throw new ForbiddenError('Voce nao pode excluir o seu proprio perfil.');
+  }
+
+  if (locals.supabase) {
+    // Reatribui os artigos para o editor que esta excluindo (preserva o conteudo).
+    const { error: reassignError } = await locals.supabase
+      .from('articles')
+      .update({ author_id: session.id })
+      .eq('author_id', id);
+    if (reassignError) throw new Error(reassignError.message);
+
+    const { error } = await locals.supabase.from('profiles').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return true;
+  }
+
+  throw new Error('A exclusao de colunistas exige o banco configurado.');
+}
+
 /* -------------------------------------------------------------------------- */
 /* Pistas, servicos e anuncios                                                */
 /* -------------------------------------------------------------------------- */
@@ -893,6 +930,25 @@ export async function updateAd(
   }
 
   return demoStore.updateAd(id, patch as Partial<LocalAd>)!;
+}
+
+/** Exclui um anuncio local (somente a redacao / editor-chefe). */
+export async function deleteAd(
+  locals: App.Locals,
+  session: AdminSession,
+  id: string,
+): Promise<boolean> {
+  if (!isAdmin(session)) {
+    throw new ForbiddenError('Somente a redacao pode excluir anuncios.');
+  }
+
+  if (locals.supabase) {
+    const { error } = await locals.supabase.from('local_ads').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return true;
+  }
+
+  throw new Error('A exclusao de anuncios exige o banco configurado.');
 }
 
 /* -------------------------------------------------------------------------- */
