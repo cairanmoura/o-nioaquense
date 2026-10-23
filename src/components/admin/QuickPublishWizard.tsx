@@ -184,6 +184,7 @@ export default function QuickPublishWizard({
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -249,6 +250,31 @@ export default function QuickPublishWizard({
       textarea.focus();
       textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
     });
+  }
+
+  async function rewriteWithAI() {
+    if (!form.content.trim()) {
+      setError('Escreva algo no corpo antes de reescrever.');
+      return;
+    }
+    setRewriting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/ai/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: form.content }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'Falha na IA');
+      if (data.rewritten) {
+        setForm((previous) => ({ ...previous, content: data.rewritten }));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao reescrever com IA.');
+    } finally {
+      setRewriting(false);
+    }
   }
 
   function insertList() {
@@ -785,6 +811,18 @@ export default function QuickPublishWizard({
                       <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
                     </svg>
                   </button>
+                </div>
+
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={rewriteWithAI}
+                    disabled={rewriting}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
+                  >
+                    {rewriting ? 'Reescrevendo...' : '✨ Reescrever com IA'}
+                  </button>
+                  <span className="text-[11px] text-ink-muted">Usa Google Gemini. O resultado substitui o texto atual.</span>
                 </div>
 
                 <textarea
