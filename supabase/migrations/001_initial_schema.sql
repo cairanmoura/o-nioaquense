@@ -343,6 +343,29 @@ create policy "articles_update_own" on public.articles for update to authenticat
 drop policy if exists "public_utilities_select_all" on public.public_utilities;
 create policy "public_utilities_select_all" on public.public_utilities for select using (true);
 
+-- Servico publico: horarios de onibus, cotacoes e loterias
+alter table public.bus_schedules enable row level security;
+alter table public.market_quotes enable row level security;
+alter table public.lottery_results enable row level security;
+
+drop policy if exists "bus_schedules_select_public" on public.bus_schedules;
+create policy "bus_schedules_select_public" on public.bus_schedules for select to anon, authenticated using (true);
+
+drop policy if exists "bus_schedules_admin_all" on public.bus_schedules;
+create policy "bus_schedules_admin_all" on public.bus_schedules for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "market_quotes_select_public" on public.market_quotes;
+create policy "market_quotes_select_public" on public.market_quotes for select to anon, authenticated using (true);
+
+drop policy if exists "market_quotes_admin_all" on public.market_quotes;
+create policy "market_quotes_admin_all" on public.market_quotes for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "lottery_results_select_public" on public.lottery_results;
+create policy "lottery_results_select_public" on public.lottery_results for select to anon, authenticated using (true);
+
+drop policy if exists "lottery_results_admin_all" on public.lottery_results;
+create policy "lottery_results_admin_all" on public.lottery_results for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
 -- Policies de local_ads
 drop policy if exists "local_ads_select_all" on public.local_ads;
 create policy "local_ads_select_all" on public.local_ads for select using (active = true);
