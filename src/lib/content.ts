@@ -47,6 +47,7 @@ function normalizeArticle(row: Record<string, unknown>): Article {
     cover_image_caption: row.cover_image_caption ? String(row.cover_image_caption) : null,
     scope: (row.scope ?? 'nioaque') as ArticleScope,
     category_label: row.category_label ? String(row.category_label) : null,
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
     is_featured: Boolean(row.is_featured),
     author_id: row.author_id ? String(row.author_id) : '',

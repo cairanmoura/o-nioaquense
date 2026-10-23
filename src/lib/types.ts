@@ -55,6 +55,8 @@ export interface Article {
   cover_image_caption: string | null;
   scope: ArticleScope;
   category_label: string | null;
+  /** Tags da materia (ex.: "Saude", "Obra", "Enchente"). Adicionadas na producao. */
+  tags?: string[];
   is_breaking: boolean;
   is_featured: boolean;
   author_id: string;

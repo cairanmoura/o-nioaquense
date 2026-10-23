@@ -31,6 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       cover_image_caption: payload.cover_image_caption ? String(payload.cover_image_caption) : null,
       scope: (payload.scope ?? 'nioaque') as ArticleScope,
       category_label: payload.category_label ? String(payload.category_label) : null,
+      tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
       is_breaking: Boolean(payload.is_breaking),
       is_featured: Boolean(payload.is_featured),
       status: payload.status ? (String(payload.status) as ArticleStatus) : 'draft',

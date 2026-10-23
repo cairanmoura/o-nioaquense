@@ -28,6 +28,7 @@ interface ArticleSeed {
   cover_image_caption: string | null;
   scope: string;
   category_label: string | null;
+  tags?: string[];
   is_breaking: boolean;
   status: string;
 }
@@ -57,6 +58,7 @@ const EMPTY = {
   content: '',
   category: '',
   scope: 'nioaque',
+  tags: [],
   isBreaking: false,
   caption: '',
 };
@@ -166,6 +168,7 @@ export default function QuickPublishWizard({
     category: article?.category_label ?? EMPTY.category,
     scope: article?.scope ?? EMPTY.scope,
     isBreaking: article?.is_breaking ?? EMPTY.isBreaking,
+    tags: article?.tags ?? [...EMPTY.tags],
     caption: article?.cover_image_caption ?? EMPTY.caption,
   }));
 
@@ -346,6 +349,7 @@ export default function QuickPublishWizard({
           cover_image_caption: form.caption,
           scope: form.scope,
           category_label: form.category,
+          tags: form.tags,
           is_breaking: form.isBreaking,
           status: target,
         }),
@@ -679,6 +683,29 @@ export default function QuickPublishWizard({
                 </select>
               </label>
             </div>
+
+            <label className="block">
+              <span className="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Tags
+              </span>
+              <p className="mt-0.5 text-[10px] text-ink-muted">
+                Separe por virgula (ex.: Saude, Obra, Enchente). Maximo 10.
+              </p>
+              <input
+                type="text"
+                value={form.tags.join(', ')}
+                onChange={(event) => {
+                  const next = event.target.value
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .slice(0, 10);
+                  setForm((previous) => ({ ...previous, tags: next }));
+                }}
+                placeholder="Saude, Obra, Enchente"
+                className="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
+              />
+            </label>
 
             <label className="flex items-center gap-3 rounded-xl bg-editorial px-4 py-3">
               <input

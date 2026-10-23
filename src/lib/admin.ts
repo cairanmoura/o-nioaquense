@@ -56,6 +56,17 @@ export const CATEGORY_OPTIONS = [
   'Concursos',
   'Diário Oficial',
   'Brasil',
+  'Esportes',
+  'Segurança',
+  'Polícia',
+  'Justiça',
+  'Transporte',
+  'Habitação',
+  'Meio Ambiente',
+  'Agricultura',
+  'Emprego',
+  'Assistência Social',
+  'Religião',
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -119,6 +130,7 @@ function mapArticle(row: Record<string, unknown>): Article {
     cover_image_caption: row.cover_image_caption ? String(row.cover_image_caption) : null,
     scope: (row.scope ?? 'nioaque') as ArticleScope,
     category_label: row.category_label ? String(row.category_label) : null,
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
     is_featured: Boolean(row.is_featured),
     author_id: row.author_id ? String(row.author_id) : '',
@@ -338,6 +350,8 @@ export interface ArticleInput {
   cover_image_caption?: string | null;
   scope: ArticleScope;
   category_label?: string | null;
+  /** Tags da materia. */
+  tags?: string[];
   is_breaking?: boolean;
   is_featured?: boolean;
   status?: ArticleStatus;
@@ -405,6 +419,7 @@ export async function saveArticle(
     cover_image_caption: input.cover_image_caption ?? existing?.cover_image_caption ?? null,
     scope: input.scope ?? 'nioaque',
     category_label: input.category_label?.trim() || null,
+    tags: Array.isArray(input.tags) ? input.tags.filter((t) => t.trim()).slice(0, 10) : [],
     is_breaking: Boolean(input.is_breaking),
     is_featured: isAdmin(session) ? Boolean(input.is_featured) : (existing?.is_featured ?? false),
     author_id: existing?.author_id ?? session.profile.id,
@@ -427,6 +442,7 @@ export async function saveArticle(
       cover_image_caption: payload.cover_image_caption,
       scope: payload.scope,
       category_label: payload.category_label,
+      tags: payload.tags,
       is_breaking: payload.is_breaking,
       is_featured: payload.is_featured,
       status: payload.status,
@@ -1179,6 +1195,7 @@ export async function convertSubmissionToDraft(
     cover_image_caption: 'Imagem enviada pelo leitor',
     scope: 'nioaque',
     category_label: 'Cidade',
+    tags: [],
     is_breaking: false,
     is_featured: false,
     author_id: session.profile.id,
