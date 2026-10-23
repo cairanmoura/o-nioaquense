@@ -106,30 +106,30 @@ export const mockArticles: Article[] = [
   {
     id: '20000000-0000-4000-8000-000000000001',
     title:
-      'Motociclista de 28 anos morre após grave acidente entre moto e Fiorino no último sábado, em Nioaque',
-    subtitle: 'Colisão frontal ocorreu na BR-060; vítima foi socorrida em estado grave',
-    slug: 'motociclista-28-anos-morre-acidente-moto-fiorino-br-060-nioaque',
+      'Outubro Rosa reforça prevenção e amplia o cuidado com a saúde da mulher em Nioaque',
+    subtitle: 'Campanha mobiliza Secretaria de Saúde com programação nas ESFs',
+    slug: 'outubro-rosa-reforca-prevencao-amplia-cuidado-saude-mulher-nioaque',
     summary_bullets: [
-      'A colisão frontal aconteceu na BR-060, no último sábado (17), em Nioaque.',
-      'Wellington Henrique foi socorrido em estado grave e encaminhado para Campo Grande.',
-      'A vítima não resistiu aos ferimentos e o caso foi registrado como morte no local.',
+      'A campanha Outubro Rosa mobiliza a Secretaria Municipal de Saúde desde o início do mês.',
+      'Ações são realizadas nas Estratégias de Saúde da Família (ESFs), com exames preventivos.',
+      'A iniciativa busca conscientizar sobre a importância do diagnóstico precoce.',
     ],
-    content: `<p>Um motociclista de 28 anos morreu na noite do sábado (17) após se envolver em uma colisão frontal entre uma moto e um Fiorino na BR-060, em Nioaque.</p>
+    content: `<p>A prevenção e o diagnóstico precoce são fundamentais para o cuidado com a saúde da mulher. Em Nioaque, a campanha Outubro Rosa mobiliza, desde o início do mês, a Secretaria Municipal de Saúde em uma programação especial.</p>
 <p>Wellington Henrique foi socorrido ainda no local, em estado grave, e encaminhado para uma unidade hospitalar de Campo Grande. Não resistiu aos ferimentos.</p>
 <p>A Polícia Militar atendeu a chamada e iniciou o resgate. A prova de crash foi recolhida pela pericia.</p>
 <p>Segundo informações da corporacao, a pista estava molhada no momento da colisão. A apuracao das causas segue em andamento.</p>`,
     cover_image_url: '/covers/cap-01.svg',
-    cover_image_caption: 'Trecho da BR-060 onde aconteceu a colisão',
+    cover_image_caption: 'Campanha Outubro Rosa em Nioaque',
     scope: 'nioaque',
-    category_label: 'Acidente Nioaque',
+    category_label: 'Saúde',
     is_breaking: false,
     is_featured: true,
     author_id: '10000000-0000-4000-8000-000000000001',
     status: 'published',
-    views_count: 9840,
-    published_at: '2026-10-15T11:20:00Z',
-    created_at: '2026-10-15T10:50:00Z',
-    updated_at: '2026-10-15T11:20:00Z',
+    views_count: 49,
+    published_at: '2026-10-22T11:20:00Z',
+    created_at: '2026-10-22T10:50:00Z',
+    updated_at: '2026-10-22T11:20:00Z',
   },
   {
     id: '20000000-0000-4000-8000-000000000002',
