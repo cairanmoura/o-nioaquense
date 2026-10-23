@@ -37,9 +37,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Paginas do painel e suas APIs precisam da sessao resolvida no servidor.
   const isAdminPage = pathname.startsWith('/admin');
   const isAdminApi = pathname.startsWith('/api/admin');
+  // Troca de senha: usa a sessao do painel, mas mora em /api/auth.
+  const isSelfServiceRoute = pathname === '/api/auth/change-password';
 
-  if (isAdminPage || isAdminApi) {
+  if (isAdminPage || isAdminApi || isSelfServiceRoute) {
     const isLoginRoute = pathname === '/admin/login';
+
+    // Telas de senha: acessíveis sem sessão (a de redefinição exige a sessão
+    // temporária criada pelo link do e-mail e valida isso na própria página).
+    const isPasswordRoute =
+      pathname === '/admin/recuperar-senha' || pathname === '/admin/redefinir-senha';
 
     const demoCookie = context.cookies.get(DEMO_COOKIE)?.value;
     const session = await resolveAdminSession(context.locals, demoCookie);
@@ -47,7 +54,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.adminUser = session;
 
     if (isAdminPage) {
-      if (!session && !isLoginRoute) {
+      if (!session && !isLoginRoute && !isPasswordRoute) {
         const next_ = encodeURIComponent(`${pathname}${context.url.search}`);
         // O redirect sai antes do bloco de cache: aplicamos a politica
         // `private` aqui para que nem o navegador nem o CDN guardem o 302.

@@ -11,6 +11,19 @@ if (!session) {
 }
 
 const publishAllowed = canPublishDirectly(session);
+
+const senhaOk = Astro.url.searchParams.get('senha') === 'ok';
+
+const errosSenha: Record<string, string> = {
+  atual: 'A senha atual não confere.',
+  curta: 'A nova senha precisa ter pelo menos 8 caracteres.',
+  confirmacao: 'As senhas não conferem.',
+  igual: 'A nova senha precisa ser diferente da atual.',
+  supabase: 'Não foi possível salvar a nova senha. Tente de novo.',
+  demo: 'No modo demonstração não há senha real para trocar.',
+};
+
+const erroSenha = errosSenha[Astro.url.searchParams.get('erro') ?? ''] ?? '';
 ---
 
 <AdminLayout
@@ -69,5 +82,100 @@ const publishAllowed = canPublishDirectly(session);
         social_links: session.profile.social_links,
       }}
     />
+
+    {/* Senha de acesso */}
+    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
+        Senha de acesso
+      </h2>
+      <p class="mt-2 text-xs leading-relaxed text-ink-soft">
+        Troque a senha temporária por uma que só você saiba. Mínimo de 8 caracteres.
+      </p>
+
+      {
+        senhaOk && (
+          <p
+            role="status"
+            class="mt-3 rounded-xl bg-nioaque-green-50 px-4 py-3 text-sm font-semibold text-nioaque-green-dark"
+          >
+            Senha alterada. Use a nova senha no próximo login.
+          </p>
+        )
+      }
+
+      {
+        erroSenha && (
+          <p
+            role="alert"
+            class="mt-3 rounded-xl bg-nioaque-red-50 px-4 py-3 text-sm font-semibold text-nioaque-red-dark"
+          >
+            {erroSenha}
+          </p>
+        )
+      }
+
+      {
+        session.isDemo ? (
+          <p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
+            O modo demonstração usa perfis fictícios — a troca de senha fica disponível quando o
+            Supabase estiver configurado.
+          </p>
+        ) : (
+          <form method="POST" action="/api/auth/change-password" class="mt-4 space-y-4">
+            <label class="block">
+              <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Senha atual
+              </span>
+              <input
+                type="password"
+                name="current_password"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+                class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+              />
+            </label>
+
+            <label class="block">
+              <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Nova senha
+              </span>
+              <input
+                type="password"
+                name="new_password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="••••••••"
+                class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+              />
+            </label>
+
+            <label class="block">
+              <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                Repita a nova senha
+              </span>
+              <input
+                type="password"
+                name="confirm_password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="••••••••"
+                class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+              />
+            </label>
+
+            <button
+              type="submit"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-white px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green ring-1 ring-inset ring-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
+            >
+              <Icon name="lock" size={15} />
+              Salvar nova senha
+            </button>
+          </form>
+        )
+      }
+    </section>
   </div>
 </AdminLayout>

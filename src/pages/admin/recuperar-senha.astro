@@ -1,0 +1,145 @@
+---
+import Icon from '../../components/admin/Icon.astro';
+import LogoNioaquense from '../../components/LogoNioaquense.astro';
+import { isSupabaseConfigured } from '../../lib/auth';
+import '../../styles/global.css';
+
+/**
+ * /admin/recuperar-senha
+ * -----------------------------------------------------------------------------
+ * Pede o e-mail de redefinicao. A resposta e' sempre a mesma, com ou sem
+ * conta cadastrada (evita descobrir quais e-mails existem no portal).
+ */
+
+const supabaseReady = isSupabaseConfigured(Astro.locals);
+
+// Quem ja esta logado nao precisa recuperar nada.
+if (supabaseReady) {
+  const { session } = await Astro.locals.getSession();
+  if (session) return Astro.redirect('/admin');
+}
+
+const enviado = Astro.url.searchParams.get('enviado') === '1';
+
+const erros: Record<string, string> = {
+  email: 'Informe um e-mail válido.',
+  config: 'O Supabase ainda não está configurado neste ambiente.',
+};
+
+const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1E293B" />
+    <title>Recuperar senha | Painel O Nioaquense</title>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+
+  <body class="flex min-h-screen flex-col bg-ink text-ink">
+    <div class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+      <div class="w-full max-w-md">
+        <div class="flex justify-center">
+          <div class="w-44">
+            <LogoNioaquense class="w-full" />
+          </div>
+        </div>
+
+        <p class="mt-4 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
+          Painel da redação
+        </p>
+
+        <div class="mt-8 rounded-3xl bg-nioaque-white p-6 shadow-lift sm:p-8">
+          <a
+            href="/admin/login"
+            class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted transition-colors hover:text-nioaque-green"
+          >
+            <Icon name="logout" size={13} class="rotate-180" />
+            Voltar ao login
+          </a>
+
+          <h1 class="mt-4 font-editorial text-2xl font-semibold text-ink">Recuperar senha</h1>
+          <p class="mt-1 text-sm leading-relaxed text-ink-soft">
+            Informe o e-mail cadastrado no painel. Você recebe um link para criar uma nova senha.
+          </p>
+
+          {
+            enviado ? (
+              <div class="mt-5 rounded-2xl border border-nioaque-green-100 bg-nioaque-green-50 p-4">
+                <p class="flex items-center gap-2 text-sm font-semibold text-nioaque-green-dark">
+                  <Icon name="send" size={15} />
+                  Link enviado
+                </p>
+                <p class="mt-1 text-xs leading-relaxed text-ink-soft">
+                  Se o e-mail estiver cadastrado, o link chega em alguns instantes. Confira também a
+                  caixa de spam. Por segurança, ele expira em 1 hora.
+                </p>
+                <a
+                  href="/admin/login"
+                  class="mt-3 inline-block text-xs font-bold text-nioaque-green underline underline-offset-4"
+                >
+                  Voltar ao login
+                </a>
+              </div>
+            ) : (
+              <form method="POST" action="/api/auth/recover" class="mt-5 space-y-4">
+                <label class="block">
+                  <span class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                    E-mail
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                    placeholder="voce@onioaquense.com.br"
+                    class="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+                  />
+                </label>
+
+                {erro && (
+                  <p
+                    role="alert"
+                    class="rounded-xl bg-nioaque-red-50 px-4 py-3 text-sm font-semibold text-nioaque-red-dark"
+                  >
+                    {erro}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  class="flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+                >
+                  <Icon name="send" size={15} />
+                  Enviar link de redefinição
+                </button>
+              </form>
+            )
+          }
+
+          <p class="mt-5 text-[11px] leading-relaxed text-ink-muted">
+            Não recebeu o e-mail? Peça à redação para redefinir a senha pelo painel do Supabase ou
+            tente de novo em alguns minutos.
+          </p>
+        </div>
+
+        <p class="mt-6 text-center">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/60 transition-colors hover:text-white"
+          >
+            <Icon name="eye" size={14} />
+            Voltar ao portal
+          </a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

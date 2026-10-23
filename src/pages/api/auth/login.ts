@@ -22,10 +22,17 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
 
   const safeNext = next.startsWith('/admin') ? next : '/admin';
 
+  /** Volta para o login preservando o destino e o motivo da falha. */
+  const backToLogin = (code: string) =>
+    redirect(
+      `/admin/login?next=${encodeURIComponent(safeNext)}&erro=${encodeURIComponent(code)}`,
+      302,
+    );
+
   /* -------------------- Supabase (producao) -------------------- */
   if (isSupabaseConfigured(locals)) {
     if (!email || !password) {
-      return json({ error: 'Informe e-mail e senha.' }, 400);
+      return backToLogin('campos');
     }
 
     const { error } = await locals.supabase!.auth.signInWithPassword({
@@ -34,7 +41,7 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
     });
 
     if (error) {
-      return json({ error: 'E-mail ou senha invalidos.' }, 401);
+      return backToLogin('credenciais');
     }
 
     return redirect(safeNext, 302);
@@ -42,7 +49,7 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
 
   /* -------------------- Modo demonstracao -------------------- */
   if (demoRole !== 'admin' && demoRole !== 'columnist') {
-    return json({ error: 'Perfil de demonstracao invalido.' }, 400);
+    return backToLogin('demo');
   }
 
   cookies.set(DEMO_COOKIE, demoRole, {
@@ -55,10 +62,3 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
 
   return redirect(safeNext, 302);
 };
-
-function json(body: Record<string, unknown>, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
