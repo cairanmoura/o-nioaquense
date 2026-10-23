@@ -7,8 +7,13 @@
 -- =============================================================================
 
 -- =============================================================================
---  O Nioaquense - Supabase Schema + Seed (Unico arquivo)
---  Cole tudo no SQL Editor e execute de uma vez
+--  O Nioaquense - Schema completo + dados (arquivo unico)
+-- -----------------------------------------------------------------------------
+--  Cole TUDO no SQL Editor do Supabase e execute uma vez.
+--  https://supabase.com/dashboard/project/_/sql
+--
+--  Ordem: enums -> tabelas -> funcoes -> triggers -> RLS/policies -> dados.
+--  O script e idempotente: pode ser executado novamente sem erro.
 -- =============================================================================
 
 create schema if not exists extensions;
@@ -309,162 +314,67 @@ alter table public.local_ads enable row level security;
 alter table public.reader_submissions enable row level security;
 
 -- Policies de profiles (usar DO para nao falhar se ja existir)
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_select_authenticated') then
-    create policy "profiles_select_authenticated" on public.profiles for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_select_authenticated" on public.profiles;
+create policy "profiles_select_authenticated" on public.profiles for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_insert_authenticated') then
-    create policy "profiles_insert_authenticated" on public.profiles for insert to authenticated with check (true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_insert_authenticated" on public.profiles;
+create policy "profiles_insert_authenticated" on public.profiles for insert to authenticated with check (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_update_own') then
-    create policy "profiles_update_own" on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
-  end if;
-end
-$$;
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own" on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_select_public') then
-    create policy "profiles_select_public" on public.profiles for select to anon, authenticated using (active = true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_select_public" on public.profiles;
+create policy "profiles_select_public" on public.profiles for select to anon, authenticated using (active = true);
 
 -- Policies de articles
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_select_published') then
-    create policy "articles_select_published" on public.articles for select using (status = 'published');
-  end if;
-end
-$$;
+drop policy if exists "articles_select_published" on public.articles;
+create policy "articles_select_published" on public.articles for select using (status = 'published');
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_select_authenticated') then
-    create policy "articles_select_authenticated" on public.articles for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "articles_select_authenticated" on public.articles;
+create policy "articles_select_authenticated" on public.articles for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_insert_authenticated') then
-    create policy "articles_insert_authenticated" on public.articles for insert to authenticated with check (auth.uid() = author_id);
-  end if;
-end
-$$;
+drop policy if exists "articles_insert_authenticated" on public.articles;
+create policy "articles_insert_authenticated" on public.articles for insert to authenticated with check (auth.uid() = author_id);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_update_own') then
-    create policy "articles_update_own" on public.articles for update to authenticated using (auth.uid() = author_id) with check (auth.uid() = author_id);
-  end if;
-end
-$$;
+drop policy if exists "articles_update_own" on public.articles;
+create policy "articles_update_own" on public.articles for update to authenticated using (auth.uid() = author_id) with check (auth.uid() = author_id);
 
 -- Policies de public_utilities
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'public_utilities' and policyname = 'public_utilities_select_all') then
-    create policy "public_utilities_select_all" on public.public_utilities for select using (true);
-  end if;
-end
-$$;
+drop policy if exists "public_utilities_select_all" on public.public_utilities;
+create policy "public_utilities_select_all" on public.public_utilities for select using (true);
 
 -- Policies de local_ads
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'local_ads' and policyname = 'local_ads_select_all') then
-    create policy "local_ads_select_all" on public.local_ads for select using (active = true);
-  end if;
-end
-$$;
+drop policy if exists "local_ads_select_all" on public.local_ads;
+create policy "local_ads_select_all" on public.local_ads for select using (active = true);
 
 -- Policies de reader_submissions
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_insert_public') then
-    create policy "reader_submissions_insert_public" on public.reader_submissions for insert to public with check (true);
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_insert_public" on public.reader_submissions;
+create policy "reader_submissions_insert_public" on public.reader_submissions for insert to public with check (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_select_authenticated') then
-    create policy "reader_submissions_select_authenticated" on public.reader_submissions for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_select_authenticated" on public.reader_submissions;
+create policy "reader_submissions_select_authenticated" on public.reader_submissions for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_update_admin') then
-    create policy "reader_submissions_update_admin" on public.reader_submissions for update to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_update_admin" on public.reader_submissions;
+create policy "reader_submissions_update_admin" on public.reader_submissions for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Policies de administracao (RBAC) - usam as funcoes security definer
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_admin_all') then
-    create policy "profiles_admin_all" on public.profiles for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "profiles_admin_all" on public.profiles;
+create policy "profiles_admin_all" on public.profiles for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_admin_select') then
-    create policy "articles_admin_select" on public.articles for select to authenticated using (public.is_staff());
-  end if;
-end
-$$;
+drop policy if exists "articles_admin_select" on public.articles;
+create policy "articles_admin_select" on public.articles for select to authenticated using (public.is_staff());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_update_admin') then
-    create policy "articles_update_admin" on public.articles for update to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "articles_update_admin" on public.articles;
+create policy "articles_update_admin" on public.articles for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_delete_admin') then
-    create policy "articles_delete_admin" on public.articles for delete to authenticated using (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "articles_delete_admin" on public.articles;
+create policy "articles_delete_admin" on public.articles for delete to authenticated using (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'local_ads' and policyname = 'local_ads_admin_all') then
-    create policy "local_ads_admin_all" on public.local_ads for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "local_ads_admin_all" on public.local_ads;
+create policy "local_ads_admin_all" on public.local_ads for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'public_utilities' and policyname = 'public_utilities_admin_all') then
-    create policy "public_utilities_admin_all" on public.public_utilities for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "public_utilities_admin_all" on public.public_utilities;
+create policy "public_utilities_admin_all" on public.public_utilities for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- RPCs
 create or replace function public.handle_new_user()
@@ -577,4 +487,5 @@ create index if not exists idx_articles_author on public.articles(author_id);
 create index if not exists idx_profiles_slug on public.profiles(slug);
 create index if not exists idx_profiles_role on public.profiles(role);
 
+-- ===========================================================================
 -- ===========================================================================

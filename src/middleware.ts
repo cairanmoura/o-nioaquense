@@ -83,12 +83,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const cacheKey = context.request.url;
 
+  // Quanto tempo a versao gravada ainda pode ser entregue.
+  const maxStaleMs = (policy.sMaxAge + policy.staleWhileRevalidate) * 1000;
+
   try {
     const cached = await edgeCache.match(cacheKey);
 
     if (cached) {
-      // Ja existe versao na borda: entrega na hora (o CDN revalida em background).
-      return applyCacheHeaders(cached, policy);
+      // Carimbo gravado por nos no momento do `put`. Entradas antigas (sem o
+      // carimbo) sao tratadas como vencidas: o `Date` nao serve porque a borda
+      // o reescreve a cada entrega.
+      const stamped = Number(cached.headers.get('x-edge-stored-at'));
+      const ageMs =
+        Number.isFinite(stamped) && stamped > 0
+          ? Date.now() - stamped
+          : Number.POSITIVE_INFINITY;
+
+      // Sem essa checagem a borda serviria a mesma pagina para sempre.
+      if (ageMs >= 0 && ageMs <= maxStaleMs) {
+        return applyCacheHeaders(cached, policy);
+      }
     }
   } catch {
     /* cache indisponivel: seguimos servindo direto */
@@ -96,13 +110,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const response = await next();
 
+  // Os cabecalhos entram ANTES de gravar no cache: e' o `Cache-Control` da
+  // resposta guardada que define a validade da entrada na borda.
+  const finalResponse = applyCacheHeaders(response, policy);
+
   try {
     if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
-      await edgeCache.put(cacheKey, response.clone());
+      const clone = finalResponse.clone();
+      const headers = new Headers(clone.headers);
+      headers.set('x-edge-stored-at', String(Date.now()));
+
+      await edgeCache.put(
+        cacheKey,
+        new Response(clone.body, { status: clone.status, statusText: clone.statusText, headers }),
+      );
     }
   } catch {
     /* falha ao gravar no cache: o usuario nao e' afetado */
   }
 
-  return applyCacheHeaders(response, policy);
+  return finalResponse;
 });

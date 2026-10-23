@@ -306,162 +306,67 @@ alter table public.local_ads enable row level security;
 alter table public.reader_submissions enable row level security;
 
 -- Policies de profiles (usar DO para nao falhar se ja existir)
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_select_authenticated') then
-    create policy "profiles_select_authenticated" on public.profiles for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_select_authenticated" on public.profiles;
+create policy "profiles_select_authenticated" on public.profiles for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_insert_authenticated') then
-    create policy "profiles_insert_authenticated" on public.profiles for insert to authenticated with check (true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_insert_authenticated" on public.profiles;
+create policy "profiles_insert_authenticated" on public.profiles for insert to authenticated with check (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_update_own') then
-    create policy "profiles_update_own" on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
-  end if;
-end
-$$;
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own" on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_select_public') then
-    create policy "profiles_select_public" on public.profiles for select to anon, authenticated using (active = true);
-  end if;
-end
-$$;
+drop policy if exists "profiles_select_public" on public.profiles;
+create policy "profiles_select_public" on public.profiles for select to anon, authenticated using (active = true);
 
 -- Policies de articles
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_select_published') then
-    create policy "articles_select_published" on public.articles for select using (status = 'published');
-  end if;
-end
-$$;
+drop policy if exists "articles_select_published" on public.articles;
+create policy "articles_select_published" on public.articles for select using (status = 'published');
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_select_authenticated') then
-    create policy "articles_select_authenticated" on public.articles for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "articles_select_authenticated" on public.articles;
+create policy "articles_select_authenticated" on public.articles for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_insert_authenticated') then
-    create policy "articles_insert_authenticated" on public.articles for insert to authenticated with check (auth.uid() = author_id);
-  end if;
-end
-$$;
+drop policy if exists "articles_insert_authenticated" on public.articles;
+create policy "articles_insert_authenticated" on public.articles for insert to authenticated with check (auth.uid() = author_id);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_update_own') then
-    create policy "articles_update_own" on public.articles for update to authenticated using (auth.uid() = author_id) with check (auth.uid() = author_id);
-  end if;
-end
-$$;
+drop policy if exists "articles_update_own" on public.articles;
+create policy "articles_update_own" on public.articles for update to authenticated using (auth.uid() = author_id) with check (auth.uid() = author_id);
 
 -- Policies de public_utilities
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'public_utilities' and policyname = 'public_utilities_select_all') then
-    create policy "public_utilities_select_all" on public.public_utilities for select using (true);
-  end if;
-end
-$$;
+drop policy if exists "public_utilities_select_all" on public.public_utilities;
+create policy "public_utilities_select_all" on public.public_utilities for select using (true);
 
 -- Policies de local_ads
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'local_ads' and policyname = 'local_ads_select_all') then
-    create policy "local_ads_select_all" on public.local_ads for select using (active = true);
-  end if;
-end
-$$;
+drop policy if exists "local_ads_select_all" on public.local_ads;
+create policy "local_ads_select_all" on public.local_ads for select using (active = true);
 
 -- Policies de reader_submissions
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_insert_public') then
-    create policy "reader_submissions_insert_public" on public.reader_submissions for insert to public with check (true);
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_insert_public" on public.reader_submissions;
+create policy "reader_submissions_insert_public" on public.reader_submissions for insert to public with check (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_select_authenticated') then
-    create policy "reader_submissions_select_authenticated" on public.reader_submissions for select to authenticated using (true);
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_select_authenticated" on public.reader_submissions;
+create policy "reader_submissions_select_authenticated" on public.reader_submissions for select to authenticated using (true);
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'reader_submissions' and policyname = 'reader_submissions_update_admin') then
-    create policy "reader_submissions_update_admin" on public.reader_submissions for update to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "reader_submissions_update_admin" on public.reader_submissions;
+create policy "reader_submissions_update_admin" on public.reader_submissions for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Policies de administracao (RBAC) - usam as funcoes security definer
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'profiles_admin_all') then
-    create policy "profiles_admin_all" on public.profiles for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "profiles_admin_all" on public.profiles;
+create policy "profiles_admin_all" on public.profiles for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_admin_select') then
-    create policy "articles_admin_select" on public.articles for select to authenticated using (public.is_staff());
-  end if;
-end
-$$;
+drop policy if exists "articles_admin_select" on public.articles;
+create policy "articles_admin_select" on public.articles for select to authenticated using (public.is_staff());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_update_admin') then
-    create policy "articles_update_admin" on public.articles for update to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "articles_update_admin" on public.articles;
+create policy "articles_update_admin" on public.articles for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'articles' and policyname = 'articles_delete_admin') then
-    create policy "articles_delete_admin" on public.articles for delete to authenticated using (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "articles_delete_admin" on public.articles;
+create policy "articles_delete_admin" on public.articles for delete to authenticated using (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'local_ads' and policyname = 'local_ads_admin_all') then
-    create policy "local_ads_admin_all" on public.local_ads for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "local_ads_admin_all" on public.local_ads;
+create policy "local_ads_admin_all" on public.local_ads for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
-do $$
-begin
-  if not exists (select 1 from pg_policies where tablename = 'public_utilities' and policyname = 'public_utilities_admin_all') then
-    create policy "public_utilities_admin_all" on public.public_utilities for all to authenticated using (public.is_admin()) with check (public.is_admin());
-  end if;
-end
-$$;
+drop policy if exists "public_utilities_admin_all" on public.public_utilities;
+create policy "public_utilities_admin_all" on public.public_utilities for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- RPCs
 create or replace function public.handle_new_user()
@@ -575,7 +480,8 @@ create index if not exists idx_profiles_slug on public.profiles(slug);
 create index if not exists idx_profiles_role on public.profiles(role);
 
 -- ===========================================================================
---  DADOS (seed) - 5 perfis, 9 materias, farmacias, onibus e anuncios
+-- ===========================================================================
+--  DADOS (seed) - 5 perfis, 19 materias, farmacias, onibus e anuncios
 -- ===========================================================================
 
 -- ---------------------------------------------------------------------------
@@ -658,7 +564,7 @@ insert into public.articles (id, title, subtitle, slug, summary_bullets, content
     'Obras Públicas',
     false,
     false,
-    '10000000-0000-0000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000004',
     'published',
     650,
     '2026-10-18T09:15:00Z',
@@ -970,6 +876,226 @@ insert into public.local_ads (id, client_name, title, image_url, target_url, wha
     89,
     '2026-10-22T06:00:00Z',
     '2026-10-22T06:00:00Z'
+  )
+on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+--  COLUNAS E RADAR OFICIAL (capas em branco: usam as artes geometricas)
+-- ---------------------------------------------------------------------------
+insert into public.articles (id, title, subtitle, slug, summary_bullets, content, cover_image_url, cover_image_caption, scope, category_label, is_breaking, is_featured, author_id, status, views_count, published_at, created_at, updated_at) values
+  (
+    '20000000-0000-4000-8000-000000000043',
+    'Quem apaga o vazio do quadro de avisos',
+    'Coluna Bastidores',
+    'coluna-bastidores-quem-apaga-o-vazio-do-quadro-de-avisos',
+    ARRAY['No municipio, muita informacao existe apenas em papel colado na porta.', 'Diario Oficial, editais e contratos ficam acessiveis a quem sabe onde olhar.', 'Transparencia so vale se o cidadao encontra.'],
+    '<p>Existe uma informacao que quase nunca chega a quem precisa: a que esta afixada na porta da secretaria, em papel, defasada de duas semanas.</p>
+<p>Licitacao, contrato, parecer tecnico, ata de comissao. Tudo isso existe, e tudo isso esta no Diario Oficial do municipio. O problema e'' a distancia entre o documento e a pessoa que precisa dele.</p>
+<p>Num municipio pequeno, transparencia nao e'' um departing. E'' a unica forma de o morador conferir se o que o municipio diz combina com o que ele fez.</p>',
+    null,
+    null,
+    'coluna',
+    'Bastidores',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000005',
+    'published',
+    1340,
+    '2026-10-20T09:00:00Z',
+    '2026-10-20T08:30:00Z',
+    '2026-10-20T09:00:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000042',
+    'Asfalto em Aquidauana e o que diz sobre a regiao',
+    'Coluna Radar MS',
+    'coluna-radar-ms-asfalto-aquidauana-regiao',
+    ARRAY['Contrato de R$ 12 milhoes para asfalto e drenagem em Aquidauana foi formalizado.', 'A intervencao mostra a prioridade do Estado na regiao de Aquidauana.', 'Para Nioaque, a licao e'' sobre a ordem das obras.'],
+    '<p>R$ 12 milhoes em asfalto e drenagem em Aquidauana: o contrato foi formalizado e diz bastante sobre como o Estado esta olhando para o Sul.</p>
+<p>Aquidauana e'' a referencia regional para Nioaque em logistica, saude e comercio. Quando a cidade vizinha recebe obra de pavimentacao, o efeito chega aqui em horas.</p>
+<p>A licao pratica e'' simples: quem tem projeto pronto espera menos. Nossas obras, por menorem, precisam de um passo a mais - e esse passo comeca no papel, nao nainauguracao.</p>',
+    null,
+    null,
+    'coluna',
+    'Radar MS',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000004',
+    'published',
+    1930,
+    '2026-10-21T06:45:00Z',
+    '2026-10-21T06:20:00Z',
+    '2026-10-21T06:45:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000041',
+    'Feira do Produtor: o que parece pequeno e sustenta a cidade',
+    'Coluna Giro de Bairro',
+    'coluna-giro-de-bairro-feira-do-produtor-sustenta-cidade',
+    ARRAY['Duas manhas por semana a feira aproxima produtor e consumidor.', 'A agricultura familiar movimenta o comercio do municipio inteiro.', 'Quem produz em Nioaque precisa de quem compra perto de casa.'],
+    '<p>Toda cidade que quer ser grande precisa de uma base que a sustente. Em Nioaque, essa base tem nome e horario: a Feira do Produtor, duas vezes por semana na Rodoviaria.</p>
+<p>Quem passa la na manha ve o que o campo produz e, no mesmo minuto, ve quem compra. E'' essa proximidade que sustenta a agricultura familiar e, com ela, boa parte do comercio local.</p>
+<p>Feira e'' onde a cidade ve a si mesma. Bom sinal.</p>',
+    null,
+    null,
+    'coluna',
+    'Giro de Bairro',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000003',
+    'published',
+    2680,
+    '2026-10-21T07:30:00Z',
+    '2026-10-21T07:00:00Z',
+    '2026-10-21T07:30:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000040',
+    'O municipio que aprendeu a fazer do medo um projeto',
+    'Coluna Visao de Nioaque',
+    'coluna-visao-nioaque-municipio-que-aprendeu-do-medo',
+    ARRAY['A resposta a alertas de tempestade em Nioaque virou rotina de protecao da populacao.', 'Defesa Civil,_INMET e comunicacao local trabalhando na mesma direcao.', 'O que era reacao de urgencia virou plano.'],
+    '<p>Toda cidade do interior aprende a ler o ceu. O que Nioaque aprendeu a fazer melhor foi transformar o alerta em rotina.</p>
+<p>Em poucas semanas, a comunicacao do municipio passou a repassar os avisos do INMET com a mesma frequencia com que avisa sobre o transporte ou a farmacia de plantao. Isso parece pequeno, nao e: e'' a diferenca entre a pessoa se assustar e a pessoa se preparar.</p>
+<p>Tem preco, tem protocolo, tem quem cuide. E'' assim que se construtor de Confianca entre quem produz e quem decide.</p>',
+    null,
+    null,
+    'coluna',
+    'Visao de Nioaque',
+    false,
+    true,
+    '10000000-0000-4000-8000-000000000002',
+    'published',
+    4210,
+    '2026-10-22T07:00:00Z',
+    '2026-10-22T06:20:00Z',
+    '2026-10-22T07:00:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000055',
+    'Feira do Produtor amplia movecao e estabelece novo dia de funcionamento',
+    'Radar Oficial',
+    'radar-oficial-feira-produtor-novo-dia-funcionamento',
+    ARRAY['A feira passa a ter mais um dia de funcionamento por semana.', 'Produtores da agricultura familiar tem cadastro aberto.', 'A lista dos participantes pode ser consultada na secretaria.'],
+    '<p>A Feira do Produtor amplia a movimentacao e estabelece novo dia de funcionamento. Produtores da agricultura familiar tem cadastro aberto.</p>
+<p>A lista dos participantes pode ser consultada na secretaria, das 8h as 17h.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Prefeitura',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    430,
+    '2026-10-19T11:20:00Z',
+    '2026-10-19T11:00:00Z',
+    '2026-10-19T11:20:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000054',
+    'Diario Oficial do municipio: confira as publicacoes desta semana',
+    'Radar Oficial',
+    'radar-oficial-diario-oficial-publicacoes-da-semana',
+    ARRAY['A edicao da semana reune portarias, editais e atos de licitacao.', 'O gazeto pode ser lido online ou retirado em grafica no centro.', 'Prazos para impugnacao vencem nesta sexta-feira.'],
+    '<p>A edicao desta semana do Diario Oficial do municipio reune portarias, editais e atos de licitacao. O gazeto pode ser lido online ou retirado em grafica no centro.</p>
+<p>Destaques: o regulamento do transporte escolar, a licitacao da obra de recapeamento e a tabela de onibus para o proximo trimestre. Os prazos para impugnacao vencem nesta sexta-feira.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Diário Oficial',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    520,
+    '2026-10-20T16:40:00Z',
+    '2026-10-20T16:20:00Z',
+    '2026-10-20T16:40:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000053',
+    'De saladeiro a vigia, Campo Grande oferta mais de 600 vagas nesta quinta-feira',
+    'Radar Oficial',
+    'radar-oficial-campo-grande-600-vagas-emprego',
+    ARRAY['Mais de 600 vagas sao ofertadas nesta quinta-feira em Campo Grande.', '418 delas sao para pessoas sem experiencia.', 'A selecao e'' feita em um unico dia, por ordem de chegada.'],
+    '<p>De saladeiro a vigia: Campo Grande oferta mais de 600 vagas nesta quinta-feira. Do total, 418 sao para pessoas sem experiencia.</p>
+<p>A selecao acontece em um unico dia, por ordem de chegada. Quem busca a vaga precisa levar documento de identidade e comprovante de endereco.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Concursos',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    980,
+    '2026-10-21T12:30:00Z',
+    '2026-10-21T12:10:00Z',
+    '2026-10-21T12:30:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000052',
+    'Camara de Paraiso das Aguas abre concurso com salarios de ate R$ 8,1 mil',
+    'Radar Oficial',
+    'radar-oficial-camara-paraiso-aguas-concurso-8-1-mil',
+    ARRAY['O edital oferece vagas para candidatos com ensino medio e superior.', 'Os salarios chegam a R$ 8,1 mil.', 'As inscricoes seguem conforme o cronograma do edital.'],
+    '<p>A Camara de Paraiso das Aguas abriu concurso com salarios de ate R$ 8,1 mil. O edital oferece vagas para candidatos com ensino medio e superior.</p>
+<p>As inscricoes seguem conforme o cronograma publicado no edital, consultado pela redacao.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Concursos',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    1420,
+    '2026-10-21T13:10:00Z',
+    '2026-10-21T13:00:00Z',
+    '2026-10-21T13:10:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000051',
+    'Camara de Campo Grande vota criacao do Conselho de Migrantes nesta quinta-feira',
+    'Radar Oficial',
+    'radar-oficial-camara-campo-grande-conselho-migrantes-votacao',
+    ARRAY['A Camara de Campo Grande vota nesta quinta-feira a criacao do Conselho de Migrantes.', 'Um projeto que revoga a doacao de imovel publico tambem sera analisado.', 'As sessoes sao transmitidas e podem ser acompanhadas pelo cidade.'],
+    '<p>A Camara de Campo Grande vota nesta quinta-feira a criacao do Conselho de Migrantes. Um projeto que revoga a doacao de imovel publico tambem sera analisado na mesma sessao.</p>
+<p>Sessoes da Camara sao transmitidas e podem ser acompanhadas pelo cidade, no site oficial.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Câmara',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    610,
+    '2026-10-21T14:20:00Z',
+    '2026-10-21T14:00:00Z',
+    '2026-10-21T14:20:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000050',
+    'Nioaque homologa empresa por R$ 3,57 milhoes para nova creche no bairro Monte Alto',
+    'Radar Oficial',
+    'radar-oficial-nioaque-homologa-empresa-creche-monte-alto-3-57-milhoes',
+    ARRAY['A Dias Construtora e Empreendimentos LTDA foi declarada vencedora da licitacao.', 'O valor e'' de R$ 3.574.000,00 para uma Creche Pre-Escola Tipo 2 do FNDE.', 'A obra sera construida no bairro Monte Alto.'],
+    '<p>Foi homologada a empresa que vai construir a nova creche do bairro Monte Alto. A Dias Construtora e Empreendimentos LTDA foi declarada vencedora da concurrencia para construcao de uma Creche Pre-Escola Tipo 2 do FNDE.</p>
+<p>O valor contrato e'' de R$ 3.574.000,00. O prazo de execucao consta no processo, consultado pela redacao junto a secretaria de Obras.</p>',
+    null,
+    null,
+    'radar_oficial',
+    'Prefeitura',
+    false,
+    false,
+    '10000000-0000-4000-8000-000000000001',
+    'published',
+    890,
+    '2026-10-21T15:40:00Z',
+    '2026-10-21T15:00:00Z',
+    '2026-10-21T15:40:00Z'
   )
 on conflict (id) do nothing;
 
