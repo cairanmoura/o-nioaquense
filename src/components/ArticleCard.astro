@@ -48,7 +48,7 @@ const readingMinutes = Math.max(1, Math.round(words / 200));
   variant === 'column' ? (
     <article
       class:list={[
-        'group relative flex h-full flex-col overflow-hidden rounded-xl bg-nioaque-white p-5',
+        'group relative flex h-full flex-col overflow-hidden bg-nioaque-white p-5',
         className,
       ]}
     >
@@ -109,7 +109,6 @@ const readingMinutes = Math.max(1, Math.round(words / 200));
     </article>
   ) : variant === 'lead' ? (
     <article class:list={['group flex flex-col', className]}>
-      {/* Manchete primeiro: no celular e na primeira dobra, o titulo aparece antes da capa. */}
       <div>
         <h2 class="font-editorial text-headline font-semibold leading-[1.08]">
           <a href={href} class="transition-colors group-hover:text-nioaque-green">
@@ -181,7 +180,7 @@ const readingMinutes = Math.max(1, Math.round(words / 200));
   ) : (
     <article
       class:list={[
-        'group flex h-full flex-col overflow-hidden rounded-xl bg-nioaque-white',
+        'group flex h-full flex-col overflow-hidden bg-nioaque-white',
         className,
       ]}
     >

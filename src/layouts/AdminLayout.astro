@@ -87,7 +87,7 @@ const isActive = (href: string) =>
                     href={item.href}
                     aria-current={isActive(item.href) ? 'page' : undefined}
                     class:list={[
-                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
+                      'flex items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-colors',
                       isActive(item.href)
                         ? 'bg-nioaque-green text-white'
                         : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
@@ -105,7 +105,7 @@ const isActive = (href: string) =>
         <div class="border-t border-line p-3">
           <a
             href="/"
-            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+            class="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
           >
             <Icon name="eye" size={18} />
             Ver o portal
@@ -113,7 +113,7 @@ const isActive = (href: string) =>
           <form method="POST" action="/api/auth/logout">
             <button
               type="submit"
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red"
+              class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red"
             >
               <Icon name="logout" size={18} />
               Sair

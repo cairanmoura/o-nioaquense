@@ -33,7 +33,7 @@ const reservedHeight = ad ? AD_MIN_HEIGHT[ad?.slot_position ?? 'home_middle'] : 
   ad && (
     <div
       class:list={[
-        'relative overflow-hidden rounded-xl bg-nioaque-white',
+        'relative overflow-hidden border border-line bg-nioaque-white',
         className,
       ]}
       style={reservedHeight ? `min-height:${reservedHeight}` : undefined}

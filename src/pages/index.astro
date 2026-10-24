@@ -1,5 +1,6 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
+import AdMosaic from '../components/AdMosaic.astro';
 import ScopePill from '../components/ScopePill.astro';
 // import ColumnistShowcase from '../components/ColumnistShowcase.astro'; // desativado temporariamente (sem colunistas)
 import GoogleAdSlot from '../components/GoogleAdSlot.astro';
@@ -11,7 +12,6 @@ import MarketTicker from '../components/MarketTicker.astro';
 import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
 import ServiceBlock from '../components/ServiceBlock.astro';
-import WeatherWidget from '../components/WeatherWidget.astro';
 import { getHomeFeed, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
 import type { ArticleScope, Profile } from '../lib/types';
@@ -80,7 +80,7 @@ const sidebarTopId = secondary[0]?.id;
 const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTopId).slice(0, 3);
 ---
 
-<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil. Farmácia de plantão, clima e Radar Oficial.">
+<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil. Radar Oficial, serviços e clima no cabeçalho.">
   {/* Faixa de ultima hora */}
   {
     breaking.length > 0 && (
@@ -102,15 +102,9 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     )
   }
 
-  {/* Topo: chamada para anunciantes */}
+  {/* Topo: leaderboard de anunciantes locais (padrao Google 728x90) */}
   <div class="container-editorial pt-3">
-    <a
-      href="/mande-sua-noticia"
-      class="flex items-center justify-center gap-2 rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-3 text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
-    >
-      <span>📣</span>
-      <span>Anuncie aqui — fale com a redação</span>
-    </a>
+    <AdMosaic ads={feed.ads} slots={['header_billboard']} label="Publicidade" />
   </div>
 
   <div class="container-editorial py-8 sm:py-10">
@@ -216,11 +210,8 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       </aside>
     </div>
 
-    {/* Servicos: clima + onibus + alertas */}
-    <div class="mt-12 grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]" data-reveal>
-      <div id="clima" class="scroll-mt-28">
-        <WeatherWidget />
-      </div>
+    {/* Servicos: onibus + alertas (o clima vive so no cabecalho) */}
+    <div class="mt-12" data-reveal>
       <ServiceBlock utility={feed.utility} />
     </div>
 
@@ -230,16 +221,13 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       <LotteryResults results={lotteries} />
     </div>
 
-    {/* Chamada para anunciantes */}
-    <div class="mt-10">
-      <a
-        href="/mande-sua-noticia"
-        class="flex items-center justify-center gap-2 rounded-xl border border-dashed border-nioaque-green/40 bg-nioaque-green-50 px-4 py-3 text-sm font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100"
-      >
-        <span>📣</span>
-        <span>Anuncie aqui — fale com a redação</span>
-      </a>
-    </div>
+    {/* Mosaico de anunciantes locais (padrao Google 300x250) */}
+    <AdMosaic
+      ads={feed.ads}
+      slots={['home_middle', 'sidebar']}
+      label="Publicidade local"
+      class="mt-10"
+    />
 
     {/* Colunistas em destaque — desativado temporariamente (sem colunistas) */}
 

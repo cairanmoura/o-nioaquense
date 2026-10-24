@@ -1,7 +1,5 @@
 ---
 import { getHomeFeed } from '../lib/content';
-import { getNioaqueWeather } from '../lib/weather';
-import type { WeatherIcon } from '../lib/weather';
 import { ALERT_STYLE } from '../lib/types';
 
 /**
@@ -9,28 +7,16 @@ import { ALERT_STYLE } from '../lib/types';
  * -----------------------------------------------------------------------------
  * Barra fixa de utilidade publica, imediatamente abaixo do cabecalho.
  *
- * No celular os itens deslizam na horizontal; no desktop ficam lado a lado.
- *
  *   - Alerta da cidade (vermelho / amarelo) no topo, quando ativo
- *   - Farmacia de plantao do dia (ligar / WhatsApp)
- *   - Clima em tempo real de Nioaque (Open-Meteo, cache na borda)
- *   - Alertas da cidade
+ *   - Identificacao local (Nioaque · MS) e data no desktop
+ *
+ * O clima agora e' exibido apenas no cabecalho (Header.astro).
  */
 
 const feed = await getHomeFeed(Astro.locals);
 const utility = feed.utility;
-const weather = await getNioaqueWeather(Astro.locals);
 
 const alertStyle = utility?.alert_active ? ALERT_STYLE[utility.alert_level] : null;
-
-const WEATHER_ICONS: Record<WeatherIcon, string> = {
-  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M6.5 6.5 4.9 4.9M19.1 19.1l-1.6-1.6M17.5 6.5l1.6-1.6M4.9 19.1l1.6-1.6"/>',
-  cloud: '<path d="M7 18a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 18Z"/>',
-  rain: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M9 18v2M13 18v2M17 18v2"/>',
-  storm: '<path d="M7 14a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 14Z"/><path d="m13 13-3 5h4l-2 4"/>',
-  fog: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M4 18h16M6 21h12"/>',
-  snow: '<path d="M7 15a4.5 4.5 0 0 1 .5-9 6 6 0 0 1 11.2 1.6A3.7 3.7 0 0 1 18 15Z"/><path d="M9 19h.01M13 21h.01M17 19h.01"/>',
-};
 ---
 
 <div class="sticky top-0 z-40">
@@ -65,41 +51,11 @@ const WEATHER_ICONS: Record<WeatherIcon, string> = {
     )
   }
 
-  {/* Itens de servico */}
-  <div class="bg-nioaque-white">
+  {/* Identificacao local */}
+  <div class="border-b border-line bg-nioaque-white">
     <div class="container-editorial">
-      <div class="grid grid-cols-2 gap-x-4 py-1.5 md:flex md:items-stretch md:gap-0 md:py-0">
-        {/* Clima */}
-        <a
-          href="/#clima"
-          class="flex min-w-0 items-center gap-2.5 py-1.5 transition-colors hover:text-nioaque-green md:shrink-0 md:py-2.5 md:pr-6"
-        >
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nioaque-green-50 text-nioaque-green">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              set:html={WEATHER_ICONS[weather.icon]}
-            />
-          </span>
-          <div class="min-w-0 leading-tight">
-            <p class="text-xs font-semibold text-ink-muted">Clima agora</p>
-            <p class="truncate text-sm font-semibold text-ink">
-              {weather.temperature}°C<span class="hidden lg:inline"> · {weather.label}</span>
-            </p>
-          </div>
-        </a>
-
-
-        {/* Data (desktop) */}
-        <span class="ml-auto hidden shrink-0 items-center pl-4 text-xs font-medium text-ink-muted lg:flex">
-          Nioaque · MS
-        </span>
+      <div class="flex items-center py-1.5 md:py-2">
+        <span class="text-xs font-medium text-ink-muted">Nioaque · MS</span>
       </div>
     </div>
   </div>

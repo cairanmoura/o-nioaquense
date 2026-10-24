@@ -1,0 +1,116 @@
+---
+import LocalAdBanner from './LocalAdBanner.astro';
+import type { LocalAd, AdSlotPosition } from '../lib/types';
+
+/**
+ * AdMosaic.astro
+ * -----------------------------------------------------------------------------
+ * Mosaico tematico de anunciantes locais usando os tamanhos padrao do Google
+ * AdSense:
+ *
+ *   - Leaderboard 728x90 (header_billboard)
+ *   - Retangulo 300x250 (home_middle, article_inline, sidebar)
+ *   - Meia pagina 300x600 (daily_deal)
+ *
+ * Quando nao ha anuncio no ar no slot, o mosaico mostra "Anuncie aqui" com o
+ * mesmo tamanho reservado (zero CLS, regra #1 do AGENTS.md).
+ *
+ * Uso:
+ *   <AdMosaic ads={feed.ads} slots={['home_middle', 'sidebar']} />
+ */
+
+interface Props {
+  ads: Partial<Record<AdSlotPosition, LocalAd>>;
+  /** Slots a exibir, em ordem. */
+  slots?: AdSlotPosition[];
+  label?: string;
+  class?: string;
+}
+
+const {
+  ads,
+  slots = ['home_middle', 'sidebar'],
+  label = 'Publicidade local',
+  class: className = '',
+} = Astro.props;
+
+/* Classes literais (o Tailwind nao gera classes dinamicas). */
+const SIZE_CLASS: Record<AdSlotPosition, string> = {
+  header_billboard: 'aspect-[728/90] min-h-[90px]',
+  home_middle: 'aspect-[6/5] min-h-[250px]',
+  article_inline: 'aspect-[6/5] min-h-[250px]',
+  sidebar: 'aspect-[6/5] min-h-[250px]',
+  daily_deal: 'aspect-[1/2] min-h-[600px]',
+};
+
+const SIZE_LABEL: Record<AdSlotPosition, string> = {
+  header_billboard: 'Leaderboard · 728×90',
+  home_middle: 'Retângulo · 300×250',
+  article_inline: 'Retângulo · 300×250',
+  sidebar: 'Retângulo · 300×250',
+  daily_deal: 'Meia página · 300×600',
+};
+
+const isWide = (slot: AdSlotPosition) => slot === 'header_billboard';
+---
+
+<section aria-label={label} class:list={['space-y-4', className]}>
+  <div class="flex items-baseline gap-3 border-b border-line pb-2">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+      {label}
+    </p>
+    <a
+      href="/mande-sua-noticia"
+      class="ml-auto shrink-0 text-xs font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+    >
+      Anuncie aqui
+    </a>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      slots.map((slot) => {
+        const ad = ads[slot];
+
+        return (
+          <div
+            class:list={[
+              'relative overflow-hidden border border-line bg-nioaque-white',
+              SIZE_CLASS[slot],
+              isWide(slot) && 'sm:col-span-2',
+            ]}
+          >
+            {ad ? (
+              <LocalAdBanner ad={ad} label={label} class="h-full border-0" />
+            ) : (
+              <a
+                href="/mande-sua-noticia"
+                class="flex h-full w-full flex-col items-center justify-center gap-1.5 p-4 text-center transition-colors hover:bg-nioaque-green-50"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="text-nioaque-green"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span class="text-xs font-semibold text-nioaque-green">Anuncie aqui</span>
+                <span class="hidden text-[10px] text-ink-muted sm:inline">
+                  {SIZE_LABEL[slot]}
+                </span>
+              </a>
+            )}
+          </div>
+        );
+      })
+    }
+  </div>
+</section>

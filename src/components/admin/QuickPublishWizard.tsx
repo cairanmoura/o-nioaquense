@@ -188,6 +188,7 @@ export default function QuickPublishWizard({
   const [copied, setCopied] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [rewriting, setRewriting] = useState(false);
+  const [generatingBullets, setGeneratingBullets] = useState(false);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -277,6 +278,30 @@ export default function QuickPublishWizard({
       setError(err instanceof Error ? err.message : 'Erro ao reescrever com IA.');
     } finally {
       setRewriting(false);
+    }
+  }
+
+  async function generateBulletsWithAI() {
+    const body = form.bullets.filter((b) => b.trim()).join('. ') || form.content;
+    if (!body.trim()) {
+      setError('Escreva o texto ou algum topico antes de gerar.');
+      return;
+    }
+    setGeneratingBullets(true);
+    setError('');
+    try {
+      const res = await fetch('/api/ai/direto-ao-ponto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: body }),
+      });
+      const data = (await res.json()) as { bullets?: string[]; error?: string };
+      if (!res.ok || !data.bullets) throw new Error(data.error ?? 'Falha ao gerar topicos.');
+      setForm((previous) => ({ ...previous, bullets: data.bullets ?? previous.bullets }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao gerar topicos.');
+    } finally {
+      setGeneratingBullets(false);
     }
   }
 
@@ -769,6 +794,20 @@ export default function QuickPublishWizard({
                   />
                 </label>
               ))}
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={generateBulletsWithAI}
+                disabled={generatingBullets}
+                className="inline-flex items-center gap-1.5 rounded-full border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
+              >
+                {generatingBullets ? 'Gerando...' : '✨ Gerar com IA'}
+              </button>
+              <span className="text-[11px] text-ink-muted">
+                Cria os 3 topicos a partir do texto da materia.
+              </span>
             </div>
           </section>
 
