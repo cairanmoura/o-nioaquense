@@ -179,7 +179,7 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
           type="button"
           onClick={toggle}
           aria-pressed={state === 'playing'}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark sm:flex-none"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark sm:flex-none"
         >
           {state === 'playing' ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -198,14 +198,14 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
           <button
             type="button"
             onClick={stop}
-            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-red hover:text-nioaque-red"
+            className="inline-flex items-center justify-center gap-1.5 rounded-sm border border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-red hover:text-nioaque-red"
           >
             Parar
           </button>
         )}
 
         <div
-          className="flex items-center gap-1 rounded-full bg-editorial p-1"
+          className="flex items-center gap-1 rounded-sm bg-editorial p-1"
           role="group"
           aria-label="Velocidade da leitura"
         >
@@ -215,7 +215,7 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
               type="button"
               onClick={() => changeSpeed(value)}
               aria-pressed={speed === value}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+              className={`rounded-sm px-3 py-1.5 text-[11px] font-bold transition-colors ${
                 speed === value
                   ? 'bg-nioaque-white text-nioaque-green shadow-sm'
                   : 'text-ink-muted hover:text-ink'
@@ -228,9 +228,9 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
       </div>
 
       {/* Progresso */}
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-editorial">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-sm bg-editorial">
         <div
-          className="h-full rounded-full bg-nioaque-green transition-[width] duration-200"
+          className="h-full rounded-sm bg-nioaque-green transition-[width] duration-200"
           style={{ width: `${progress}%` }}
           role="progressbar"
           aria-valuenow={Math.round(progress)}

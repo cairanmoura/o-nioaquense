@@ -39,7 +39,7 @@ const authorOf = (id: string) => profilesById.get(id) ?? null;
       }
     </header>
 
-    <form action="/busca" method="get" role="search" class="mt-6 flex max-w-xl items-center gap-2 rounded-full border border-line bg-nioaque-white px-5 py-3 focus-within:border-nioaque-green">
+    <form action="/busca" method="get" role="search" class="mt-6 flex max-w-xl items-center gap-2 rounded-sm border border-line bg-nioaque-white px-5 py-3 focus-within:border-nioaque-green">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" stroke-linecap="round" />
@@ -55,7 +55,7 @@ const authorOf = (id: string) => profilesById.get(id) ?? null;
       />
       <button
         type="submit"
-        class="shrink-0 rounded-full bg-nioaque-green px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
+        class="shrink-0 rounded-sm bg-nioaque-green px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
       >
         Buscar
       </button>
@@ -63,7 +63,7 @@ const authorOf = (id: string) => profilesById.get(id) ?? null;
 
     {
       !term && (
-        <div class="mt-10 rounded-2xl border border-line bg-nioaque-white p-6">
+        <div class="mt-10 rounded-sm border border-line bg-nioaque-white p-6">
           <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
             Sugestões
           </h2>
@@ -97,14 +97,14 @@ const authorOf = (id: string) => profilesById.get(id) ?? null;
 
     {
       term && results.length === 0 && (
-        <div class="mt-10 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-8 text-center">
+        <div class="mt-10 rounded-sm border border-dashed border-line-strong bg-nioaque-white p-8 text-center">
           <p class="font-editorial text-xl font-semibold text-ink">Nada encontrado por aqui</p>
           <p class="mt-2 text-sm text-ink-soft">
             Tente outra palavra ou volte para a capa do portal.
           </p>
           <a
             href="/"
-            class="mt-5 inline-flex rounded-full bg-nioaque-green px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+            class="mt-5 inline-flex rounded-sm bg-nioaque-green px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
           >
             Voltar para a capa
           </a>

@@ -155,10 +155,10 @@ export default function ProfileEditor({ profile, role }: Props) {
             <img
               src={preview}
               alt=""
-              className="h-20 w-20 shrink-0 rounded-full object-cover ring-[3px] ring-nioaque-green"
+              className="h-20 w-20 shrink-0 rounded-sm object-cover ring-[3px] ring-nioaque-green"
             />
           ) : (
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-ink/10 font-editorial text-2xl font-semibold text-ink-soft ring-[3px] ring-line">
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-sm bg-ink/10 font-editorial text-2xl font-semibold text-ink-soft ring-[3px] ring-line">
               {fullName.charAt(0) || '?'}
             </span>
           )}
@@ -167,7 +167,7 @@ export default function ProfileEditor({ profile, role }: Props) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-full border border-line px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green"
+              className="rounded-sm border border-line px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green"
             >
               {preview ? 'Trocar foto' : 'Enviar foto'}
             </button>
@@ -255,7 +255,7 @@ export default function ProfileEditor({ profile, role }: Props) {
           type="button"
           onClick={() => void save()}
           disabled={busy || !fullName.trim()}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-nioaque-green px-5 py-3.5 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
         >
           {busy ? 'Salvando...' : 'Salvar perfil'}
         </button>

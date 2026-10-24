@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 
 import { readPayload, requireSession, toErrorResponse } from '../../../lib/api';
 import { isAdmin } from '../../../lib/auth';
+import { runAI } from '../../../lib/ai';
 
 /**
  * POST /api/ai/curate
@@ -36,34 +37,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const imgMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
     const suggestedImage = imgMatch?.[1] ?? null;
 
-    const apiKey = (locals as any)?.runtime?.env?.GEMINI_API_KEY ?? (locals as any)?.runtime?.env?.GOOGLE_API_KEY;
-    if (!apiKey) throw new Error('Google Gemini API key nao configurada (GEMINI_API_KEY)');
+    const env = (locals as any)?.runtime?.env ?? {};
+    const result = await runAI(
+      `Voce e um editor jornalistico. Reescreva o texto fornecido como uma noticia inedita e imparcial para a cidade de Nioaque-MS. Crie: 1) um titulo, 2) um resumo de 3 topicos, 3) o corpo da noticia. Cite a fonte original no final. Retorne em formato estruturado.\n\nURL: ${url}\n\nTexto original:\n${text}`,
+      env,
+    );
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    return new Response(
+      JSON.stringify({ draft: result.text, suggestedImage, sourceUrl: url, provider: result.provider }),
       {
-        method: 'POST',
+        status: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Voce e um editor jornalistico. Reescreva o texto fornecido como uma noticia inedita e imparcial para a cidade de Nioaque-MS. Crie: 1) um titulo, 2) um resumo de 3 topicos, 3) o corpo da noticia. Cite a fonte original no final. Retorne em formato estruturado.\n\nURL: ${url}\n\nTexto original:\n${text}`,
-                },
-              ],
-            },
-          ],
-        }),
       },
     );
-    if (!geminiRes.ok) throw new Error(`Gemini API error: ${geminiRes.status}`);
-    const data = await geminiRes.json();
-    const draft = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-    return new Response(JSON.stringify({ draft, suggestedImage, sourceUrl: url }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
   } catch (err) {
     return toErrorResponse(err);
   }

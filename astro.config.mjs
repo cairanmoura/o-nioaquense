@@ -36,6 +36,11 @@ export default defineConfig({
       path: 'src/worker.ts',
       namedExports: ['scheduled'],
     },
+    // Dev local: nao abrir sessao remota da Cloudflare (o binding [ai] exige
+    // autenticacao); localmente os bindings rodam via miniflare.
+    platformProxy: {
+      remoteBindings: false,
+    },
   }),
   integrations: [react()],
   // Sessoes: o portal usa cookies do Supabase (SSR). O driver 'memory' evita

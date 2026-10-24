@@ -275,14 +275,14 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
             aria-checked={alertActive}
             aria-label="Ativar alerta"
             onClick={() => setAlertActive((value) => !value)}
-            className={`relative mt-1 h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nioaque-red/40 focus-visible:ring-offset-2 ${
+            className={`relative mt-1 h-7 w-12 shrink-0 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nioaque-red/40 focus-visible:ring-offset-2 ${
               alertActive ? 'bg-nioaque-red' : 'bg-line-strong'
             }`}
           >
             {/* `left-0` explícito: evita o knob nascer centralizado pelo
                 `text-align:center` do <button> (estado desligado torto). */}
             <span
-              className={`absolute left-0 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-white shadow transition-transform ${
                 alertActive ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -337,7 +337,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
             type="button"
             onClick={() => void saveAlert()}
             disabled={savingAlert || !alertUtility}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-red px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-nioaque-red px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
           >
             {savingAlert ? 'Salvando...' : 'Salvar alerta'}
           </button>
@@ -406,7 +406,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
           type="button"
           onClick={() => void saveWeek()}
           disabled={savingWeek}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-sm bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
         >
           {savingWeek ? 'Salvando...' : 'Salvar escala da semana'}
         </button>
@@ -482,14 +482,14 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
                 <button
                   type="button"
                   onClick={() => void saveLine(line)}
-                  className="rounded-full bg-nioaque-green px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
+                  className="rounded-sm bg-nioaque-green px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark"
                 >
                   Salvar
                 </button>
                 <button
                   type="button"
                   onClick={() => void removeLine(line.id)}
-                  className="rounded-full border border-line px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-nioaque-red transition-colors hover:bg-nioaque-red-50"
+                  className="rounded-sm border border-line px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-nioaque-red transition-colors hover:bg-nioaque-red-50"
                 >
                   Remover
                 </button>
@@ -547,7 +547,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
             type="button"
             onClick={() => void addLine()}
             disabled={!newLine.route_name.trim() || !newLine.destination.trim()}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-ink/90 disabled:opacity-50"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-sm bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-ink/90 disabled:opacity-50"
           >
             Cadastrar linha
           </button>

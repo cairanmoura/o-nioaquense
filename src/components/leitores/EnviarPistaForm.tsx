@@ -130,7 +130,7 @@ export default function EnviarPistaForm() {
   if (done) {
     return (
       <div className="rounded-2xl border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-nioaque-green text-white">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-sm bg-nioaque-green text-white">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M20 6 9 17l-5-5" />
           </svg>
@@ -151,7 +151,7 @@ export default function EnviarPistaForm() {
             setMessage('');
             setPhotos([]);
           }}
-          className="mt-5 rounded-full border border-nioaque-green px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
+          className="mt-5 rounded-sm border border-nioaque-green px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
         >
           Enviar outra
         </button>
@@ -238,7 +238,7 @@ export default function EnviarPistaForm() {
                   type="button"
                   onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}
                   aria-label={`Remover ${photo.name}`}
-                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-white shadow"
+                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-sm bg-ink text-white shadow"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
                     <path d="M18 6 6 18M6 6l12 12" />
@@ -287,7 +287,7 @@ export default function EnviarPistaForm() {
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
       >
         {busy ? 'Enviando...' : 'Mandar para a redação'}
       </button>

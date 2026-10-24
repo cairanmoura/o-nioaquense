@@ -4,17 +4,20 @@
  * -----------------------------------------------------------------------------
  * Capa desenhada para materias sem foto.
  *
- * As artes oficiais de /artes-nioarquense sao o ponto de partida (faixas verde
- * e vermelha, circulo e caixa branca). Aqui a caixa branca recebe a editoria,
- * para a capa nao parecer um espaco vazio. O desenho e' SVG inline: escala sem
- * perder nitidez e nao gera requisicao extra.
+ * Variedade determinística: o desenho geometrico e o icone editoriais variam
+ * conforme o hash do `slug`, de modo que nao se repete sempre a mesma arte.
+ * Usa as 29 artes geometricas / ícones editoriais de Nioaque disponíveis em
+ * public/icons/ (pauta-*) e as faixas da bandeira municipal.
  */
+
 
 interface Props {
   /** Editoria que aparece em destaque (ex.: "Saúde"). */
   label: string;
   /** Escopo editorial (ex.: "Nioaque"). */
   scope: string;
+  /** Slug da materia (usado para gerar variedade determinística). */
+  slug: string;
   /** Nome acessivel; quando vazio, a capa e' decorativa. */
   alt?: string;
   /** `cover` preenche o quadro; `contain` mostra a arte inteira (miniaturas). */
@@ -22,58 +25,86 @@ interface Props {
   class?: string;
 }
 
-const { label, scope, alt, fit = 'cover', class: className = '' } = Astro.props;
+const { label, scope, slug, alt, fit = 'cover', class: className = '' } = Astro.props;
 
-/*
- * Nem todo `category_label` e' uma editoria (o banco de demonstracao chega a
- * gravar nome de empresa). Quando o rotulo nao e' uma editoria conhecida, a
- * capa usa o escopo - que e' sempre verdadeiro - em vez de inventar secoes.
- */
-const EDITORIAS = new Set([
-  'saúde',
-  'saude',
-  'educação',
-  'educacao',
-  'política',
-  'politica',
-  'obras',
-  'obras públicas',
-  'obras publicas',
-  'infraestrutura',
-  'cidade',
-  'esporte',
-  'cultura',
-  'economia',
-  'segurança',
-  'seguranca',
-  'prefeitura',
-  'câmara',
-  'camara',
-  'câmara municipal',
-  'camara municipal',
-  'concursos',
-  'diário oficial',
-  'diario oficial',
-  'meio ambiente',
-  'agricultura',
-  'agricultura familiar',
-  'emprego',
-  'empregos',
-  'assistência social',
-  'assistencia social',
-  'trânsito',
-  'transito',
-  'radar oficial',
-  'coluna',
-  'opinião',
-  'opiniao',
-]);
+/* ---- Hash determinístico baseado no slug ---- */
+function hashString(value: string): number {
+  let result = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    result = (result * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return result;
+}
+
+const h = hashString(slug);
+
+/* Ícones editoriais disponíveis (pauta-*), mapeados por palavra-chave da categoria. */
+const ICON_BY_KEYWORD: Record<string, string> = {
+  saude: '/icons/24-pauta-saude-pulso.svg',
+  saude_ambulancia: '/icons/23-pauta-saude-ambulancia.svg',
+  educacao: '/icons/13-pauta-educacao-livro.svg',
+  cultura: '/icons/12-pauta-cultura-violao.svg',
+  esporte: '/icons/18-pauta-esporte-trofeu.svg',
+  agro: '/icons/14-pauta-campo-trator.svg',
+  seguranca: '/icons/26-pauta-justica-seguranca.svg',
+  justica: '/icons/26-pauta-justica-seguranca.svg',
+  politica: '/icons/25-pauta-poder-politica.svg',
+  poder: '/icons/25-pauta-poder-politica.svg',
+  financas: '/icons/27-pauta-financas-grafico.svg',
+  obras: '/icons/28-pauta-obras-infraestrutura.svg',
+  infraestrutura: '/icons/28-pauta-obras-infraestrutura.svg',
+  alerta: '/icons/29-pauta-alerta-utilidade.svg',
+  utilidade: '/icons/29-pauta-alerta-utilidade.svg',
+};
+
+/* Seleciona um ícone temático com base na categoria/escopo e no hash. */
+function pickIcon(categoryLabel: string | null, scope: string): string | null {
+  const key = (categoryLabel ?? scope).toLowerCase().replace(/[^a-z]/g, '_');
+  const direct = ICON_BY_KEYWORD[key];
+  if (direct) return direct;
+
+  /* Fallback: ciclo determinístico pelos ícones disponíveis baseado no hash. */
+  const icons = Object.values(ICON_BY_KEYWORD);
+  return icons[h % icons.length] ?? null;
+}
+
+/* Padrões de marca d'água variados (posicao/tamanho/opacidade). */
+const WATERMARK_PATTERNS = [
+  { cx: 930, cy: 338, r: 170, color: '#008026', opacity: 0.12 },
+  { cx: 270, cy: 200, r: 120, color: '#E60000', opacity: 0.1 },
+  { cx: 930, cy: 120, r: 90, color: '#008026', opacity: 0.08 },
+  { cx: 270, cy: 450, r: 140, color: '#E60000', opacity: 0.09 },
+  { cx: 600, cy: 300, r: 200, color: '#008026', opacity: 0.07 },
+];
+const watermark = WATERMARK_PATTERNS[h % WATERMARK_PATTERNS.length];
+
+/* Cores de destaque variadas. */
+const ACCENT_COLORS = ['#E60000', '#008026', '#1E293B'];
+const accentColor = ACCENT_COLORS[h % ACCENT_COLORS.length];
+
+/* Layout da caixa branca (posicao variada). */
+const BOX_VARIANTS = [
+  { x: 72, y: 188, w: 720, h: 300, rx: 4 },
+  { x: 72, y: 220, w: 640, h: 260, rx: 4 },
+  { x: 120, y: 188, w: 680, h: 280, rx: 4 },
+];
+const box = BOX_VARIANTS[h % BOX_VARIANTS.length];
 
 const rotulo = label.trim();
+const EDITORIAS = new Set([
+  'saúde', 'saude', 'educação', 'educacao', 'política', 'politica', 'obras',
+  'obras públicas', 'obras publicas', 'infraestrutura', 'cidade', 'esporte',
+  'cultura', 'economia', 'segurança', 'seguranca', 'prefeitura', 'câmara',
+  'camara', 'câmara municipal', 'camara municipal', 'concursos', 'diário oficial',
+  'diario oficial', 'meio ambiente', 'agricultura', 'agricultura familiar',
+  'emprego', 'empregos', 'assistência social', 'assistencia social', 'trânsito',
+  'transito', 'radar oficial', 'coluna', 'opinião', 'opiniao',
+]);
 const ehEditoria = EDITORIAS.has(rotulo.toLowerCase());
 const titulo = (ehEditoria ? rotulo : scope.trim()).slice(0, 24);
 const kicker = (ehEditoria ? scope : 'O NIOAQUENSE').trim().toUpperCase().slice(0, 22);
 const tituloSize = titulo.length > 16 ? 58 : titulo.length > 11 ? 68 : 76;
+const iconPath = pickIcon(label, scope);
 ---
 
 <svg
@@ -91,9 +122,21 @@ const tituloSize = titulo.length > 16 ? 58 : titulo.length > 11 ? 68 : 76;
   <rect width="1200" height="96" fill="#008026" />
   <rect y="579" width="1200" height="96" fill="#E60000" />
 
-  {/* Marca d'agua geometrica */}
-  <circle cx="930" cy="338" r="170" fill="#008026" opacity="0.12" />
-  <circle cx="1030" cy="250" r="56" fill="#E60000" opacity="0.1" />
+  {/* Marca d'agua geometrica variada (hash do slug) */}
+  <circle
+    cx={watermark.cx}
+    cy={watermark.cy}
+    r={watermark.r}
+    fill={watermark.color}
+    opacity={watermark.opacity}
+  />
+  <circle
+    cx={1200 - watermark.cx}
+    cy={675 - watermark.cy}
+    r={watermark.r * 0.6}
+    fill={watermark.color === '#008026' ? '#E60000' : '#008026'}
+    opacity={watermark.opacity * 0.7}
+  />
 
   {/* Assinatura no topo */}
   <text
@@ -103,8 +146,8 @@ const tituloSize = titulo.length > 16 ? 58 : titulo.length > 11 ? 68 : 76;
     font-family="'Plus Jakarta Sans', Arial, sans-serif"
     font-size="22"
     font-weight="700"
-    letter-spacing="5">O NIOAQUENSE</text
-  >
+    letter-spacing="5"
+  >O NIOAQUENSE</text>
   <text
     x="1128"
     y="60"
@@ -114,42 +157,57 @@ const tituloSize = titulo.length > 16 ? 58 : titulo.length > 11 ? 68 : 76;
     font-family="'Plus Jakarta Sans', Arial, sans-serif"
     font-size="18"
     font-weight="500"
-    letter-spacing="2">NIOAQUE · MS</text
-  >
+    letter-spacing="2"
+  >NIOAQUE · MS</text>
 
-  {/* Caixa branca: antes vazia, agora com a editoria */}
-  <rect x="72" y="188" width="720" height="300" rx="20" fill="#FFFFFF" />
+  {/* Caixa branca variada (posicao/tamanho baseado no hash) */}
+  <rect x={box.x} y={box.y} width={box.w} height={box.h} rx={box.rx} fill="#FFFFFF" />
 
   <text
-    x="116"
-    y="254"
+    x={box.x + 44}
+    y={box.y + 66}
     fill="#008026"
     font-family="'Plus Jakarta Sans', Arial, sans-serif"
     font-size="22"
     font-weight="700"
-    letter-spacing="3">{kicker}</text
-  >
+    letter-spacing="3"
+  >{kicker}</text>
 
   <text
-    x="112"
-    y="352"
+    x={box.x + 40}
+    y={box.y + 164}
     fill="#1E293B"
     font-family="Newsreader, Georgia, 'Times New Roman', serif"
     font-size={tituloSize}
     font-weight="600"
-    letter-spacing="-1">{titulo}</text
-  >
+    letter-spacing="-1"
+  >{titulo}</text>
 
-  <rect x="116" y="386" width="72" height="7" rx="3.5" fill="#E60000" />
+  <rect x={box.x + 44} y={box.y + 198} width="72" height="7" rx="3.5" fill={accentColor} />
 
   <text
-    x="116"
-    y="446"
+    x={box.x + 44}
+    y={box.y + 258}
     fill="#64748B"
     font-family="'Plus Jakarta Sans', Arial, sans-serif"
     font-size="21"
-    font-weight="500">Jornalismo hiperlocal, apurado na fonte.</text
-  >
+    font-weight="500"
+  >Jornalismo hiperlocal, apurado na fonte.</text>
+
+  {/* Icone editorial tematico (opcional, baseado na categoria e hash) */}
+  {
+    iconPath && (
+      <image
+        href={iconPath}
+        x={1200 - 220}
+        y={box.y + box.h - 120}
+        width="160"
+        height="160"
+        preserveAspectRatio="xMidYMid meet"
+        opacity="0.15"
+      />
+    )
+  }
 
   {/* Cruz da bandeira, no canto inferior direito */}
   <g transform="translate(1092 616) scale(0.42)">

@@ -52,13 +52,13 @@ const AD_FORMAT: Record<AdsenseFormat, string> = {
   client && slotId && (
     <div
       class:list={[
-        'relative flex flex-col overflow-hidden rounded-xl border border-line bg-nioaque-white',
+        'relative flex flex-col overflow-hidden rounded-sm border border-line bg-nioaque-white',
         className,
       ]}
       style={`min-height:${reservedHeight}`}
     >
       <span
-        class="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white"
+        class="pointer-events-none absolute left-3 top-3 z-10 rounded-sm bg-ink/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white"
       >
         {label}
       </span>

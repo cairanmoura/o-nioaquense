@@ -111,7 +111,7 @@ export default function EnviarPista() {
             setStatus('idle');
             setMessage('');
           }}
-          className="mt-4 rounded-full border border-nioaque-green px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
+          className="mt-4 rounded-sm border border-nioaque-green px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
         >
           Enviar outra
         </button>
@@ -193,7 +193,7 @@ export default function EnviarPista() {
         <button
           type="submit"
           disabled={status === 'sending'}
-          className="inline-flex items-center justify-center rounded-full bg-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-sm bg-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
         >
           {status === 'sending' ? 'Enviando...' : 'Enviar pista'}
         </button>
@@ -202,7 +202,7 @@ export default function EnviarPista() {
           href="https://wa.me/5567999990000?text=Tenho%20uma%20pista%20para%20o%20O%20Nioaquense"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-full border border-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green-50"
+          className="inline-flex items-center justify-center rounded-sm border border-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green-50"
         >
           Enviar pelo WhatsApp
         </a>

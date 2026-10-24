@@ -12,8 +12,8 @@ import type { LocalAd, AdSlotPosition } from '../lib/types';
  *   - Retangulo 300x250 (home_middle, article_inline, sidebar)
  *   - Meia pagina 300x600 (daily_deal)
  *
- * Quando nao ha anuncio no ar no slot, o mosaico mostra "Anuncie aqui" com o
- * mesmo tamanho reservado (zero CLS, regra #1 do AGENTS.md).
+ * Quando nao ha anuncio no ar no slot, o mosaico exibe uma arte geometrica SVG
+ * nas cores de Nioaque com o texto "Espaco publicitario" (zero CLS).
  *
  * Uso:
  *   <AdMosaic ads={feed.ads} slots={['home_middle', 'sidebar']} />
@@ -60,7 +60,7 @@ const isWide = (slot: AdSlotPosition) => slot === 'header_billboard';
       {label}
     </p>
     <a
-      href="/mande-sua-noticia"
+      href="/anuncie"
       class="ml-auto shrink-0 text-xs font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
     >
       Anuncie aqui
@@ -84,23 +84,46 @@ const isWide = (slot: AdSlotPosition) => slot === 'header_billboard';
               <LocalAdBanner ad={ad} label={label} class="h-full border-0" />
             ) : (
               <a
-                href="/mande-sua-noticia"
-                class="flex h-full w-full flex-col items-center justify-center gap-1.5 p-4 text-center transition-colors hover:bg-nioaque-green-50"
+                href="/anuncie"
+                class="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center transition-colors hover:bg-nioaque-green-50"
               >
                 <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.6"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="text-nioaque-green"
-                  aria-hidden="true"
+                  width="300"
+                  height="250"
+                  viewBox="0 0 300 250"
+                  role="img"
+                  aria-label="Espaço publicitário disponível"
+                  class="max-w-full max-h-full"
                 >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  <rect width="300" height="250" fill="#FAF9F6" />
+                  <rect x="0" y="0" width="300" height="24" fill="#008026" />
+                  <rect x="0" y="226" width="300" height="24" fill="#E60000" />
+                  <circle cx="225" cy="75" r="45" fill="#008026" opacity="0.12" />
+                  <circle cx="75" cy="175" r="30" fill="#E60000" opacity="0.1" />
+                  <text
+                    x="150"
+                    y="118"
+                    text-anchor="middle"
+                    fill="#1E293B"
+                    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+                    font-size="14"
+                    font-weight="800"
+                    letter-spacing="0.06em"
+                  >
+                    ESPAÇO PUBLICITÁRIO
+                  </text>
+                  <text
+                    x="150"
+                    y="138"
+                    text-anchor="middle"
+                    fill="#008026"
+                    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+                    font-size="11"
+                    font-weight="600"
+                    letter-spacing="0.04em"
+                  >
+                    ANUNCIE SUA EMPRESA NO O NIOAQUENSE
+                  </text>
                 </svg>
                 <span class="text-xs font-semibold text-nioaque-green">Anuncie aqui</span>
                 <span class="hidden text-[10px] text-ink-muted sm:inline">

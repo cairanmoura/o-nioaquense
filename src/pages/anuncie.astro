@@ -1,0 +1,141 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+/**
+ * /anuncie - Pagina comercial do portal O Nioaquense.
+ * Apresenta formatos de mídia, vantagens e canal direto de contratacao.
+ */
+
+const WHATSAPP = '5567999990000';
+
+const formats = [
+  {
+    name: 'Topo do Portal',
+    description:
+      'Leaderboard fixo no cabeçalho de todas as páginas. Máxima visibilidade para a sua marca no primeiro contato do leitor com o portal.',
+    size: '728 × 90 px',
+    position: 'Header (todas as páginas)',
+  },
+  {
+    name: 'Meio de Página',
+    description:
+      'Retângulo médio inserido no corpo das notícias, entre parágrafos de leitura. Ideal para campanhas de conscientização e promoções sazonais.',
+    size: '300 × 250 px',
+    position: 'Dentro das matérias',
+  },
+  {
+    name: 'Rodapé',
+    description:
+      'Banner de fechamento nas páginas de leitura e editoriais. Último impacto antes o leitor sair da página.',
+    size: '300 × 250 px',
+    position: 'Rodapé dos artigos',
+  },
+  {
+    name: 'Vitrine do Comércio',
+    description:
+      'Destaque do Comércio de Nioaque na home, com logo, nome da empresa e chamada para ação direcionada ao WhatsApp ou site do anunciante.',
+    size: '300 × 600 px',
+    position: 'Home (seção de comércio)',
+  },
+  {
+    name: 'Informe Publicitário',
+    description:
+      'Reportagem publicitária assinada pela redação, com texto, fotos e divulgação nas redes sociais do portal. Conteúdo nativo de confiança.',
+    size: 'Editorial completo',
+    position: 'Página própria + redes',
+  },
+];
+
+const advantages = [
+  'Alcance hiperlocal: sua mensagem chega diretamente aos moradores de Nioaque e região.',
+  'Audiência qualificada: leitores que buscam notícias da cidade, serviços públicos e comércio local.',
+  'Preços acessíveis para pequenos e médios negócios de Nioaque.',
+  'Métricas transparentes: cliques, impressões e contato direto via WhatsApp.',
+  'Atendimento rápido: contrate direto com a redação pelo WhatsApp.',
+];
+---
+
+<MainLayout title="Anuncie no O Nioaquense" description="Anuncie sua empresa no portal de notícias de Nioaque (MS). Formatos: Topo, Meio de Página, Rodapé, Vitrine do Comércio e Informe Publicitário.">
+  <header class="mt-8 mb-10 border-b-2 border-nioaque-green pb-6">
+    <h1 class="font-editorial text-3xl font-semibold tracking-tight text-ink sm:text-5xl">
+      Anuncie no O Nioaquense
+    </h1>
+    <p class="mt-3 text-base leading-relaxed text-ink-soft sm:text-lg">
+      Leve sua marca para quem mais importa: os moradores de Nioaque (MS). O portal
+      hiperlocal que cobre o que acontece na cidade, no Sul de Mato Grosso do Sul
+      e no Brasil.
+    </p>
+  </header>
+
+  {/* Formatos de mídia */}
+  <section id="formatos" class="mt-12" data-reveal>
+    <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+      Formatos de mídia
+    </h2>
+    <p class="mt-3 text-sm text-ink-muted">
+      Escolha o espaço que melhor combina com o seu objetivo de campanha.
+    </p>
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {formats.map((fmt) => (
+        <article class="border border-line bg-nioaque-white p-5 sm:p-6">
+          <h3 class="font-editorial text-lg font-semibold text-ink">{fmt.name}</h3>
+          <p class="mt-1 text-xs font-semibold text-nioaque-green">{fmt.size}</p>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">{fmt.description}</p>
+          <p class="mt-3 text-xs font-medium text-ink-muted">{fmt.position}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* Vantagens */}
+  <section id="vantagens" class="mt-16 bg-nioaque-white" data-reveal>
+    <div class="container-editorial py-12">
+      <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        Por que anunciar no O Nioaquense?
+      </h2>
+      <ul class="mt-6 space-y-3 text-sm leading-relaxed text-ink-soft">
+        {advantages.map((adv) => (
+          <li class="flex gap-3">
+            <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
+            {adv}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {/* Contratacao direta */}
+  <section id="contratacao" class="mt-16" data-reveal>
+    <div class="container-editorial">
+      <div class="border border-line bg-nioaque-white p-8 sm:p-12">
+        <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          Quer anunciar? Fale com a redação.
+        </h2>
+        <p class="mt-3 text-sm text-ink-muted">
+          Envie uma mensagem pelo WhatsApp ou preencha o formulário abaixo. Retornamos em
+          até 24 horas úteis com tabela de preços e disponibilidade de espaços.
+        </p>
+
+        <div class="mt-8 flex flex-col sm:flex-row gap-4">
+          <a
+            href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Olá! Gostaria de anunciar no O Nioaquense. Por favor, enviem a tabela de preços e disponibilidade de espaços publicitários.')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-center gap-2 rounded-sm bg-nioaque-green px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-nioaque-green-dark sm:text-base"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.2h.01c5.43 0 9.84-4.4 9.84-9.84C21.89 6.4 17.48 2 12.04 2Zm5.76 14.02c-.24.68-1.4 1.3-1.94 1.36-.54.06-1.04.08-1.68-.12-.4-.12-.9-.3-1.56-.58-2.74-1.18-4.52-3.94-4.66-4.12-.14-.18-1.12-1.5-1.12-2.86 0-1.36.7-2.02.96-2.3.26-.28.56-.34.74-.34.18 0 .38 0 .54.02.18.02.42-.06.66.5.24.56.82 1.94.9 2.08.06.14.1.3.02.48-.08.18-.12.3-.24.46-.12.16-.26.36-.36.48-.12.12-.26.26-.1.5.14.24.64 1.06 1.38 1.72.94.84 1.74 1.1 1.98 1.22.24.12.38.1.52-.06.14-.16.6-.7.76-.94.16-.24.32-.2.54-.12.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.6-.18 1.2Z" />
+            </svg>
+            Contratar via WhatsApp
+          </a>
+          <a
+            href="/mande-sua-noticia"
+            class="flex items-center justify-center gap-2 rounded-sm border border-line bg-editorial px-5 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-nioaque-green-50 sm:text-base"
+          >
+            Enviar formulário
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</MainLayout>

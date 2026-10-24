@@ -1,123 +1,93 @@
 ---
 import LogoNioaquense from './LogoNioaquense.astro';
-import { getNioaqueWeather } from '../lib/weather';
 
 /**
  * Header.astro
  * -----------------------------------------------------------------------------
- * Cabecalho principal em uma unica linha:
- * logo - busca - editorias - clima - Mande sua Notícia
+ * Cabecalho editorial em uma unica linha:
+ *
+ *   [Logo] [Navegacao categorias] [whitespace] [Busca] [CTA]
+ *
+ * Logo e navegacao agrupadas a ESQUERDA (justify-start), busca e CTA à DIREITA,
+ * tudo na mesma linha (items-center + whitespace-nowrap).
  */
 
-const editorias = [
+const categorias = [
   { href: '/editoria/nioaque', label: 'Nioaque', accent: true },
   { href: '/radar-oficial', label: 'Radar Oficial' },
-  { href: '/editoria/ms', label: 'MS' },
+  { href: '/editoria/politica-poder', label: 'Política & Poder' },
+  { href: '/editoria/agro-campo', label: 'Agro & Campo' },
+  { href: '/editoria/policia-justica', label: 'Polícia & Justiça' },
+  { href: '/editoria/saude', label: 'Saúde' },
+  { href: '/editoria/educacao', label: 'Educação' },
+  { href: '/editoria/esporte', label: 'Esporte' },
+  { href: '/editoria/cultura', label: 'Cultura' },
+  { href: '/editoria/ms', label: 'Mato Grosso do Sul' },
   { href: '/editoria/brasil', label: 'Brasil' },
 ];
 
 const searchTerm = Astro.url.searchParams.get('q') ?? '';
 const activeScope = Astro.url.searchParams.get('escopo');
-const headerWeather = await getNioaqueWeather(Astro.locals);
+
+const isActive = (href: string) => {
+  const slug = href.split('/').pop();
+  return activeScope === slug || (activeScope === null && href === '/editoria/nioaque');
+};
 ---
 
 <header class="bg-nioaque-white border-b border-line">
   <div class="container-editorial">
-    <div class="flex items-center gap-4 lg:gap-6 py-3 sm:py-4">
-      {/* Logo */}
-      <a href="/" class="flex shrink-0" aria-label="O Nioaquense - pagina inicial">
-        <LogoNioaquense class="w-32 sm:w-40 lg:w-48" />
-      </a>
+    <div class="flex items-center justify-between gap-6 whitespace-nowrap py-3 sm:py-4">
 
-      {/* Busca rapida */}
-      <form
-        action="/busca"
-        method="get"
-        role="search"
-        class="flex items-center gap-2 rounded-full border border-line bg-editorial px-3 py-2 sm:px-4 sm:py-2.5 transition-colors focus-within:border-nioaque-green focus-within:bg-nioaque-white"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-        </svg>
-        <label for="busca-desktop" class="sr-only">Buscar no O Nioaquense</label>
-        <input
-          id="busca-desktop"
-          type="search"
-          name="q"
-          value={searchTerm}
-          placeholder="Buscar notícia..."
-          class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
-        />
-      </form>
-
-      {/* Menu de editorias (desktop linha, mobile painel lateral) */}
-      <nav aria-label="Editorias" class="hidden lg:flex items-center gap-1">
-        <ul class="flex flex-wrap gap-1">
-          {
-            editorias.map((item) => (
-              <li>
-                <a
-                  href={item.href}
-                  aria-current={activeScope === item.href.split('/').pop() ? 'page' : undefined}
-                  class:list={[
-                    'inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-colors',
-                    activeScope === item.href.split('/').pop() || (activeScope === null && item.accent)
-                      ? 'bg-nioaque-green text-white hover:bg-nioaque-green-dark'
-                      : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
-                  ]}
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
-
-      <div class="ml-auto flex items-center gap-3">
-        {/* Clima minimalista (somente aqui: unica exibicao do clima no site) */}
-        <span
-          title="Clima em Nioaque"
-          class="flex items-center gap-2 rounded-full border border-line bg-nioaque-white px-3 py-2 text-xs font-semibold text-ink"
-        >
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-nioaque-green-50 text-nioaque-green">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.7 17.7l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.7 6.3l1.41-1.41" />
-            </svg>
-          </span>
-          <span class="hidden sm:inline truncate max-w-[80px]">
-            <span class="font-semibold text-ink">{headerWeather.temperature}°C</span>
-            <span class="text-ink-soft"> · {headerWeather.label}</span>
-          </span>
-        </span>
-
-        {/* Botao de destaque */}
-        <a
-          href="/mande-sua-noticia"
-          class="inline-flex shrink-0 items-center gap-2 rounded-full bg-nioaque-red px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-nioaque-red-dark sm:px-4"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span class="hidden sm:inline">Mande sua notícia</span>
-          <span class="sm:hidden">Notícia</span>
+      {/* Esquerda: Logo + Navegacao de categorias */}
+      <div class="flex items-center gap-6 shrink-0">
+        <a href="/" class="flex shrink-0" aria-label="O Nioaquense - pagina inicial">
+          <LogoNioaquense class="w-32 sm:w-40 lg:w-48" />
         </a>
-      </div>
-    </div>
 
-    {/* Menu mobile (painel lateral) */}
-    <div id="menu-mobile" hidden class="border-t border-line bg-editorial lg:hidden">
-      <div class="container-editorial py-4">
-        <form action="/busca" method="get" role="search" class="mb-4 flex items-center gap-2 rounded-full border border-line bg-nioaque-white px-4 py-2.5">
+        <nav aria-label="Categorias" class="hidden sm:flex items-center gap-1 sm:gap-2">
+          <ul class="flex flex-wrap gap-1">
+            {
+              categorias.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <li>
+                    <a
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      class:list={[
+                        'inline-flex items-center gap-1.5 rounded-sm border border-line px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap',
+                        active
+                          ? 'bg-nioaque-green text-white border-nioaque-green hover:bg-nioaque-green-dark'
+                          : 'text-ink-soft border-transparent hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                      ]}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </nav>
+      </div>
+
+      {/* Direita: Busca + CTA */}
+      <div class="flex items-center gap-3 shrink-0">
+        {/* Busca rapida */}
+        <form
+          action="/busca"
+          method="get"
+          role="search"
+          class="hidden sm:flex items-center gap-2 rounded-sm border border-line bg-editorial px-3 py-2 sm:px-3 sm:py-2 transition-colors focus-within:border-nioaque-green focus-within:bg-nioaque-white"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.5-3.5" stroke-linecap="round" />
           </svg>
-          <label for="busca-mobile" class="sr-only">Buscar no O Nioaquense</label>
+          <label for="busca-desktop" class="sr-only">Buscar no O Nioaquense</label>
           <input
-            id="busca-mobile"
+            id="busca-desktop"
             type="search"
             name="q"
             value={searchTerm}
@@ -126,18 +96,53 @@ const headerWeather = await getNioaqueWeather(Astro.locals);
           />
         </form>
 
-        <nav aria-label="Editorias">
+        {/* Botao de destaque */}
+        <a
+          href="/mane-sua-noticia"
+          class="inline-flex shrink-0 items-center justify-center gap-2 rounded-sm bg-nioaque-red px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span class="hidden sm:inline">Mande sua notícia</span>
+          <span class="sm:hidden">Notícia</span>
+        </a>
+      </div>
+
+    </div>
+
+    {/* Busca mobile (abaixo da linha principal, apenas mobile) */}
+    <div class="hidden sm:hidden mt-3 flex items-center gap-2 rounded-sm border border-line bg-nioaque-white px-4 py-2.5">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+      </svg>
+      <label for="busca-mobile" class="sr-only">Buscar no O Nioaquense</label>
+      <input
+        id="busca-mobile"
+        type="search"
+        name="q"
+        value={searchTerm}
+        placeholder="Buscar notícia..."
+        class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
+      />
+    </div>
+
+    {/* Menu mobile (painel lateral) */}
+    <div id="menu-mobile" hidden class="border-t border-line bg-nioaque-white lg:hidden">
+      <div class="container-editorial py-4">
+        <nav aria-label="Categorias">
           <ul class="grid grid-cols-2 gap-2">
             {
-              editorias.map((item) => (
+              categorias.map((item) => (
                 <li>
                   <a
                     href={item.href}
                     class:list={[
-                      'block rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                      activeScope === item.href.split('/').pop() || (activeScope === null && item.accent)
+                      'block rounded-sm px-4 py-3 text-sm font-semibold transition-colors',
+                      isActive(item.href)
                         ? 'bg-nioaque-green text-white'
-                        : 'bg-nioaque-white text-ink ring-1 ring-line hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                        : 'bg-nioaque-white text-ink border border-line hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
                     ]}
                   >
                     {item.label}
@@ -166,6 +171,6 @@ const headerWeather = await getNioaqueWeather(Astro.locals);
       panel.setAttribute('hidden', '');
     }
 
-    toggle.setAttribute('aria-expanded', String(willOpen));
+    toggle?.setAttribute('aria-expanded', String(willOpen));
   });
 </script>

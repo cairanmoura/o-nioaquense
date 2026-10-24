@@ -94,7 +94,7 @@ const rest = articles.filter((article) => article.id !== featured?.id);
         return (
           <a
             href={href}
-            class={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+            class={`px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors ${
               isActive
                 ? SCOPE_BADGE_CLASS[editoriaScope as ArticleScope]
                 : 'bg-nioaque-white border border-line text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark'
@@ -108,7 +108,7 @@ const rest = articles.filter((article) => article.id !== featured?.id);
 
     {
       articles.length === 0 ? (
-        <p class="mt-10 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-10 text-center text-sm text-ink-soft">
+        <p class="mt-10 rounded-sm border border-dashed border-line-strong bg-nioaque-white p-10 text-center text-sm text-ink-soft">
           Nenhuma matéria publicada nesta editoria ainda.
         </p>
       ) : (

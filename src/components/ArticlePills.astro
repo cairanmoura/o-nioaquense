@@ -57,7 +57,7 @@ const tone = BRAND_TONES[hash(normalized) % BRAND_TONES.length];
     className,
   ]}
 >
-  <span class:list={['h-1.5 w-1.5 shrink-0 rounded-full', tone.dot]} aria-hidden="true" />
+  <span class:list={['h-1.5 w-1.5 shrink-0 rounded-sm', tone.dot]} aria-hidden="true" />
   <span class:list={['font-semibold', tone.text]}>{label}</span>
   {showEditor && <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>}
   {article.is_breaking && <span class="font-bold text-nioaque-red">&middot; Última hora</span>}

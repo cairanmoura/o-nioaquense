@@ -49,7 +49,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
 
           <ul class="mt-3 space-y-4">
             {pending.map((submission) => (
-              <li class="overflow-hidden rounded-2xl border border-line bg-nioaque-white">
+              <li class="overflow-hidden rounded-sm border border-line bg-nioaque-white">
                 <div class="flex flex-wrap items-center gap-2 border-b border-line bg-editorial px-4 py-2.5">
                   <span class:list={['pill-scope', STATUS_CLASS[submission.status]]}>
                     {STATUS_LABEL[submission.status]}
@@ -107,7 +107,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
                       href={`https://wa.me/${submission.sender_whatsapp.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-90"
+                      class="inline-flex items-center gap-1.5 rounded-sm bg-[#25D366] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-90"
                     >
                       Responder no WhatsApp
                     </a>
@@ -136,7 +136,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
             Já tratados
           </h2>
 
-          <ul class="mt-3 divide-y divide-line rounded-2xl border border-line bg-nioaque-white px-4">
+          <ul class="mt-3 divide-y divide-line rounded-sm border border-line bg-nioaque-white px-4">
             {handled.map((submission) => (
               <li class="flex items-start gap-3 py-4">
                 <div class="min-w-0 flex-1">
@@ -164,7 +164,7 @@ const handled = dashboard.submissions.filter((item) => item.status !== 'pending'
 
     {
       dashboard.submissions.length === 0 && (
-        <div class="rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-10 text-center">
+        <div class="rounded-sm border border-dashed border-line-strong bg-nioaque-white p-10 text-center">
           <p class="font-editorial text-xl font-semibold text-ink">Nenhum relato ainda</p>
           <p class="mt-1.5 text-sm text-ink-soft">
             As pistas enviadas pelo formulário ou pelo WhatsApp aparecem aqui.

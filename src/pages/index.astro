@@ -73,7 +73,7 @@ const subLeads = (
 const secondary = feed.articles.filter((article) => article.id !== lead?.id);
 const breaking = feed.breaking.slice(0, 3);
 const nioaqueGrid = nioaquePool.filter((article) => !subLeads.some((item) => item.id === article.id)).slice(0, 4);
-const ms = feed.byScope.ms.slice(0, 3);
+const ms = feed.byScope.ms.slice(0, 6);
 // A capa da lateral e' a materia mais recente. Para a foto nao se repetir no
 // meio da pagina, a editoria Brasil comeca na seguinte.
 const sidebarTopId = secondary[0]?.id;
@@ -162,17 +162,15 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           )
         }
 
-        {/* Submanchetes */}
+        {/* Grid de 3 secundarias lado a lado abaixo da manchete */}
         {
           subLeads.length > 0 && (
-            <div class="mt-8 space-y-4 sm:mt-10">
-              {subLeads.map((article, i) => (
+            <div class="mt-8 grid gap-6 sm:grid-cols-3">
+              {subLeads.map((article) => (
                 <ArticleCard
                   article={article}
                   author={authorOf(article.author_id)}
-                  // Em desktop, a primeira submanchete ganha imagem (standard);
-                  // no celular, todas compactas para economizar espaco.
-                  variant={i === 0 ? 'standard' : 'compact'}
+                  variant="standard"
                 />
               ))}
             </div>
@@ -246,21 +244,14 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Ver tudo
             </a>
           </div>
-          <div class="mt-6 grid gap-6 pt-2 sm:pt-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-            <ArticleCard
-              article={nioaqueGrid[0]}
-              author={authorOf(nioaqueGrid[0].author_id)}
-              variant="standard"
-            />
-            <div class="space-y-4">
-              {nioaqueGrid.slice(1).map((article) => (
-                <ArticleCard
-                  article={article}
-                  author={authorOf(article.author_id)}
-                  variant="compact"
-                />
-              ))}
-            </div>
+          <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {nioaqueGrid.map((article) => (
+              <ArticleCard
+                article={article}
+                author={authorOf(article.author_id)}
+                variant="standard"
+              />
+            ))}
           </div>
         </section>
       )
@@ -286,9 +277,13 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Ver tudo
             </a>
           </div>
-          <div class="mt-6 space-y-4 pt-2 sm:pt-4">
+          <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {ms.map((article) => (
-              <ArticleCard article={article} author={authorOf(article.author_id)} variant="compact" />
+              <ArticleCard
+                article={article}
+                author={authorOf(article.author_id)}
+                variant="standard"
+              />
             ))}
           </div>
         </section>
@@ -304,7 +299,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Destaque do Comércio de Nioaque
             </h2>
             <a
-              href="/mande-sua-noticia"
+              href="/anuncie"
               class="ml-auto shrink-0 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
             >
               Anuncie aqui
@@ -358,7 +353,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
     {/* Envio de pistas */}
     <section id="pistas" class="mt-16 scroll-mt-28 sm:mt-20" aria-labelledby="sec-pistas" data-reveal>
-      <div class="grid gap-8 rounded-2xl bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12">
+      <div class="grid gap-8 rounded-sm bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12">
         <div>
           <h2 id="sec-pistas" class="text-headline font-semibold leading-tight text-ink">
             Alguma coisa aconteceu na sua rua?
@@ -369,22 +364,22 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           </p>
           <ul class="mt-6 space-y-2.5 text-base text-ink-soft">
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
               Buracos, coleta de lixo, iluminação, transporte
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
               Escolas, saúde, eventos da cidade
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
               Comércio, agricultura e produções locais
             </li>
           </ul>
 
           <a
             href="/mande-sua-noticia"
-            class="mt-7 inline-flex items-center gap-2 rounded-full bg-nioaque-red px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
+            class="mt-7 inline-flex items-center gap-2 rounded-sm bg-nioaque-red px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -405,15 +400,15 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
           <ul class="mt-5 space-y-2.5 text-base text-ink-soft">
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
               Formulário curtinho, feito para o celular
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
               Fotos comprimidas antes de subir
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
               Ou chame a redação no WhatsApp
             </li>
           </ul>

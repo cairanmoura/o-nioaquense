@@ -25,7 +25,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
 >
   <div class="mx-auto max-w-4xl space-y-6">
     {/* Chave de publicacao direta */}
-    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+    <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
         Permissao de publicacao
       </h2>
@@ -48,10 +48,10 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
                     height="44"
                     loading="lazy"
                     decoding="async"
-                    class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-nioaque-green"
+                    class="h-11 w-11 shrink-0 rounded-sm object-cover ring-2 ring-nioaque-green"
                   />
                 ) : (
-                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink/10 font-editorial text-base font-semibold text-ink-soft">
+                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-ink/10 font-editorial text-base font-semibold text-ink-soft">
                     {columnist.full_name.charAt(0)}
                   </span>
                 )}
@@ -131,7 +131,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
     </section>
 
     {/* Cadastro de novo colunista */}
-    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+    <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
         Cadastrar colunista
       </h2>
@@ -212,7 +212,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
 
         <button
           type="submit"
-          class="inline-flex items-center justify-center gap-2 rounded-full bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+          class="inline-flex items-center justify-center gap-2 rounded-sm bg-nioaque-green px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
         >
           <Icon name="users" size={14} />
           Cadastrar colunista
@@ -221,7 +221,7 @@ const dashboard = await getAdminDashboard(Astro.locals, session);
     </section>
 
     {/* Publicacoes dos colunistas */}
-    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+    <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">
         Textos em circulacao
       </h2>

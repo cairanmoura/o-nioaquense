@@ -70,6 +70,9 @@ PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
 PUBLIC_REDACAO_WHATSAPP = "5567999990000"
 
+[env.production.ai]
+binding = "AI"
+
 # -----------------------------------------------------------------------------
 #  R2 (imagens em WebP) e KV (cache da borda) - Etapas seguintes
 #  Criar os recursos antes de descomentar:

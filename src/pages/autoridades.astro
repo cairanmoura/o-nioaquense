@@ -1,0 +1,226 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+type Authority = {
+  id: string;
+  name: string;
+  role: string;
+  party: string | null;
+  photo_url: string | null;
+  contact: string | null;
+};
+
+const executivo: Authority[] = [
+  {
+    id: 'auth-001',
+    name: 'José Carlos de Souza',
+    role: 'Prefeito Municipal',
+    party: 'PSDB',
+    photo_url: '/covers/avatar-redacao.svg',
+    contact: '(67) 3465-1000 • prefeitura@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-002',
+    name: 'Maria Aparecida Oliveira',
+    role: 'Vice-Prefeita',
+    party: 'MDB',
+    photo_url: '/covers/avatar-cleide.svg',
+    contact: '(67) 3465-1001 • vice@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-003',
+    name: 'Carlos Eduardo Silva',
+    role: 'Secretário Municipal de Saúde',
+    party: null,
+    photo_url: '/covers/avatar-marcos.svg',
+    contact: '(67) 3465-1100 • saude@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-004',
+    name: 'Ana Paula Costa',
+    role: 'Secretária Municipal de Educação',
+    party: null,
+    photo_url: '/covers/avatar-cleide.svg',
+    contact: '(67) 3465-1200 • educacao@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-005',
+    name: 'Roberto Lima',
+    role: 'Secretário Municipal de Obras',
+    party: null,
+    photo_url: '/covers/avatar-rafael.svg',
+    contact: '(67) 3465-1300 • obras@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-006',
+    name: 'Fernanda Rocha',
+    role: 'Secretária Municipal de Cultura e Turismo',
+    party: null,
+    photo_url: '/covers/avatar-cleide.svg',
+    contact: '(67) 3465-1400 • cultura@nioaque.ms.gov.br',
+  },
+];
+
+const legislativo: Authority[] = [
+  {
+    id: 'auth-010',
+    name: 'Presidente da Câmara',
+    role: 'Mesa Diretora - Presidente',
+    party: 'PDT',
+    photo_url: null,
+    contact: '(67) 3465-2000 • camara@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-011',
+    name: '1º Secretário',
+    role: 'Mesa Diretora - 1º Secretário',
+    party: 'Republicanos',
+    photo_url: null,
+    contact: '(67) 3465-2001',
+  },
+  {
+    id: 'auth-012',
+    name: '2º Secretário',
+    role: 'Mesa Diretora - 2º Secretário',
+    party: 'PL',
+    photo_url: null,
+    contact: '(67) 3465-2002',
+  },
+  {
+    id: 'auth-013',
+    name: 'Vereador(a)',
+    role: 'Vereador(a) Municipal',
+    party: 'PT',
+    photo_url: null,
+    contact: '(67) 3465-2010',
+  },
+  {
+    id: 'auth-014',
+    name: 'Vereador(a)',
+    role: 'Vereador(a) Municipal',
+    party: 'PDT',
+    photo_url: null,
+    contact: '(67) 3465-2011',
+  },
+  {
+    id: 'auth-015',
+    name: 'Vereador(a)',
+    role: 'Vereador(a) Municipal',
+    party: 'MDB',
+    photo_url: null,
+    contact: '(67) 3465-2012',
+  },
+];
+
+const locais: Authority[] = [
+  {
+    id: 'auth-020',
+    name: '9º GAC - Grupo de Artilharia de Campanha',
+    role: 'Comando Militar',
+    party: 'Exército Brasileiro',
+    photo_url: null,
+    contact: '(67) 3465-3000 • quartel@nioaque.ms.gov.br',
+  },
+  {
+    id: 'auth-021',
+    name: 'Polícia Militar de Nioaque',
+    role: '3º Pelotão da PM',
+    party: 'Estado de MS',
+    photo_url: null,
+    contact: '190 • (67) 3465-3100',
+  },
+  {
+    id: 'auth-022',
+    name: 'Polícia Civil de Nioaque',
+    role: 'Delegacia de Polícia Civil',
+    party: 'Estado de MS',
+    photo_url: null,
+    contact: '197 • (67) 3465-3200',
+  },
+  {
+    id: 'auth-023',
+    name: 'Corpo de Bombeiros',
+    role: '1º Subgrupamento',
+    party: 'Estado de MS',
+    photo_url: null,
+    contact: '193 • (67) 3465-3300',
+  },
+];
+---
+
+<MainLayout title="Autoridades Públicas de Nioaque" description="Prefeito, Vice-Prefeito, Secretários Municipais, Vereadores da Câmara e Comandos Locais de Nioaque (MS).">
+  <header class="mt-8 mb-10 border-b-2 border-nioaque-green pb-6">
+    <h1 class="font-editorial text-3xl font-semibold tracking-tight text-ink sm:text-5xl">
+      Autoridades Públicas
+    </h1>
+    <p class="mt-3 text-base leading-relaxed text-ink-soft sm:text-lg">
+      Poderes e órgãos do município de Nioaque (MS): contato, cargos e
+      endereços institucionais para o cidadão.
+    </p>
+  </header>
+
+  {[
+    {
+      title: 'Poder Executivo',
+      subtitle: 'Prefeito, Vice-Prefeito e Secretários Municipais de Nioaque',
+      items: executivo,
+      id: 'executivo',
+    },
+    {
+      title: 'Poder Legislativo',
+      subtitle: 'Mesa Diretora e Vereadores da Câmara Municipal de Nioaque',
+      items: legislativo,
+      id: 'legislativo',
+    },
+    {
+      title: 'Comandos e Órgãos Locais',
+      subtitle: '9º GAC, Polícia Militar, Polícia Civil e Bombeiros',
+      items: locais,
+      id: 'orgaos-locais',
+    },
+  ].map((sec) => (
+    <section class="mt-16" data-reveal id={sec.id}>
+      <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
+        <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          {sec.title}
+        </h2>
+        <p class="text-sm font-medium text-ink-muted">{sec.subtitle}</p>
+      </div>
+      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {sec.items.map((item) => (
+          <article class="border border-line bg-nioaque-white p-5 sm:p-6">
+            <div class="flex items-start gap-4">
+              {item.photo_url ? (
+                <img
+                  src={item.photo_url}
+                  alt=""
+                  width="72"
+                  height="72"
+                  class="shrink-0 h-18 w-18 rounded-sm object-cover"
+                />
+              ) : (
+                <span class="flex h-18 w-18 shrink-0 items-center justify-center rounded-sm bg-nioaque-green-50 text-nioaque-green font-editorial text-xl font-semibold">
+                  {item.name.charAt(0)}
+                </span>
+              )}
+              <div class="min-w-0 flex-1">
+                <h3 class="font-editorial text-lg font-semibold text-ink leading-snug">
+                  {item.name}
+                </h3>
+                <p class="mt-1 text-xs font-semibold text-nioaque-green">{item.role}</p>
+                {item.party && (
+                  <p class="mt-1 text-xs text-ink-muted">{item.party}</p>
+                )}
+                {item.contact && (
+                  <p class="mt-3 text-sm leading-relaxed text-ink-soft break-all">
+                    {item.contact}
+                  </p>
+                )}
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  ))}
+</MainLayout>

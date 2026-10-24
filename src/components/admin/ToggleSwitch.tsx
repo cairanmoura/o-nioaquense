@@ -89,14 +89,14 @@ export default function ToggleSwitch({
         aria-label={label}
         disabled={busy}
         onClick={toggle}
-        className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nioaque-green/40 focus-visible:ring-offset-2 disabled:opacity-60 ${
+        className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nioaque-green/40 focus-visible:ring-offset-2 disabled:opacity-60 ${
           checked ? onColor : 'bg-line-strong'
         }`}
       >
         {/* `left-0` explícito: sem ele o knob herda o `text-align:center` do
             <button> e nasce centralizado, deixando o estado "desligado" torto. */}
         <span
-          className={`absolute left-0 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-white shadow transition-transform ${
             checked ? 'translate-x-6' : 'translate-x-1'
           }`}
         />

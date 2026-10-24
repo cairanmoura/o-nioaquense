@@ -27,6 +27,8 @@ interface Props {
    * - `wordmark` : apenas o texto (o SVG externo ja traz o texto junto)
    */
   variant?: 'full' | 'mark' | 'wordmark';
+  /** Versao da marca: '01' (horizontal, default) ou '02' (empilhada editorial). */
+  version?: '01' | '02';
   /** Cor do wordmark (mantida por compatibilidade; o SVG externo ja tem cores fixas). */
   textColor?: string;
   /** Desenha a moldura da faixa central em branco puro (mantido por compatibilidade). */
@@ -37,17 +39,22 @@ const {
   class: className = '',
   title = 'O Nioaquense',
   variant = 'full',
+  version = '01',
 } = Astro.props;
+
+const LOGO_SRC = version === '02' ? '/icons/02-logo-empilhada-editorial.svg' : '/icons/01-logo-horizontal-bandeira.svg';
+
+const LOGO_DIM = version === '02' ? { width: 400, height: 520 } : { width: 470, height: 100 };
 
 ---
 <img
-  src="/icons/01-logo-horizontal-bandeira.svg"
+  src={LOGO_SRC}
   alt={variant === 'mark' ? 'Marca O Nioaquense' : title}
   class={className}
   loading="eager"
   decoding="async"
-  width="470"
-  height="100"
+  width={LOGO_DIM.width}
+  height={LOGO_DIM.height}
   style="display:block;height:auto;width:100%;max-width:100%;"
   aria-hidden={variant === 'mark' ? 'true' : undefined}
   role={variant === 'mark' ? undefined : 'img'}

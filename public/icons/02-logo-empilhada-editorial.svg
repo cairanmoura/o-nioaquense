@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520">
+  <defs>
+    <style>
+      .green { fill: #008026; }
+      .red { fill: #E60000; }
+      .white { fill: #FFFFFF; }
+      .ink { fill: #1E293B; }
+      .text-main { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-weight: 800; letter-spacing: 0.08em; }
+      .text-sub { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-weight: 600; letter-spacing: 0.04em; }
+    </style>
+  </defs>
+
+  <!-- Faixa superior VERDE -->
+  <rect width="400" height="96" class="green" />
+
+  <!-- Faixa central BRANCA com cruz latina vermelha -->
+  <rect y="96" width="400" height="328" class="white" />
+  <rect x="30" y="180" width="24" height="160" class="red" />
+  <rect y="240" width="400" height="24" class="red" />
+
+  <!-- Faixa inferior VERMELHA -->
+  <rect y="424" width="400" height="96" class="red" />
+
+  <!-- Wordmark empilhado na faixa branca -->
+  <text
+    x="200"
+    y="190"
+    text-anchor="middle"
+    fill="#E60000"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="34"
+    font-weight="800"
+    letter-spacing="0.12em"
+  >O NIOAQUENSE</text>
+  <text
+    x="200"
+    y="234"
+    text-anchor="middle"
+    fill="#1E293B"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="20"
+    font-weight="600"
+    letter-spacing="0.06em"
+  >PORTAL DE NOTÍCIAS</text>
+
+  <!-- Riscos finos verde e vermelho embaixo -->
+  <rect x="60" y="286" width="130" height="4" class="green" />
+  <rect x="210" y="286" width="130" height="4" class="red" />
+
+  <!-- Assinatura no fundo -->
+  <text
+    x="200"
+    y="334"
+    text-anchor="middle"
+    fill="#64748B"
+    font-family="'Plus Jakarta Sans', Arial, sans-serif"
+    font-size="15"
+    font-weight="500"
+    letter-spacing="0.1em"
+  >NIOAQUE · MS</text>
+
+  <!-- Cruz da bandeira no canto inferior direito (faixa vermelha) -->
+  <g transform="translate(340 460) scale(0.42)">
+    <rect x="0" y="0" width="100" height="18" class="green" />
+    <rect x="0" y="18" width="100" height="64" class="white" />
+    <rect x="0" y="82" width="100" height="18" class="red" />
+    <rect x="26" y="28" width="8" height="44" class="red" />
+    <rect x="18" y="37" width="24" height="8" class="red" />
+  </g>
+</svg>

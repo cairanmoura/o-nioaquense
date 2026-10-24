@@ -440,7 +440,7 @@ export default function QuickPublishWizard({
         {/* Kit WhatsApp */}
         <section className="overflow-hidden rounded-2xl border border-line bg-nioaque-white">
           <header className="flex items-center gap-2 border-b border-line bg-nioaque-green px-4 py-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-white/15 text-white">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.2h.01c5.43 0 9.84-4.4 9.84-9.84C21.89 6.4 17.48 2 12.04 2Zm5.76 14.02c-.24.68-1.4 1.3-1.94 1.36-.54.06-1.04.08-1.68-.12-.4-.12-.9-.3-1.56-.58-2.74-1.18-4.52-3.94-4.66-4.12-.14-.18-1.12-1.5-1.12-2.86 0-1.36.7-2.02.96-2.3.26-.28.56-.34.74-.34.18 0 .38 0 .54.02.18.02.42-.06.66.5.24.56.82 1.94.9 2.08.06.14.1.3.02.48-.08.18-.12.3-.24.46-.12.16-.26.36-.36.48-.12.12-.26.26-.1.5.14.24.64 1.06 1.38 1.72.94.84 1.74 1.1 1.98 1.22.24.12.38.1.52-.06.14-.16.6-.7.76-.94.16-.24.32-.2.54-.12.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.6-.18 1.2Z" />
               </svg>
@@ -466,7 +466,7 @@ export default function QuickPublishWizard({
                   setCopied(ok);
                   if (ok) setTimeout(() => setCopied(false), 2500);
                 }}
-                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${
+                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-sm px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${
                   copied
                     ? 'bg-nioaque-green text-white'
                     : 'bg-[#25D366] text-white hover:opacity-90'
@@ -487,7 +487,7 @@ export default function QuickPublishWizard({
 
               <a
                 href={`/noticia/${result.slug}`}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-editorial"
+                className="inline-flex items-center justify-center gap-2 rounded-sm border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-editorial"
               >
                 Ver a materia
               </a>
@@ -501,7 +501,7 @@ export default function QuickPublishWizard({
             setResult(null);
             setStep(1);
           }}
-          className="w-full rounded-full border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-editorial"
+          className="w-full rounded-sm border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-editorial"
         >
           Escrever outra materia
         </button>
@@ -522,7 +522,7 @@ export default function QuickPublishWizard({
                 onClick={() => number < step && setStep(number as Step)}
                 disabled={number > step}
                 aria-current={state === 'current' ? 'step' : undefined}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-xs font-bold transition-colors ${
                   state === 'todo'
                     ? 'bg-line text-ink-muted'
                     : state === 'done'
@@ -756,7 +756,7 @@ export default function QuickPublishWizard({
               type="button"
               onClick={() => setStep(2)}
               disabled={!form.title.trim()}
-              className="h-12 w-full rounded-full bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-50"
+              className="h-12 w-full rounded-sm bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-50"
             >
               Continuar
             </button>
@@ -778,7 +778,7 @@ export default function QuickPublishWizard({
             <div className="mt-3 space-y-3">
               {form.bullets.map((bullet, index) => (
                 <label key={index} className="flex items-start gap-3">
-                  <span className="mt-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-nioaque-red text-[11px] font-bold text-white">
+                  <span className="mt-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-nioaque-red text-[11px] font-bold text-white">
                     {index + 1}
                   </span>
                   <input
@@ -801,7 +801,7 @@ export default function QuickPublishWizard({
                 type="button"
                 onClick={generateBulletsWithAI}
                 disabled={generatingBullets}
-                className="inline-flex items-center gap-1.5 rounded-full border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
               >
                 {generatingBullets ? 'Gerando...' : '✨ Gerar com IA'}
               </button>
@@ -819,7 +819,7 @@ export default function QuickPublishWizard({
               <button
                 type="button"
                 onClick={() => setPreview((value) => !value)}
-                className="rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft"
+                className="rounded-sm border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft"
               >
                 {preview ? 'Editar' : 'Previa'}
               </button>
@@ -896,7 +896,7 @@ export default function QuickPublishWizard({
                     type="button"
                     onClick={rewriteWithAI}
                     disabled={rewriting}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-nioaque-green/40 bg-nioaque-green-50 px-3 py-1.5 text-xs font-semibold text-nioaque-green transition-colors hover:bg-nioaque-green-100 disabled:opacity-60"
                   >
                     {rewriting ? 'Reescrevendo...' : '✨ Reescrever com IA'}
                   </button>
@@ -922,14 +922,14 @@ export default function QuickPublishWizard({
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="h-12 shrink-0 rounded-full border border-line px-6 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:bg-editorial"
+              className="h-12 shrink-0 rounded-sm border border-line px-6 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:bg-editorial"
             >
               Voltar
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="h-12 flex-1 rounded-full bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
+              className="h-12 flex-1 rounded-sm bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark"
             >
               Continuar
             </button>
@@ -964,7 +964,7 @@ export default function QuickPublishWizard({
                   .filter((bullet) => bullet.trim())
                   .map((bullet, index) => (
                     <li key={index} className="flex gap-3 text-sm text-ink">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nioaque-red" />
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" />
                       {bullet}
                     </li>
                   ))}
@@ -1000,7 +1000,7 @@ export default function QuickPublishWizard({
           >
             <div className="flex items-start gap-3">
               <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${
                   canPublish ? 'bg-nioaque-green text-white' : 'bg-nioaque-red text-white'
                 }`}
               >
@@ -1040,7 +1040,7 @@ export default function QuickPublishWizard({
                 type="button"
                 onClick={() => void publish('published')}
                 disabled={busy || !form.title.trim()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-nioaque-green px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-nioaque-green px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
               >
                 {busy ? 'Publicando...' : 'Publicar agora'}
               </button>
@@ -1049,7 +1049,7 @@ export default function QuickPublishWizard({
                 type="button"
                 onClick={() => void publish('pending_review')}
                 disabled={busy || !form.title.trim()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
               >
                 {busy ? 'Enviando...' : 'Enviar para revisao'}
               </button>
@@ -1059,7 +1059,7 @@ export default function QuickPublishWizard({
               type="button"
               onClick={() => void publish('draft')}
               disabled={busy || !form.title.trim()}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:bg-editorial disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-sm border border-line px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:bg-editorial disabled:opacity-60"
             >
               Salvar rascunho
             </button>
@@ -1069,7 +1069,7 @@ export default function QuickPublishWizard({
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full rounded-full border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-editorial"
+              className="w-full rounded-sm border border-line px-5 py-3 text-xs font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:bg-editorial"
             >
               Voltar para o inicio
             </button>
@@ -1084,7 +1084,7 @@ export default function QuickPublishWizard({
             <button
               type="button"
               onClick={() => setStep((step - 1) as Step)}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line text-ink-soft"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border border-line text-ink-soft"
               aria-label="Passo anterior"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1098,14 +1098,14 @@ export default function QuickPublishWizard({
               type="button"
               onClick={() => setStep((step + 1) as Step)}
               disabled={step === 1 && !form.title.trim()}
-              className="h-12 flex-1 rounded-full bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-50"
+              className="h-12 flex-1 rounded-sm bg-nioaque-green text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-50"
             >
               Continuar
             </button>
           ) : (
             <a
               href="/admin"
-              className="flex h-12 flex-1 items-center justify-center rounded-full border border-line text-xs font-bold uppercase tracking-[0.12em] text-ink-soft"
+              className="flex h-12 flex-1 items-center justify-center rounded-sm border border-line text-xs font-bold uppercase tracking-[0.12em] text-ink-soft"
             >
               Voltar ao painel
             </a>

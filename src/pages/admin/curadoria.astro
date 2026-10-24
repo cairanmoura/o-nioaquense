@@ -9,7 +9,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
 <AdminLayout title="Curadoria" subtitle="Reescreva notícias de sites privados com IA">
   <div class="mx-auto max-w-3xl space-y-6">
-    <section class="rounded-2xl border border-line bg-nioaque-white p-5">
+    <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <header class="mb-4">
         <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
           Colar URL de notícia
@@ -28,7 +28,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
           required
         />
-        <button type="submit" class="rounded-full bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+        <button type="submit" class="rounded-sm bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
           Extrair e reescrever com IA
         </button>
       </form>

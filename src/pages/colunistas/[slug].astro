@@ -32,7 +32,7 @@ const published = articles.filter((article) => article.status === 'published');
   <div class="container-editorial py-8 sm:py-10">
     {/* Cabecalho do colunista */}
     <header
-      class="mx-auto flex max-w-3xl flex-col items-center gap-5 rounded-3xl border border-line bg-nioaque-white p-6 text-center sm:flex-row sm:items-start sm:text-left sm:p-8"
+      class="mx-auto flex max-w-3xl flex-col items-center gap-5 rounded-sm border border-line bg-nioaque-white p-6 text-center sm:flex-row sm:items-start sm:text-left sm:p-8"
     >
       {
         profile.avatar_url ? (
@@ -43,10 +43,10 @@ const published = articles.filter((article) => article.status === 'published');
             height="120"
             loading="eager"
             decoding="async"
-            class="h-28 w-28 shrink-0 rounded-full object-cover ring-4 ring-nioaque-green sm:h-32 sm:w-32"
+            class="h-28 w-28 shrink-0 rounded-sm object-cover ring-4 ring-nioaque-green sm:h-32 sm:w-32"
           />
         ) : (
-          <span class="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-4xl font-semibold text-white ring-4 ring-nioaque-green sm:h-32 sm:w-32">
+          <span class="flex h-28 w-28 shrink-0 items-center justify-center rounded-sm bg-nioaque-green font-editorial text-4xl font-semibold text-white ring-4 ring-nioaque-green sm:h-32 sm:w-32">
             {profile.full_name.charAt(0)}
           </span>
         )
@@ -94,7 +94,7 @@ const published = articles.filter((article) => article.status === 'published');
 
       {
         articles.length === 0 ? (
-          <p class="mt-6 rounded-2xl border border-dashed border-line-strong bg-nioaque-white p-8 text-center text-sm text-ink-soft">
+          <p class="mt-6 rounded-sm border border-dashed border-line-strong bg-nioaque-white p-8 text-center text-sm text-ink-soft">
             Este colunista ainda não publicou textos.
           </p>
         ) : (

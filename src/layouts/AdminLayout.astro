@@ -149,7 +149,7 @@ const isActive = (href: string) =>
             {actionHref && actionLabel && (
               <a
                 href={actionHref}
-                class="inline-flex shrink-0 items-center gap-2 rounded-full bg-nioaque-green px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark sm:px-4"
+                class="inline-flex shrink-0 items-center gap-2 rounded-sm bg-nioaque-green px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-nioaque-green-dark sm:px-4"
               >
                 <Icon name="pen" size={14} />
                 <span class="hidden sm:inline">{actionLabel}</span>
@@ -173,10 +173,10 @@ const isActive = (href: string) =>
                     alt=""
                     width="36"
                     height="36"
-                    class="h-9 w-9 rounded-full object-cover ring-2 ring-nioaque-green"
+                    class="h-9 w-9 rounded-sm object-cover ring-2 ring-nioaque-green"
                   />
                 ) : (
-                  <span class="flex h-9 w-9 items-center justify-center rounded-full bg-nioaque-green font-editorial text-sm font-semibold text-white">
+                  <span class="flex h-9 w-9 items-center justify-center rounded-sm bg-nioaque-green font-editorial text-sm font-semibold text-white">
                     {user.profile.full_name.charAt(0)}
                   </span>
                 )}
