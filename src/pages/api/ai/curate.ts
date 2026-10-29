@@ -3,12 +3,17 @@ import type { APIRoute } from 'astro';
 import { readPayload, requireSession, toErrorResponse } from '../../../lib/api';
 import { isAdmin } from '../../../lib/auth';
 import { runAI } from '../../../lib/ai';
+import {
+  fetchHtmlCoverImage,
+  extractInternalImages,
+} from '../../../lib/rss';
 
 /**
  * POST /api/ai/curate
  * -----------------------------------------------------------------------------
- * Recebe uma URL de noticia de site privado, extrai o texto e gera uma versao
- * inedita com IA para Nioaque-MS, citando a fonte original.
+ * Recebe uma URL de notícia de site privado, extrai o texto e gera uma versão
+ * inédita com IA para Nioaque-MS, citando a fonte original. Também extrai a
+ * foto de capa (og:image) e todas as fotos internas da matéria original.
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -20,7 +25,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!url) throw new Error('URL vazia');
 
     // Extrai o HTML da URL original
-    const pageRes = await fetch(url, { headers: { 'User-Agent': 'O-Nioaquense-Bot/1.0' } });
+    const pageRes = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      },
+    } as RequestInit);
     if (!pageRes.ok) throw new Error(`Falha ao buscar URL: ${pageRes.status}`);
     const html = await pageRes.text();
 
@@ -33,18 +45,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .trim()
       .slice(0, 4000);
 
-    // Extrai imagem de sugestao
-    const imgMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
-    const suggestedImage = imgMatch?.[1] ?? null;
+    // Extrai imagem de sugestão (og:image / twitter:image / primeira img)
+    const cover = await fetchHtmlCoverImage(url, url);
+
+    // Extrai fotos internas da matéria original
+    const internalImages = extractInternalImages(html, url, 'Fonte');
 
     const env = (locals as any)?.runtime?.env ?? {};
     const result = await runAI(
-      `Voce e um editor jornalistico. Reescreva o texto fornecido como uma noticia inedita e imparcial para a cidade de Nioaque-MS. Crie: 1) um titulo, 2) um resumo de 3 topicos, 3) o corpo da noticia. Cite a fonte original no final. Retorne em formato estruturado.\n\nURL: ${url}\n\nTexto original:\n${text}`,
+      `Você é um editor jornalístico. Reescreva o texto fornecido como uma notícia inédita e imparcial para a cidade de Nioaque-MS. Crie: 1) um título, 2) um resumo de 3 tópicos, 3) o corpo da notícia. Cite a fonte original no final. Retorne em formato estruturado.\n\nURL: ${url}\n\nTexto original:\n${text}`,
       env,
     );
 
     return new Response(
-      JSON.stringify({ draft: result.text, suggestedImage, sourceUrl: url, provider: result.provider }),
+      JSON.stringify({
+        draft: result.text,
+        suggestedImage: cover.url ?? null,
+        coverImage: cover.url ?? null,
+        coverCaption: cover.caption ?? null,
+        internalImages,
+        sourceUrl: url,
+        provider: result.provider,
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

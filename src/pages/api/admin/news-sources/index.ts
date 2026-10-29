@@ -36,7 +36,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { data, error } = await client.from('news_sources').insert({
       name: String(payload.name ?? ''),
       rss_url: String(payload.rss_url ?? ''),
-      is_active: true,
+      is_active: payload.is_active !== false,
+      auto_publish: payload.auto_publish !== false,
+      ai_rewrite: payload.ai_rewrite !== false,
+      use_original_image: payload.use_original_image !== false,
+      keywords_filter: payload.keywords_filter ? String(payload.keywords_filter) : null,
       default_category: payload.default_category ? String(payload.default_category) : null,
     }).select().single();
     if (error) throw new Error(error.message);

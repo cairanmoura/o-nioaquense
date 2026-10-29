@@ -129,6 +129,7 @@ function mapArticle(row: Record<string, unknown>): Article {
     cover_image_url: row.cover_image_url ? String(row.cover_image_url) : null,
     cover_image_caption: row.cover_image_caption ? String(row.cover_image_caption) : null,
     scope: (row.scope ?? 'nioaque') as ArticleScope,
+    local_tags: Array.isArray(row.local_tags) ? (row.local_tags as string[]) : [],
     category_label: row.category_label ? String(row.category_label) : null,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
@@ -349,6 +350,7 @@ export interface ArticleInput {
   cover_image_url?: string | null;
   cover_image_caption?: string | null;
   scope: ArticleScope;
+  local_tags?: string[];
   category_label?: string | null;
   /** Tags da materia. */
   tags?: string[];
@@ -418,6 +420,7 @@ export async function saveArticle(
     cover_image_url: input.cover_image_url ?? existing?.cover_image_url ?? null,
     cover_image_caption: input.cover_image_caption ?? existing?.cover_image_caption ?? null,
     scope: input.scope ?? 'nioaque',
+    local_tags: input.local_tags ?? [],
     category_label: input.category_label?.trim() || null,
     tags: Array.isArray(input.tags) ? input.tags.filter((t) => t.trim()).slice(0, 10) : [],
     is_breaking: Boolean(input.is_breaking),
@@ -1194,6 +1197,7 @@ export async function convertSubmissionToDraft(
     cover_image_url: submission.media_urls[0] ?? null,
     cover_image_caption: 'Imagem enviada pelo leitor',
     scope: 'nioaque',
+    local_tags: [],
     category_label: 'Cidade',
     tags: [],
     is_breaking: false,

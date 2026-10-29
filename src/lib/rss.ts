@@ -8,6 +8,8 @@
  * HTML do resumo e' limpo antes de ir para a pagina.
  */
 
+import type { ArticleScope } from './types';
+
 export interface RssArticle {
   title: string;
   link: string;
@@ -16,8 +18,6 @@ export interface RssArticle {
   image?: string;
   source: string;
 }
-
-type ArticleScope = 'nioaque' | 'ms' | 'brasil' | 'coluna' | 'radar_oficial';
 
 /* -------------------------------------------------------------------------- */
 /* Texto                                                                      */
@@ -262,6 +262,7 @@ export function rssToArticle(
     cover_image_url: rss.image ?? getArteFallback(scope),
     cover_image_caption: rss.image ? `Foto: ${rss.source}` : null,
     scope,
+    local_tags: [],
     category_label: rss.source,
     is_featured: false,
     is_breaking: false,
@@ -279,6 +280,7 @@ export function rssToArticle(
 /** Lista de artes disponiveis como fallback por escopo. */
 const ARTE_FALLBACK: Record<ArticleScope, string> = {
   nioaque: '/artes-nioarquense/arte-agro-campo.svg',
+  regiao: '/artes-nioarquense/arte-cultura-9gac.svg',
   ms: '/artes-nioarquense/arte-prefeitura-obras.svg',
   brasil: '/artes-nioarquense/arte-cultura-9gac.svg',
   coluna: '/artes-nioarquense/arte-educacao.svg',
@@ -297,4 +299,310 @@ const BLANK_COVER = /^\/(?:covers|artes-nioarquense)\/(?:cap-\d+|arte-[a-z0-9-]+
 
 export function isPhotoCover(url: string | null | undefined): url is string {
   return Boolean(url && !BLANK_COVER.test(url));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Extracao avançada de fotos reais (Etapa 3)                                 */
+/* -------------------------------------------------------------------------- */
+
+/** Resolve uma URL relativa (começando com /) para absoluta usando o domínio da fonte. */
+export function resolveImageUrl(url: string, sourceUrl: string): string {
+  try {
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('//')) return `https:${url}`;
+    if (url.startsWith('/')) {
+      const base = new URL(sourceUrl);
+      return `${base.protocol}//${base.host}${url}`;
+    }
+    // Caminho relativo simples: junta ao domínio
+    const base = new URL(sourceUrl);
+    return `${base.protocol}//${base.host}/${url.replace(/^\//, '')}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Extrai a imagem de um item RSS (media:content, enclosure, thumbnail, img no description/content:encoded). */
+export function extractRssImage(block: string, sourceUrl: string): string | undefined {
+  const candidates: string[] = [];
+
+  // media:content
+  const media = block.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+  if (media) candidates.push(media[1]);
+
+  // media:thumbnail
+  const thumbnail = block.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
+  if (thumbnail) candidates.push(thumbnail[1]);
+
+  // enclosure
+  const enclosure = block.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+  if (enclosure) candidates.push(enclosure[1]);
+
+  // imagem-destaque (Agência Brasil)
+  const featured = block.match(/<imagem-destaque>([\s\S]*?)<\/imagem-destaque>/i);
+  if (featured) candidates.push(featured[1].trim());
+
+  // img dentro de description / content:encoded
+  const description = decodeEntities(takeTag(block, 'description'));
+  const content = decodeEntities(takeTag(block, 'content:encoded'));
+  for (const html of [description, content]) {
+    for (const img of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) {
+      candidates.push(img[1]);
+    }
+  }
+
+  for (const candidate of candidates) {
+    const url = resolveImageUrl(candidate, sourceUrl);
+    if (!/^https?:\/\//i.test(url)) continue;
+    if (/\.(svg|gif)(\?|$)/i.test(url)) continue;
+    if (/\/ebc\.(png|gif)\?/i.test(url)) continue;
+    if (/logo/i.test(url)) continue;
+    return url;
+  }
+
+  return undefined;
+}
+
+/**
+ * Busca o HTML da URL original da notícia e extrai a melhor imagem de capa,
+ * seguindo a ordem de prioridade:
+ *   1) <meta property="og:image" content="...">
+ *   2) <meta name="twitter:image" content="...">
+ *   3) Primeira <img> dentro de <article> ou <figure>
+ *   4) Primeira <img> principal do corpo
+ */
+export async function fetchHtmlCoverImage(
+  articleUrl: string,
+  sourceUrl: string,
+): Promise<{ url: string | null; caption: string | null }> {
+  try {
+    const response = await fetch(articleUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      },
+    } as RequestInit);
+
+    if (!response.ok) return { url: null, caption: null };
+    const html = await response.text();
+
+    // 1) og:image
+    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+    if (ogMatch) {
+      const url = resolveImageUrl(ogMatch[1], sourceUrl);
+      return { url, caption: extractCaption(html, ogMatch[1]) };
+    }
+
+    // 2) twitter:image
+    const twMatch = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    if (twMatch) {
+      const url = resolveImageUrl(twMatch[1], sourceUrl);
+      return { url, caption: extractCaption(html, twMatch[1]) };
+    }
+
+    // 3) primeira imagem dentro de <article> ou <figure>
+    const articleMatch = html.match(/<article[\s\S]*?<\/article>/i);
+    const figureMatch = html.match(/<figure[\s\S]*?<\/figure>/i);
+    const blocks = [articleMatch?.[0], figureMatch?.[0]].filter((b): b is string => Boolean(b));
+    for (const block of blocks) {
+      const imgMatch = block.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (imgMatch?.[1]) {
+        const url = resolveImageUrl(imgMatch[1], sourceUrl);
+        const caption = extractCaption(block, imgMatch[1]);
+        return { url, caption };
+      }
+    }
+
+    // 4) primeira imagem qualquer do corpo (sem ser ícone/logo)
+    const anyImg = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (anyImg?.[1]) {
+      const url = resolveImageUrl(anyImg[1], sourceUrl);
+      if (!/logo|icon|\.(svg|gif)(\?|$)/i.test(url)) {
+        return { url, caption: extractCaption(html, anyImg[1]) };
+      }
+    }
+
+    return { url: null, caption: null };
+  } catch {
+    return { url: null, caption: null };
+  }
+}
+
+/** Extrai legenda/crédito da foto: figcaption, alt da imagem, ou fallback "Foto: Reprodução / [Fonte]". */
+export function extractCaption(html: string, imageUrl: string, sourceName = 'Fonte'): string {
+  // Tenta figcaption próxima à imagem
+  const figCaption = html.match(
+    new RegExp(`<figure[\\s\\S]*?<img[^>]+src=["']${escapeRegExp(imageUrl)}["'][\\s\\S]*?<figcaption[^>]*>([\\s\\S]*?)<\\/figcaption>`, 'i'),
+  );
+  if (figCaption) {
+    const text = stripHtml(figCaption[1]).trim();
+    if (text) return text;
+  }
+
+  // Tenta alt da própria imagem
+  const altMatch = html.match(
+    new RegExp(`<img[^>]+src=["']${escapeRegExp(imageUrl)}["'][^>]*alt=["']([^"']*)["']`, 'i'),
+  );
+  if (altMatch) {
+    const text = stripHtml(altMatch[1]).trim();
+    if (text) return `Foto: ${text}`;
+  }
+
+  return `Foto: Reprodução / ${sourceName}`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Extrai todas as imagens internas de um HTML (para inclusão no corpo da matéria).
+ * Retorna array de { url, caption }.
+ */
+export function extractInternalImages(html: string, sourceUrl: string, sourceName: string): Array<{ url: string; caption: string }> {
+  const images: Array<{ url: string; caption: string }> = [];
+  const seen = new Set<string>();
+
+  for (const img of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) {
+    let url = img[1];
+    url = resolveImageUrl(url, sourceUrl);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    if (/\.(svg|gif)(\?|$)/i.test(url)) continue;
+    if (/logo/i.test(url)) continue;
+    if (/\/pixel|tracking|\d{1,3}x\d{1,3}/i.test(url)) continue;
+
+    const caption = extractCaption(html, img[1], sourceName);
+    images.push({ url, caption });
+  }
+
+  return images;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Classificacao geografica e tematica (Etapa 4)                              */
+/* -------------------------------------------------------------------------- */
+
+/** Cidades e locais da regiao de Nioaque (MS) usados na deteccao por conteudo. */
+export const REGION_CITIES: string[] = [
+  'Jardim',
+  'Guia Lopes da Laguna',
+  'Bonito',
+  'Anastacio',
+  'Anastácio',
+  'Aquidauana',
+  'Sidrolandia',
+  'Sidrolândia',
+  'Maracaju',
+  'Dois Irmãos do Buriti',
+  'Dois Irmãos do Buriti'.replace('ã', 'a'),
+  'Miranda',
+  'Bodoquena',
+  'Porto Murtinho',
+  'Rota Bioceania',
+  'Rota Bioceânica',
+  'BR-060',
+  'BR-419',
+];
+
+/** Fontes estaduais (usadas como fallback quando nao ha Nioaque nem regiao). */
+const STATE_SOURCES: Record<string, boolean> = {
+  'G1 Mato Grosso do Sul': true,
+  'Campo Grande News': true,
+  'Midiamax': true,
+  'Agencia de Noticias de MS': true,
+  'Agência de Notícias de MS': true,
+};
+
+/** Fontes nacionais. */
+const NATIONAL_SOURCES: Record<string, boolean> = {
+  'Agencia Brasil / EBC': true,
+  'Agência Brasil': true,
+};
+
+/** Normaliza uma string para comparacao (remove acentos, espacos duplos). */
+export function normCity(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Detecta "Nioaque" e cidades da constante REGION_CITIES no texto.
+ * Devolve array de local_tags (sem duplicatas, ordem de aparecimento).
+ */
+export function detectLocalTags(text: string): string[] {
+  const haystack = normCity(text);
+  const tags: string[] = [];
+  const seen = new Set<string>();
+
+  const nioaqueNorm = normCity('Nioaque');
+  if (haystack.includes(nioaqueNorm) && !seen.has(nioaqueNorm)) {
+    tags.push('Nioaque');
+    seen.add(nioaqueNorm);
+  }
+
+  for (const city of REGION_CITIES) {
+    const cn = normCity(city);
+    if (haystack.includes(cn) && !seen.has(cn)) {
+      tags.push(city);
+      seen.add(cn);
+    }
+  }
+
+  return tags;
+}
+
+/**
+ * Roteamento de escopo baseado nas regras de proximidade geografica.
+ *
+ * Regras:
+ *  a) Se encontrou "Nioaque": scope = 'nioaque'
+ *  b) Se NAO encontrou Nioaque, mas encontrou cidade da regiao: scope = 'regiao'
+ *  c) Se NAO encontrou nenhum dos dois, mas fonte estadual: scope = 'ms'
+ *  d) Se for Agencia Brasil: scope = 'brasil'
+ */
+export function routeScope(
+  localTags: string[],
+  sourceName: string,
+  defaultFallback: ArticleScope = 'ms',
+): ArticleScope {
+  const hasNioaque = localTags.some((t) => normCity(t) === normCity('Nioaque'));
+  const hasRegion = localTags.length > 0 && !hasNioaque;
+
+  if (hasNioaque) return 'nioaque';
+  if (hasRegion) return 'regiao';
+  if (STATE_SOURCES[sourceName ?? '']) return 'ms';
+  if (NATIONAL_SOURCES[sourceName ?? '']) return 'brasil';
+  return defaultFallback;
+}
+
+/**
+ * Detecta a editoria tematica com base em palavras-chave do titulo.
+ */
+export function detectCategory(title: string): string {
+  const t = title.toLowerCase();
+
+  const themes: Array<{ keywords: string[]; label: string }> = [
+    { keywords: ['policial', 'polícia', 'homicidio', 'assassinato', 'prisao', 'prisão', 'fuzil', 'revolver', 'droga', 'trafico', 'tráfico', 'roubo', 'frota', 'facao', 'facção'], label: 'Polícia' },
+    { keywords: ['agro', 'agricultura', 'lavoura', 'fazenda', 'produtor rural', 'plantio', 'colheita', 'boi', 'gado', 'soja', 'milho', 'pecuaria'], label: 'Agro' },
+    { keywords: ['prefeitura', 'camara', 'câmara', 'vereador', 'prefeito', 'projeto de lei', 'sessao', 'sessão', 'legislativo', 'executivo', 'edital', 'concurso publico'], label: 'Política' },
+    { keywords: ['saude', 'saúde', 'hospital', 'ubs', 'vacina', 'vacinacao', 'vacinação', 'medico', 'médico', 'enfermagem', 'epidemia', 'dengue'], label: 'Saúde' },
+    { keywords: ['futebol', 'time', 'campeonato', 'esporte', 'atleta', 'jogo', 'partida', 'torcida', 'estadio'], label: 'Esporte' },
+    { keywords: ['cultura', 'festival', 'show', 'musica', 'música', 'teatro', 'exposicao', 'exposição', 'artista', 'livro'], label: 'Cultura' },
+  ];
+
+  for (const theme of themes) {
+    if (theme.keywords.some((k) => t.includes(k.toLowerCase()))) {
+      return theme.label;
+    }
+  }
+
+  return 'Geral';
 }

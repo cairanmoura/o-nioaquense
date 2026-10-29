@@ -20,7 +20,27 @@ interface Props {
 }
 
 const { article, showEditor = false, class: className = '' } = Astro.props;
-const label = article.category_label ?? SCOPE_LABEL[article.scope];
+
+/* Rotulo inteligente da pílula:
+ * - scope = 'nioaque' + outras local_tags => "NIOAQUE & REGIAO"
+ * - scope = 'regiao'                       => "REGIAO"
+ * - caso contrario                         => category_label ou SCOPE_LABEL[scope]
+ */
+const regionCities = new Set([
+  'Jardim', 'Guia Lopes da Laguna', 'Bonito', 'Anastacio', 'Anastácio',
+  'Aquidauana', 'Sidrolandia', 'Sidrolândia', 'Maracaju', 'Miranda',
+  'Bodoquena', 'Porto Murtinho', 'BR-060', 'BR-419',
+]);
+const hasOtherRegion = article.local_tags.some((t) => regionCities.has(t));
+
+let label: string;
+if (article.scope === 'regiao') {
+  label = 'Regiao';
+} else if (article.scope === 'nioaque' && hasOtherRegion) {
+  label = 'Nioaque & Regiao';
+} else {
+  label = article.category_label ?? SCOPE_LABEL[article.scope];
+}
 const normalized = label.toLowerCase().trim();
 
 function hash(value: string): number {

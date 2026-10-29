@@ -9,7 +9,7 @@
 
 export type UserRole = 'admin' | 'columnist';
 
-export type ArticleScope = 'nioaque' | 'ms' | 'brasil' | 'coluna' | 'radar_oficial';
+export type ArticleScope = 'nioaque' | 'regiao' | 'ms' | 'brasil' | 'coluna' | 'radar_oficial';
 
 export type ArticleStatus = 'draft' | 'pending_review' | 'published';
 
@@ -29,6 +29,21 @@ export type AdOfferType = 'banner' | 'daily_deal';
 /* -------------------------------------------------------------------------- */
 /* Tabelas                                                                    */
 /* -------------------------------------------------------------------------- */
+
+export interface NewsSource {
+  id: string;
+  name: string;
+  rss_url: string;
+  is_active: boolean;
+  auto_publish: boolean;
+  ai_rewrite: boolean;
+  use_original_image: boolean;
+  keywords_filter: string | null;
+  default_category: string | null;
+  last_fetched_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Profile {
   id: string;
@@ -54,6 +69,8 @@ export interface Article {
   cover_image_url: string | null;
   cover_image_caption: string | null;
   scope: ArticleScope;
+  /** Cidades/locais detectados no conteudo (ex.: Nioaque, Jardim, BR-060). */
+  local_tags: string[];
   category_label: string | null;
   /** Tags da materia (ex.: "Saude", "Obra", "Enchente"). Adicionadas na producao. */
   tags?: string[];
@@ -176,6 +193,7 @@ export interface ReaderSubmission {
 
 export const SCOPE_LABEL: Record<ArticleScope, string> = {
   nioaque: 'Nioaque',
+  regiao: 'Regiao',
   ms: 'Mato Grosso do Sul',
   brasil: 'Brasil',
   coluna: 'Coluna',
@@ -184,6 +202,7 @@ export const SCOPE_LABEL: Record<ArticleScope, string> = {
 
 export const SCOPE_BADGE_CLASS: Record<ArticleScope, string> = {
   nioaque: 'bg-nioaque-green text-nioaque-white',
+  regiao: 'bg-ink text-nioaque-white',
   ms: 'bg-nioaque-green-50 text-nioaque-green-dark ring-1 ring-nioaque-green-100',
   brasil: 'bg-ink text-nioaque-white',
   coluna: 'bg-nioaque-red text-nioaque-white',

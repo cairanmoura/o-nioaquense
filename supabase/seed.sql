@@ -620,6 +620,55 @@ insert into public.articles (id, title, subtitle, slug, summary_bullets, content
   )
 on conflict (id) do nothing;
 
+-- ---------------------------------------------------------------------------
+--  8. FONTES DE NOTÍCIAS (news_sources) - piloto automático
+-- ---------------------------------------------------------------------------
+insert into public.news_sources (
+  name, rss_url, is_active, auto_publish, ai_rewrite, use_original_image,
+  keywords_filter, default_category
+) values
+  (
+    'Agência de Notícias de MS',
+    'https://agenciadenoticias.ms.gov.br/?feed=rss2',
+    true, true, false, true,
+    null, 'ms'
+  ),
+  (
+    'Agência Brasil / EBC',
+    'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml',
+    true, true, false, true,
+    null, 'brasil'
+  ),
+  (
+    'G1 Mato Grosso do Sul',
+    'https://g1.globo.com/rss/g1/mato-grosso-do-sul/',
+    true, true, true, true,
+    'Nioaque, Jardim, Bonito, Anastácio, Aquidauana, Sidrolândia, BR-060, Pantanal',
+    'nioaque'
+  ),
+  (
+    'Campo Grande News',
+    'https://www.campograndenews.com.br/rss',
+    true, true, true, true,
+    'Nioaque, Jardim, Bonito, Anastácio, Aquidauana, BR-060',
+    'nioaque'
+  ),
+  (
+    'Midiamax',
+    'https://midiamax.uol.com.br/feed/',
+    true, true, true, true,
+    'Nioaque, Jardim, Bonito, Anastácio, Aquidauana, BR-060',
+    'nioaque'
+  )
+on conflict (rss_url) do update set
+  is_active = excluded.is_active,
+  auto_publish = excluded.auto_publish,
+  ai_rewrite = excluded.ai_rewrite,
+  use_original_image = excluded.use_original_image,
+  keywords_filter = excluded.keywords_filter,
+  default_category = excluded.default_category,
+  updated_at = now();
+
 -- =============================================================================
 --  Fim do seed
 -- =============================================================================

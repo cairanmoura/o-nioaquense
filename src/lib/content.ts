@@ -46,6 +46,7 @@ function normalizeArticle(row: Record<string, unknown>): Article {
     cover_image_url: row.cover_image_url ? String(row.cover_image_url) : null,
     cover_image_caption: row.cover_image_caption ? String(row.cover_image_caption) : null,
     scope: (row.scope ?? 'nioaque') as ArticleScope,
+    local_tags: Array.isArray(row.local_tags) ? (row.local_tags as string[]) : [],
     category_label: row.category_label ? String(row.category_label) : null,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
@@ -162,6 +163,7 @@ export interface HomeFeed {
 
 const EMPTY_SCOPES: Record<ArticleScope, Article[]> = {
   nioaque: [],
+  regiao: [],
   ms: [],
   brasil: [],
   coluna: [],
@@ -375,6 +377,36 @@ export async function getHeaderBillboard(locals: App.Locals): Promise<LocalAd | 
 export async function getRadarArticles(locals: App.Locals): Promise<Article[]> {
   const feed = await getHomeFeed(locals);
   return feed.byScope.radar_oficial;
+}
+
+/**
+ * Materias da Regiao: escopo = 'regiao' OU local_tags contendo alguma cidade
+ * regional. Assim materias de Nioaque que citam a Rota Bioceania aparecem
+ * nas duas abas (Nioaque e Regiao) simultaneamente.
+ */
+export async function getRegiaoArticles(locals: App.Locals): Promise<Article[]> {
+  const supabase = locals.supabase;
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('status', 'published')
+      .or(`scope.eq.regiao,local_tags.cs.{"Jardim","Guia Lopes da Laguna","Bonito","Anastacio","Aquidauana","Sidrolandia","Maracaju","Miranda","Bodoquena","Porto Murtinho","BR-060","BR-419"}`)
+      .order('published_at', { ascending: false });
+
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map(normalizeArticle);
+  }
+
+  // Fallback: filtra no mock/demo-store
+  const all = demoStore.listArticles().filter((a) => a.status === 'published');
+  const regionCities = new Set([
+    'Jardim', 'Guia Lopes da Laguna', 'Bonito', 'Anastacio', 'Anastácio',
+    'Aquidauana', 'Sidrolandia', 'Sidrolândia', 'Maracaju', 'Miranda',
+    'Bodoquena', 'Porto Murtinho', 'BR-060', 'BR-419',
+  ]);
+  return all.filter((a) => a.scope === 'regiao' || a.local_tags.some((t) => regionCities.has(t)));
 }
 
 export interface ColumnistPick {

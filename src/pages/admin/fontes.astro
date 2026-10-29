@@ -1,5 +1,6 @@
 ---
 import ToggleSwitch from '../../components/admin/ToggleSwitch.tsx';
+import ActionButton from '../../components/admin/ActionButton.tsx';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { isAdmin } from '../../lib/auth';
 
@@ -17,44 +18,106 @@ try {
 } catch {}
 ---
 
-<AdminLayout title="Fontes de Notícias" subtitle="Gerencie as fontes RSS do robô extrator">
-  <div class="mx-auto max-w-3xl space-y-6">
+<AdminLayout title="Fontes de Notícias" subtitle="Piloto automático — extração e publicação de fontes RSS">
+  <div class="mx-auto max-w-5xl space-y-6">
+
+    {/* Ação em lote: executa a extração agora */}
+    <section class="rounded-sm border border-line bg-nioaque-white p-5">
+      <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+            Execução manual
+          </h2>
+          <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+            Dispara a extração de todas as fontes ativas agora. Matérias novas são
+            inseridas direto na Home quando a fonte tem "Publicar Direto" ativado.
+          </p>
+        </div>
+        <ActionButton
+          client:load
+          endpoint="/api/cron/extract-news"
+          label="Executar Extração Agora"
+          shortLabel="Extrair"
+          icon="send"
+          variant="primary"
+          reload
+        />
+      </header>
+    </section>
+
+    {/* Lista de fontes com switches de controle */}
     <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <header class="mb-4">
         <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
-          Fontes ativas
+          Fontes cadastradas
         </h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-          O robô extrator busca estas fontes a cada hora e cria rascunhos na tabela de matérias.
+          Cada fonte tem switches individuais: Ativo, Publicar Direto (piloto
+          automático), Reescrever com IA e Usar Foto Original.
         </p>
       </header>
 
       {sources.length === 0 && (
-        <p class="text-sm text-ink-muted">Nenhuma fonte cadastrada. Rode a migration 002_news_sources.sql.</p>
+        <p class="text-sm text-ink-muted">Nenhuma fonte cadastrada. Use o formulário abaixo para adicionar.</p>
       )}
 
       <ul class="space-y-3">
         {sources.map((s: any) => (
-          <li class="flex items-center justify-between gap-3 rounded-xl border border-line bg-editorial px-4 py-3">
-            <div class="min-w-0">
-              <p class="truncate text-sm font-semibold text-ink">{s.name}</p>
+          <li class="flex items-start justify-between gap-4 rounded-xl border border-line bg-editorial p-4">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-ink truncate">{s.name}</p>
               <p class="truncate text-xs text-ink-muted">{s.rss_url}</p>
-              <p class="mt-0.5 text-xs text-ink-muted">
+              <p class="mt-1 text-xs text-ink-muted">
                 Categoria: {s.default_category ?? '—'} · Última busca: {s.last_fetched_at ?? 'nunca'}
               </p>
             </div>
-            <ToggleSwitch
-              client:load
-              endpoint={`/api/admin/news-sources/${s.id}`}
-              field="is_active"
-              checked={Boolean(s.is_active)}
-              label="Ativa"
-            />
+
+            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <ToggleSwitch
+                client:load
+                endpoint={`/api/admin/news-sources/${s.id}`}
+                field="is_active"
+                checked={Boolean(s.is_active)}
+                label="Ativo"
+                description="O robô busca esta fonte"
+              />
+              <ToggleSwitch
+                client:load
+                endpoint={`/api/admin/news-sources/${s.id}`}
+                field="auto_publish"
+                checked={Boolean(s.auto_publish)}
+                label="Publicar Direto"
+                description="Insere direto na Home (status publicado)"
+                highlight="green"
+              />
+              <ToggleSwitch
+                client:load
+                endpoint={`/api/admin/news-sources/${s.id}`}
+                field="ai_rewrite"
+                checked={Boolean(s.ai_rewrite)}
+                label="Reescrever com IA"
+                description="Título inédito + 3 bullets do Direto ao Ponto"
+              />
+              <ToggleSwitch
+                client:load
+                endpoint={`/api/admin/news-sources/${s.id}`}
+                field="use_original_image"
+                checked={Boolean(s.use_original_image)}
+                label="Usar Foto Original"
+                description="Extrai a foto real da matéria"
+              />
+              {s.keywords_filter && (
+                <p class="mt-2 text-xs text-ink-muted font-medium">
+                  Filtro: {s.keywords_filter}
+                </p>
+              )}
+            </div>
           </li>
         ))}
       </ul>
     </section>
 
+    {/* Formulário: adicionar nova fonte */}
     <section class="rounded-sm border border-line bg-nioaque-white p-5">
       <header class="mb-4">
         <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
@@ -62,14 +125,65 @@ try {
         </h2>
       </header>
       <form id="add-source" class="space-y-3">
-        <input name="name" placeholder="Nome da fonte" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" required />
-        <input name="rss_url" placeholder="URL do RSS" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" required />
-        <input name="default_category" placeholder="Categoria padrão (ms, brasil, nioaque)" class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm" />
-        <button type="submit" class="rounded-sm bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+        <input
+          name="name"
+          placeholder="Nome da fonte (ex.: G1 Mato Grosso do Sul)"
+          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+          required
+        />
+        <input
+          name="rss_url"
+          type="url"
+          placeholder="URL do RSS (ex.: https://g1.globo.com/rss/g1/mato-grosso-do-sul/)"
+          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+          required
+        />
+        <input
+          name="default_category"
+          placeholder="Categoria padrão (nioaque, ms, brasil)"
+          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+        />
+        <input
+          name="keywords_filter"
+          placeholder="Palavras-chave (vírgula): Nioaque, Jardim, BR-060"
+          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+        />
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <ToggleSwitch
+            client:load
+            endpoint="/api/admin/news-sources/NEW"
+            field="is_active"
+            checked={true}
+            label="Ativo"
+          />
+          <ToggleSwitch
+            client:load
+            endpoint="/api/admin/news-sources/NEW"
+            field="auto_publish"
+            checked={true}
+            label="Publicar Direto"
+          />
+          <ToggleSwitch
+            client:load
+            endpoint="/api/admin/news-sources/NEW"
+            field="ai_rewrite"
+            checked={true}
+            label="Reescrever com IA"
+          />
+          <ToggleSwitch
+            client:load
+            endpoint="/api/admin/news-sources/NEW"
+            field="use_original_image"
+            checked={true}
+            label="Usar Foto Original"
+          />
+        </div>
+        <button type="submit" class="rounded-sm bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark w-full sm:w-auto">
           Adicionar fonte
         </button>
       </form>
     </section>
+
   </div>
 </AdminLayout>
 
@@ -79,6 +193,9 @@ try {
     e.preventDefault();
     const fd = new FormData(form as HTMLFormElement);
     const payload = Object.fromEntries(fd.entries());
+    // Converte strings vazias em null para campos opcionais
+    if (!payload.keywords_filter) delete payload.keywords_filter;
+    if (!payload.default_category) delete payload.default_category;
     const res = await fetch('/api/admin/news-sources', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

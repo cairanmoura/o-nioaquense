@@ -268,8 +268,10 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           alt={article.cover_image_caption ?? article.title}
           width="1600"
           height="900"
-          loading="eager"
+          loading="lazy"
           decoding="async"
+          referrerpolicy="no-referrer"
+          onerror="this.src='/artes-nioarquense/arte-cultura-9gac.svg'; this.onerror=null;"
           class="aspect-[16/9] w-full rounded-xl object-cover"
         />
       ) : (
