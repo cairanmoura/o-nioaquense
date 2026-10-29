@@ -47,15 +47,18 @@ const LOGO_SRC = version === '02' ? '/icons/02-logo-empilhada-editorial.svg' : '
 const LOGO_DIM = version === '02' ? { width: 400, height: 520 } : { width: 470, height: 100 };
 
 ---
+{/* Sem style inline de width/height: as classes do chamador (ex.: h-8 w-auto
+    max-w-[190px]) precisam governar o tamanho. O style inline antigo forçava
+    width:100%, fazendo a logo renderizar com 470px (largura intrínseca do SVG)
+    e vazando para fora da viewport no mobile. */}
 <img
   src={LOGO_SRC}
   alt={variant === 'mark' ? 'Marca O Nioaquense' : title}
-  class={className}
+  class:list={['block', className]}
   loading="eager"
   decoding="async"
   width={LOGO_DIM.width}
   height={LOGO_DIM.height}
-  style="display:block;height:auto;width:100%;max-width:100%;"
   aria-hidden={variant === 'mark' ? 'true' : undefined}
   role={variant === 'mark' ? undefined : 'img'}
   aria-label={variant === 'mark' ? undefined : title}

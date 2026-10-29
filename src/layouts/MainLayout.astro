@@ -85,7 +85,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
     <slot name="head" />
   </head>
 
-  <body class="min-h-screen bg-editorial text-ink antialiased">
+  <body class="min-h-screen w-full max-w-[100vw] overflow-x-clip bg-editorial text-ink antialiased">
     <a
       href="#conteudo"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-nioaque-green focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
@@ -97,7 +97,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
 
     {
       billboard && (
-        <div class="container-editorial pt-3">
+        <div class="container-editorial w-full box-border pt-3">
           <LocalAdBanner ad={billboard} label="Publicidade local" />
         </div>
       )
@@ -105,7 +105,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
 
     {!hideServiceBar && <NioaqueServiceBar />}
 
-    <main id="conteudo">
+    <main id="conteudo" class="w-full max-w-full box-border overflow-x-clip">
       <slot />
     </main>
 

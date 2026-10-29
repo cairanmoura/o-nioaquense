@@ -1,7 +1,6 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import AdMosaic from '../components/AdMosaic.astro';
-import ScopePill from '../components/ScopePill.astro';
 // import ColumnistShowcase from '../components/ColumnistShowcase.astro'; // desativado temporariamente (sem colunistas)
 import GoogleAdSlot from '../components/GoogleAdSlot.astro';
 import LocalAdBanner from '../components/LocalAdBanner.astro';
@@ -12,9 +11,9 @@ import MarketTicker from '../components/MarketTicker.astro';
 import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
 import ServiceBlock from '../components/ServiceBlock.astro';
-import { getHomeFeed, getLotteryResults, getMarketQuotes } from '../lib/content';
+import { getHomeFeed, getRegiaoArticles, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
-import type { ArticleScope, Profile } from '../lib/types';
+import type { ArticleScope, Profile, Article } from '../lib/types';
 
 /**
  * Home do O Nioaquense.
@@ -34,8 +33,14 @@ const profilesById = new Map<string, Profile>(feed.profiles.map((profile) => [pr
 const authorOf = (id: string) => profilesById.get(id) ?? null;
 
 const scopeParam = Astro.url.searchParams.get('escopo') as ArticleScope | null;
-const validScopes: ArticleScope[] = ['nioaque', 'ms', 'brasil', 'coluna', 'radar_oficial'];
+const validScopes: ArticleScope[] = ['nioaque', 'regiao', 'ms', 'brasil', 'coluna', 'radar_oficial'];
 const activeScope = scopeParam && validScopes.includes(scopeParam) ? scopeParam : null;
+
+/* Materias da Regiao (quando a aba Regiao esta ativa) */
+let regiaoArticles: Article[] = [];
+if (activeScope === 'regiao') {
+  regiaoArticles = await getRegiaoArticles(Astro.locals);
+}
 
 /* Data real da edicao: informacao de credibilidade, nao enfeite. */
 const agora = new Date();
@@ -60,14 +65,18 @@ const featuredNioaque = feed.featured.find((article) => article.scope === 'nioaq
 const lead =
   activeScope === null
     ? (featuredNioaque ?? feed.featured[0] ?? feed.articles[0] ?? null)
-    : (feed.byScope[activeScope][0] ?? feed.articles[0] ?? null);
+    : activeScope === 'regiao'
+      ? (regiaoArticles[0] ?? null)
+      : (feed.byScope[activeScope][0] ?? feed.articles[0] ?? null);
 
-/* --- Submanchetes de Nioaque --- */
+/* --- Submanchetes --- */
 const nioaquePool = feed.byScope.nioaque.filter((article) => article.id !== lead?.id);
 const subLeads = (
-  activeScope && activeScope !== 'nioaque'
+  activeScope && activeScope !== 'nioaque' && activeScope !== 'regiao'
     ? feed.byScope[activeScope].filter((article) => article.id !== lead?.id)
-    : nioaquePool
+    : activeScope === 'regiao'
+      ? regiaoArticles.filter((article) => article.id !== lead?.id)
+      : nioaquePool
 ).slice(0, 3);
 
 const secondary = feed.articles.filter((article) => article.id !== lead?.id);
@@ -102,33 +111,42 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     )
   }
 
-  {/* Topo: leaderboard de anunciantes locais (padrao Google 728x90) */}
-  <div class="container-editorial pt-3">
+  {/* Topo: leaderboard de anunciantes locais (padrao Google 728x90).
+      No mobile ele some daqui e aparece DEPOIS da manchete (ver abaixo),
+      para o leitor bater o olho na noticia ja na primeira dobra. */}
+  <div class="container-editorial hidden pt-3 md:block">
     <AdMosaic ads={feed.ads} slots={['header_billboard']} label="Publicidade" />
   </div>
 
-  <div class="container-editorial py-8 sm:py-10">
-    {/* Cabecalho da capa */}
-    <div class="flex flex-wrap items-end justify-between gap-3 border-b-2 border-nioaque-green pb-4">
-      <div>
-        <h1 class="text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+  <div class="container-editorial py-5 sm:py-10">
+    {/* Cabecalho da capa (mobile: uma linha discreta; desktop: completo) */}
+    <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 border-nioaque-green pb-2 sm:gap-3 sm:pb-4">
+      <div class="min-w-0">
+        <h1 class="text-lg font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
           {activeScope ? SCOPE_LABEL[activeScope] : 'O que acontece em Nioaque'}
         </h1>
-        <p class="mt-2 text-sm font-medium text-ink-muted">
+        <p class="mt-0.5 text-xs font-medium text-ink-muted sm:mt-2 sm:text-sm">
           {dataHoje} &middot; Nioaque, MS
         </p>
       </div>
-      <p class="pb-1 text-xs font-medium text-ink-muted">
+      <p class="hidden pb-1 text-xs font-medium text-ink-muted sm:block">
         {feed.source === 'mock'
           ? 'Conteúdo de demonstração'
           : `Atualizado às ${horaAgora}`}
       </p>
     </div>
 
-    {/* Navegacao por editoria */}
-    <nav class="mt-4 flex flex-wrap gap-2 sm:gap-3" aria-label="Editorias">
+    {/* Navegacao por editoria: no mobile, UNICA linha horizontal deslizavel
+        (sem empilhar em varias linhas). Cores explicitas e sem conflito:
+        ativo = fundo verde; inativo = fundo branco + texto escuro (nunca
+        texto branco sobre branco). */}
+    <nav
+      class="no-scrollbar -mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+      aria-label="Editorias"
+    >
       {[
         'nioaque',
+        'regiao',
         'ms',
         'brasil',
         'coluna',
@@ -136,20 +154,22 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       ].map((scope) => {
         const isActive = activeScope === scope;
         return (
-          <ScopePill
-            scope={scope as ArticleScope}
-            class={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+          <span
+            class:list={[
+              'inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border px-3 py-1.5 text-xs font-semibold transition-colors',
               isActive
-                ? 'bg-nioaque-green text-white shadow-sm'
-                : 'bg-nioaque-white border border-line text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark'
-            }`}
-          />
+                ? 'border-[#008026] bg-[#008026] text-white'
+                : 'border-slate-300 bg-white text-[#1E293B] hover:border-[#008026]',
+            ]}
+          >
+            {SCOPE_LABEL[scope as ArticleScope]}
+          </span>
         );
       })}
     </nav>
 
     {/* Manchete + coluna lateral */}
-    <div class="grid gap-8 pt-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:gap-10">
+    <div class="grid gap-8 pt-4 sm:pt-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:gap-10">
       <section aria-label="Manchete principal" class="min-w-0">
         {
           lead && (
@@ -161,6 +181,12 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             />
           )
         }
+
+        {/* Publicidade mobile: logo abaixo da manchete (no desktop o slot
+            de topo ja aparece acima, oculto aqui pelo md:hidden). */}
+        <div class="mt-8 md:hidden">
+          <AdMosaic ads={feed.ads} slots={['header_billboard']} label="Publicidade" />
+        </div>
 
         {/* Grid de 3 secundarias lado a lado abaixo da manchete */}
         {
@@ -246,6 +272,34 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           </div>
           <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {nioaqueGrid.map((article) => (
+              <ArticleCard
+                article={article}
+                author={authorOf(article.author_id)}
+                variant="standard"
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {/* Regiao */}
+    {
+      (activeScope === null || activeScope === 'regiao') && regiaoArticles.length > 0 && (
+        <section class="mt-16 sm:mt-20" aria-labelledby="sec-regiao" data-reveal>
+          <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
+            <h2 id="sec-regiao" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              Regiao
+            </h2>
+            <a
+              href="/editoria/regiao"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+            >
+              Ver tudo
+            </a>
+          </div>
+          <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {regiaoArticles.slice(0, 8).map((article) => (
               <ArticleCard
                 article={article}
                 author={authorOf(article.author_id)}

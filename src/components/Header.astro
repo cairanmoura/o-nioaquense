@@ -14,6 +14,9 @@ import LogoNioaquense from './LogoNioaquense.astro';
 
 const categorias = [
   { href: '/editoria/nioaque', label: 'Nioaque', accent: true },
+  { href: '/editoria/regiao', label: 'Regiao' },
+  { href: '/editoria/ms', label: 'Mato Grosso do Sul' },
+  { href: '/editoria/brasil', label: 'Brasil' },
   { href: '/radar-oficial', label: 'Radar Oficial' },
   { href: '/editoria/politica-poder', label: 'Política & Poder' },
   { href: '/editoria/agro-campo', label: 'Agro & Campo' },
@@ -22,8 +25,6 @@ const categorias = [
   { href: '/editoria/educacao', label: 'Educação' },
   { href: '/editoria/esporte', label: 'Esporte' },
   { href: '/editoria/cultura', label: 'Cultura' },
-  { href: '/editoria/ms', label: 'Mato Grosso do Sul' },
-  { href: '/editoria/brasil', label: 'Brasil' },
 ];
 
 const searchTerm = Astro.url.searchParams.get('q') ?? '';
@@ -36,13 +37,19 @@ const isActive = (href: string) => {
 ---
 
 <header class="bg-nioaque-white border-b border-line">
-  <div class="container-editorial">
-    <div class="flex items-center justify-between gap-6 whitespace-nowrap py-3 sm:py-4">
+  <div class="container-editorial w-full box-border overflow-x-clip">
+    <div class="flex items-center justify-between gap-2 whitespace-nowrap py-2.5 sm:gap-6 sm:py-4">
 
       {/* Esquerda: Logo + Navegacao de categorias */}
-      <div class="flex items-center gap-6 shrink-0">
-        <a href="/" class="flex shrink-0" aria-label="O Nioaquense - pagina inicial">
-          <LogoNioaquense class="w-32 sm:w-40 lg:w-48" />
+      <div class="flex min-w-0 items-center gap-4 sm:gap-6">
+        <a
+          href="/"
+          class="flex shrink-0 min-w-0 max-w-[190px] sm:max-w-none"
+          aria-label="O Nioaquense - pagina inicial"
+        >
+          {/* Mobile: h-8 (32px) + proporcao 470:100 = ~150px de largura,
+              sempre dentro de max-w-[190px]. Nunca estoura a viewport. */}
+          <LogoNioaquense class="h-8 w-auto max-w-[190px] sm:h-10 lg:h-12" />
         </a>
 
         <nav aria-label="Categorias" class="hidden sm:flex items-center gap-1 sm:gap-2">
@@ -96,12 +103,12 @@ const isActive = (href: string) => {
           />
         </form>
 
-        {/* Botao de destaque */}
+        {/* Botao de destaque (mobile: icon + "Noticia" = "+ Noticia") */}
         <a
           href="/mane-sua-noticia"
-          class="inline-flex shrink-0 items-center justify-center gap-2 rounded-sm bg-nioaque-red px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
+          class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-sm bg-nioaque-red px-2.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-nioaque-red-dark sm:gap-2 sm:px-3 sm:py-2.5"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="shrink-0">
             <path d="M12 5v14M5 12h14" />
           </svg>
           <span class="hidden sm:inline">Mande sua notícia</span>
