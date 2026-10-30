@@ -11,6 +11,9 @@
  * amigável em português.
  */
 
+const CF_MODELS = ['@cf/meta/llama-3.1-8b-instruct', '@cf/meta/llama-3.1-8b-instruct-fast', '@cf/meta/llama-3.2-3b-instruct'];
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+
 export interface AIResult {
   text: string;
   provider: 'cloudflare' | 'gemini';
@@ -21,47 +24,40 @@ export interface AIResult {
  * fazendo fallback para o Gemini se o binding não estiver disponível.
  */
 export async function runAI(prompt: string, env: unknown): Promise<AIResult> {
-  // --- a) Cloudflare Workers AI (prioridade) ---
+  // --- a) Cloudflare Workers AI (prioridade), com modelos alternativos se o primeiro der 404 ---
   const ai = (env as any)?.AI;
   if (ai) {
-    try {
-      const response = await ai.run('@cf/meta/llama-3.1-8b-instruct', {
-        prompt,
-        max_tokens: 1000,
-      });
-      const text = (response as any)?.response ?? '';
-      if (text.trim()) return { text, provider: 'cloudflare' };
-    } catch {
-      // segue para fallback
+    for (const model of CF_MODELS) {
+      try {
+        const response = await ai.run(model, { prompt, max_tokens: 1000 });
+        const text = (response as any)?.response ?? '';
+        if (text.trim()) return { text, provider: 'cloudflare' };
+      } catch {
+        // 404/indisponivel: tenta o proximo modelo
+      }
     }
   }
 
-  // --- b) Gemini fallback ---
-  const apiKey =
-    (env as any)?.GEMINI_API_KEY ?? (env as any)?.GOOGLE_API_KEY;
+  // --- b) Gemini fallback, tambem com modelos alternativos ---
+  const apiKey = (env as any)?.GEMINI_API_KEY ?? (env as any)?.GOOGLE_API_KEY;
   if (apiKey) {
-    try {
-      const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-          }),
-        },
-      );
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('Modelo de IA indisponível no momento.');
-        }
-        throw new Error(`Erro da IA: ${res.status}`);
+    for (const model of GEMINI_MODELS) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          },
+        );
+        if (!res.ok) continue; // 404/429: proximo modelo
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+        if (text.trim()) return { text, provider: 'gemini' };
+      } catch {
+        // proximo modelo
       }
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-      if (text.trim()) return { text, provider: 'gemini' };
-    } catch {
-      // segue para erro amigável
     }
   }
 

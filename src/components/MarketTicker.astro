@@ -13,7 +13,9 @@ interface Props {
   class?: string;
 }
 
-const { quotes, class: className = '' } = Astro.props;
+const { quotes: allQuotes, class: className = '' } = Astro.props;
+// boi_gordo e soja ficam na faixa Agro
+const quotes = allQuotes.filter((q) => q.symbol !== 'boi_gordo' && q.symbol !== 'soja');
 
 const formatValue = (quote: MarketQuote) => {
   if (quote.symbol === 'ibovespa') {
@@ -30,7 +32,7 @@ const formatValue = (quote: MarketQuote) => {
 {
   quotes.length > 0 && (
     <section
-      class:list={['overflow-hidden rounded-xl bg-nioaque-white', className]}
+      class:list={['overflow-hidden rounded-[4px] bg-nioaque-white', className]}
       aria-label="Cotações da economia"
     >
       <ul>

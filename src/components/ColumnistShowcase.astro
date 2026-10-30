@@ -19,7 +19,7 @@ const visible = picks.filter((pick) => pick.article).slice(0, 6);
 ---
 
 <section
-  class:list={['rounded-2xl bg-nioaque-white p-5 sm:p-7', className]}
+  class:list={['rounded-[4px] bg-nioaque-white p-5 sm:p-7', className]}
   aria-labelledby="faixa-colunistas"
 >
   <header class="flex flex-wrap items-end justify-between gap-3 border-b-2 border-nioaque-red pb-4">
@@ -38,7 +38,7 @@ const visible = picks.filter((pick) => pick.article).slice(0, 6);
     {
       visible.map(({ profile, article }, index) => (
         <li>
-          <article class="group flex h-full flex-col rounded-xl bg-editorial p-5">
+          <article class="group flex h-full flex-col rounded-[4px] bg-editorial p-5">
             <div class="flex items-center gap-3.5">
               {profile.avatar_url ? (
                 <img
@@ -49,14 +49,14 @@ const visible = picks.filter((pick) => pick.article).slice(0, 6);
                   loading="lazy"
                   decoding="async"
                   class:list={[
-                    'h-16 w-16 shrink-0 rounded-full border-[3px] object-cover transition-transform group-hover:scale-105',
+                    'h-16 w-16 shrink-0 rounded-[4px] border-[3px] object-cover transition-transform group-hover:scale-105',
                     index % 2 === 0 ? 'border-nioaque-green' : 'border-nioaque-red',
                   ]}
                 />
               ) : (
                 <span
                   class:list={[
-                    'flex h-16 w-16 shrink-0 items-center justify-center rounded-full font-editorial text-xl font-semibold text-white',
+                    'flex h-16 w-16 shrink-0 items-center justify-center rounded-[4px] font-editorial text-xl font-semibold text-white',
                     index % 2 === 0 ? 'bg-nioaque-green' : 'bg-nioaque-red',
                   ]}
                 >

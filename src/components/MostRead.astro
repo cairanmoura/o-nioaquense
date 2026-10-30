@@ -2,11 +2,8 @@
 import type { Article, Profile } from '../lib/types';
 
 /**
- * MostRead.astro
- * -----------------------------------------------------------------------------
- * "Mais lidas" - o ranking de leituras da casa, ordenado por `views_count`.
+ * MostRead.astro - "Mais lidas" numerada de 1 a 5.
  */
-
 interface Props {
   articles: Article[];
   authors?: Map<string, Profile>;
@@ -15,56 +12,26 @@ interface Props {
   limit?: number;
 }
 
-const {
-  articles,
-  authors,
-  title = 'Mais lidas',
-  class: className = '',
-  limit = 5,
-} = Astro.props;
+const { articles, title = 'Mais lidas', class: className = '', limit = 5 } = Astro.props;
 
-const top = [...articles]
-  .sort((a, b) => b.views_count - a.views_count)
-  .slice(0, limit);
+const top = [...articles].sort((a, b) => b.views_count - a.views_count).slice(0, limit);
 ---
 
 {
   top.length > 0 && (
-    <section
-      class:list={['overflow-hidden rounded-xl bg-nioaque-white', className]}
-      aria-label={title}
-    >
-      <header class="bg-ink px-4 py-3">
-        <h2 class="font-editorial text-lg font-semibold text-white">{title}</h2>
+    <section class:list={['overflow-hidden rounded-[4px] border border-slate-200 bg-white shadow-sm', className]} aria-label={title}>
+      <header class="border-b border-slate-200 bg-[#00661E] px-4 py-3">
+        <h2 class="text-base font-extrabold text-white">{title}</h2>
       </header>
-
-      <ol>
+      <ol class="divide-y divide-slate-200">
         {top.map((article, index) => (
-          <li class="flex items-start gap-3 px-4 py-3.5">
-            <span
-              class:list={[
-                'w-5 shrink-0 pt-0.5 text-right font-editorial text-base font-semibold tabular-nums',
-                index === 0 ? 'text-nioaque-red' : 'text-ink-muted',
-              ]}
-              aria-hidden="true"
-            >
+          <li class="flex items-start gap-3 px-4 py-3">
+            <span class:list={['w-7 shrink-0 text-2xl font-extrabold leading-none tabular-nums', index === 0 ? 'text-nioaque-red' : 'text-slate-300']} aria-hidden="true">
               {index + 1}
             </span>
-
-            <div class="min-w-0 flex-1">
-              <a
-                href={`/noticia/${article.slug}`}
-                class="block font-editorial text-base font-semibold leading-snug text-ink transition-colors hover:text-nioaque-green"
-              >
-                {article.title}
-              </a>
-              {authors?.get(article.author_id) && (
-                <p class="mt-1 text-xs text-ink-muted">
-                  {authors.get(article.author_id)!.column_name ??
-                    authors.get(article.author_id)!.full_name}
-                </p>
-              )}
-            </div>
+            <a href={`/noticia/${article.slug}`} class="block min-w-0 text-base font-bold leading-snug text-ink transition-colors hover:text-nioaque-green">
+              {article.title}
+            </a>
           </li>
         ))}
       </ol>

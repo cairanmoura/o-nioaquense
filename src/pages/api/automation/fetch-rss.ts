@@ -12,6 +12,7 @@ import {
   detectCategory,
   REGION_CITIES,
 } from '../../../lib/rss';
+import { scrapeSource } from '../../../lib/scraper';
 
 /**
  * POST /api/automation/fetch-rss
@@ -35,16 +36,43 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!isAdmin(session)) throw new Error('Acesso negado');
 
     const payload = await readPayload(request);
-    const { url, rssUrl, sourceName = 'Fonte' } = payload as {
+    const { url, rssUrl, sourceName = 'Fonte', sourceType = 'rss' } = payload as {
       url?: string;
       rssUrl?: string;
       sourceName?: string;
+      sourceType?: string;
     };
 
     const feedUrl = rssUrl || url;
     if (!feedUrl) throw new Error('URL ou RSS não informado');
 
-    // Busca o XML do RSS
+    // --- Web Scraper: raspa a pagina inicial e extrai as materias ---
+    if (sourceType === 'html_scraper') {
+      const scraped = await scrapeSource(feedUrl, sourceName, 12);
+      const items = scraped.map((a) => {
+        const localTags = detectLocalTags(`${a.title} ${a.description} ${a.contentHtml.slice(0, 3000)}`);
+        const scope = routeScope(localTags, sourceName);
+        const internalImages = extractInternalImages(a.contentHtml, a.link, sourceName);
+        return {
+          title: a.title,
+          link: a.link,
+          description: a.description,
+          pubDate: a.pubDate ?? new Date().toISOString(),
+          cover_image_url: a.coverImageUrl,
+          cover_image_caption: a.coverImageCaption,
+          local_tags: localTags,
+          scope,
+          category_label: detectCategory(a.title),
+          internal_images: internalImages,
+        };
+      });
+      return new Response(JSON.stringify({ ok: true, items, count: items.length }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // --- RSS: busca o XML do feed ---
     const res = await fetch(feedUrl, {
       headers: {
         'User-Agent':
@@ -57,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const xml = await res.text();
 
     // Extrai itens do RSS
-    const itemRegex = /<item\b[\s\S]*?<\/item>/gi;
+    const itemRegex = /<item\b([\s\S]*?)<\/item>/gi;
     const items: Array<{
       title: string;
       link: string;

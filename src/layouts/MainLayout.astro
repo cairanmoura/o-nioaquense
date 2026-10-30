@@ -3,7 +3,6 @@ import '../styles/global.css';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import LocalAdBanner from '../components/LocalAdBanner.astro';
-import NioaqueServiceBar from '../components/NioaqueServiceBar.astro';
 import { getHeaderBillboard } from '../lib/content';
 
 /**
@@ -88,7 +87,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
   <body class="min-h-screen w-full max-w-[100vw] overflow-x-clip bg-editorial text-ink antialiased">
     <a
       href="#conteudo"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-nioaque-green focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-[4px] focus:bg-nioaque-green focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
     >
       Pular para o conteúdo
     </a>
@@ -102,8 +101,6 @@ const billboard = await getHeaderBillboard(Astro.locals);
         </div>
       )
     }
-
-    {!hideServiceBar && <NioaqueServiceBar />}
 
     <main id="conteudo" class="w-full max-w-full box-border overflow-x-clip">
       <slot />

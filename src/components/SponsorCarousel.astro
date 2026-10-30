@@ -1,0 +1,61 @@
+---
+/**
+ * SponsorCarousel.astro
+ * Faixa "Quem Anuncia no Nioaquense" - logos em looping horizontal (CSS puro).
+ * Sem patrocinadores: placeholders levam para /anuncie.
+ */
+interface Sponsor {
+  name: string;
+  logo?: string | null;
+  href?: string | null;
+}
+interface Props {
+  sponsors?: Sponsor[];
+}
+const { sponsors = [] } = Astro.props;
+
+const items: Sponsor[] =
+  sponsors.length > 0
+    ? sponsors
+    : Array.from({ length: 6 }, () => ({ name: 'Anuncie aqui', logo: null, href: '/anuncie' }));
+// Duplicado para o looping sem emenda
+const track = [...items, ...items];
+---
+
+<section aria-label="Quem anuncia no Nioaquense" class="w-full border-y border-slate-200 bg-white">
+  <div class="container-editorial py-6">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-ink">Quem Anuncia no Nioaquense</h2>
+    <div class="mt-4 overflow-hidden">
+      <ul class="sponsor-track flex w-max gap-4">
+        {
+          track.map((s) => (
+            <li class="shrink-0">
+              <a
+                href={s.href ?? '/anuncie'}
+                class="flex h-16 w-40 items-center justify-center rounded-[4px] border border-slate-200 bg-white px-3 text-center text-xs font-bold uppercase tracking-wider text-ink-muted hover:border-nioaque-green"
+              >
+                {s.logo ? <img src={s.logo} alt={s.name} loading="lazy" referrerpolicy="no-referrer" class="max-h-12 max-w-full object-contain" /> : s.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sponsor-track {
+    animation: sponsor-loop 30s linear infinite;
+  }
+  .sponsor-track:hover {
+    animation-play-state: paused;
+  }
+  @keyframes sponsor-loop {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sponsor-track { animation: none; }
+  }
+</style>

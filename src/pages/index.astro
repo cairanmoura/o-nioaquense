@@ -10,9 +10,16 @@ import MainLayout from '../layouts/MainLayout.astro';
 import MarketTicker from '../components/MarketTicker.astro';
 import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
-import ServiceBlock from '../components/ServiceBlock.astro';
+import FarmaciaWidget from '../components/FarmaciaWidget.astro';
+import AdStrip from '../components/AdStrip.astro';
+import AgroBand from '../components/AgroBand.astro';
+import ArticlePills from '../components/ArticlePills.astro';
+import SponsorCarousel from '../components/SponsorCarousel.astro';
+
 import { getHomeFeed, getRegiaoArticles, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
+import { formatRelative } from '../lib/format';
+import { isPhotoCover } from '../lib/rss';
 import type { ArticleScope, Profile, Article } from '../lib/types';
 
 /**
@@ -38,7 +45,7 @@ const activeScope = scopeParam && validScopes.includes(scopeParam) ? scopeParam 
 
 /* Materias da Regiao (quando a aba Regiao esta ativa) */
 let regiaoArticles: Article[] = [];
-if (activeScope === 'regiao') {
+if (activeScope === null || activeScope === 'regiao') {
   regiaoArticles = await getRegiaoArticles(Astro.locals);
 }
 
@@ -77,9 +84,11 @@ const subLeads = (
     : activeScope === 'regiao'
       ? regiaoArticles.filter((article) => article.id !== lead?.id)
       : nioaquePool
-).slice(0, 3);
+).slice(0, 2);
 
 const secondary = feed.articles.filter((article) => article.id !== lead?.id);
+const usedIds = new Set([lead?.id, ...subLeads.map((a) => a.id)]);
+const plantao = [...secondary.filter((a) => !usedIds.has(a.id)), ...secondary.filter((a) => usedIds.has(a.id))].slice(0, 5);
 const breaking = feed.breaking.slice(0, 3);
 const nioaqueGrid = nioaquePool.filter((article) => !subLeads.some((item) => item.id === article.id)).slice(0, 4);
 const ms = feed.byScope.ms.slice(0, 6);
@@ -89,19 +98,15 @@ const sidebarTopId = secondary[0]?.id;
 const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTopId).slice(0, 3);
 ---
 
-<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil. Radar Oficial, serviços e clima no cabeçalho.">
-  {/* Faixa de ultima hora */}
+<MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil.">
   {
     breaking.length > 0 && (
       <div class="border-b border-nioaque-red/20 bg-nioaque-red-50">
         <div class="container-editorial flex items-center gap-3 py-2.5">
           <span class="pill-scope shrink-0 bg-nioaque-red text-white">Última hora</span>
-          <div class="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-medium text-ink">
+          <div class="no-scrollbar flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-medium text-ink">
             {breaking.map((article) => (
-              <a
-                href={`/noticia/${article.slug}`}
-                class="link-underline transition-colors hover:text-nioaque-red"
-              >
+              <a href={`/noticia/${article.slug}`} class="link-underline transition-colors hover:text-nioaque-red">
                 {article.title}
               </a>
             ))}
@@ -111,132 +116,122 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     )
   }
 
-  {/* Topo: leaderboard de anunciantes locais (padrao Google 728x90).
-      No mobile ele some daqui e aparece DEPOIS da manchete (ver abaixo),
-      para o leitor bater o olho na noticia ja na primeira dobra. */}
-  <div class="container-editorial hidden pt-3 md:block">
-    <AdMosaic ads={feed.ads} slots={['header_billboard']} label="Publicidade" />
-  </div>
-
-  <div class="container-editorial py-5 sm:py-10">
-    {/* Cabecalho da capa (mobile: uma linha discreta; desktop: completo) */}
-    <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 border-nioaque-green pb-2 sm:gap-3 sm:pb-4">
+  <div class="container-editorial pt-4 sm:pt-6">
+    <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 border-nioaque-green pb-2">
       <div class="min-w-0">
-        <h1 class="text-lg font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+        <h1 class="text-lg font-extrabold leading-tight tracking-tight text-ink sm:text-3xl">
           {activeScope ? SCOPE_LABEL[activeScope] : 'O que acontece em Nioaque'}
         </h1>
-        <p class="mt-0.5 text-xs font-medium text-ink-muted sm:mt-2 sm:text-sm">
-          {dataHoje} &middot; Nioaque, MS
-        </p>
+        <p class="mt-0.5 text-xs font-medium text-ink-muted sm:text-sm">{dataHoje} &middot; Nioaque, MS</p>
       </div>
       <p class="hidden pb-1 text-xs font-medium text-ink-muted sm:block">
-        {feed.source === 'mock'
-          ? 'Conteúdo de demonstração'
-          : `Atualizado às ${horaAgora}`}
+        {feed.source === 'mock' ? 'Conteúdo de demonstração' : `Atualizado às ${horaAgora}`}
       </p>
     </div>
 
-    {/* Navegacao por editoria: no mobile, UNICA linha horizontal deslizavel
-        (sem empilhar em varias linhas). Cores explicitas e sem conflito:
-        ativo = fundo verde; inativo = fundo branco + texto escuro (nunca
-        texto branco sobre branco). */}
-    <nav
-      class="no-scrollbar -mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
-      aria-label="Editorias"
-    >
-      {[
-        'nioaque',
-        'regiao',
-        'ms',
-        'brasil',
-        'coluna',
-        // 'radar_oficial', // area adormecida
-      ].map((scope) => {
-        const isActive = activeScope === scope;
-        return (
-          <span
-            class:list={[
-              'inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border px-3 py-1.5 text-xs font-semibold transition-colors',
-              isActive
-                ? 'border-[#008026] bg-[#008026] text-white'
-                : 'border-slate-300 bg-white text-[#1E293B] hover:border-[#008026]',
-            ]}
-          >
-            {SCOPE_LABEL[scope as ArticleScope]}
-          </span>
-        );
-      })}
+    {/* Categorias: uma unica linha rolavel no mobile. Ativo = verde/branco; inativo = branco/escuro. */}
+    <nav class="no-scrollbar -mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 sm:mx-0 sm:px-0" aria-label="Editorias">
+      {
+        ['nioaque', 'regiao', 'ms', 'brasil', 'coluna'].map((scope) => {
+          const isActive = (activeScope ?? 'nioaque') === scope;
+          return (
+            <a
+              href={`/editoria/${scope}`}
+              class:list={[
+                'inline-flex shrink-0 items-center whitespace-nowrap rounded-[4px] border px-3 py-1.5 text-xs font-semibold transition-colors',
+                isActive
+                  ? 'border-[#008026] bg-[#008026] text-white'
+                  : 'border-slate-300 bg-white text-[#1E293B] hover:border-[#008026]',
+              ]}
+            >
+              {SCOPE_LABEL[scope as ArticleScope]}
+            </a>
+          );
+        })
+      }
     </nav>
 
-    {/* Manchete + coluna lateral */}
-    <div class="grid gap-8 pt-4 sm:pt-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:gap-10">
+    {/* Primeira dobra: Bento 50% / 25% / 25% (desktop). Mobile: manchete + foto primeiro. */}
+    <div class="grid gap-5 pt-4 sm:pt-5 lg:grid-cols-[2fr_1fr_1fr] lg:items-start">
       <section aria-label="Manchete principal" class="min-w-0">
         {
           lead && (
-            <ArticleCard
-              article={lead}
-              author={authorOf(lead.author_id)}
-              variant="lead"
-              showEditor
-            />
-          )
-        }
-
-        {/* Publicidade mobile: logo abaixo da manchete (no desktop o slot
-            de topo ja aparece acima, oculto aqui pelo md:hidden). */}
-        <div class="mt-8 md:hidden">
-          <AdMosaic ads={feed.ads} slots={['header_billboard']} label="Publicidade" />
-        </div>
-
-        {/* Grid de 3 secundarias lado a lado abaixo da manchete */}
-        {
-          subLeads.length > 0 && (
-            <div class="mt-8 grid gap-6 sm:grid-cols-3">
-              {subLeads.map((article) => (
-                <ArticleCard
-                  article={article}
-                  author={authorOf(article.author_id)}
-                  variant="standard"
-                />
-              ))}
+            <div class="rounded-[4px] border-2 border-[#00661E] bg-white p-3 shadow-sm sm:p-4">
+              <div class="mb-3">
+                <ArticlePills article={lead} showEditor />
+              </div>
+              <ArticleCard article={lead} author={authorOf(lead.author_id)} variant="lead" showEditor />
             </div>
           )
+        }
+        {/* Publicidade mobile: abaixo da 1a manchete */}
+        <div class="mt-5 lg:hidden">
+          <AdStrip ad={feed.ads.header_billboard} />
+        </div>
+      </section>
+
+      <section aria-label="Sub-manchetes" class="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        {
+          subLeads.map((article) => (
+            <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" class="border border-slate-200 shadow-sm" />
+          ))
         }
       </section>
 
-      {/* Lateral: ultimas + mais lidas + servicos */}
-      <aside class="space-y-8">
-        <div>
-          <h2 class="font-editorial text-xl font-semibold text-ink">Mais recentes</h2>
-          {secondary[0] && (
-            <div class="mt-4">
-              <ArticleCard
-                article={secondary[0]}
-                author={authorOf(secondary[0].author_id)}
-                variant="standard"
-              />
-            </div>
-          )}
-          <div class="mt-4 space-y-4">
-            {
-              secondary.slice(1, 6).map((article) => (
-                <ArticleCard
-                  article={article}
-                  author={authorOf(article.author_id)}
-                  variant="compact"
-                />
-              ))
-            }
-          </div>
-        </div>
-
-        <MostRead articles={feed.articles} authors={profilesById} limit={5} />
+      <aside aria-label="Plantão" class="min-w-0 overflow-hidden rounded-[4px] border border-slate-200 bg-white shadow-sm">
+        <header class="flex items-center gap-2 bg-[#00661E] px-4 py-3">
+          <span class="h-2 w-2 rounded-[4px] bg-nioaque-red" aria-hidden="true"></span>
+          <h2 class="text-base font-extrabold text-white">Plantão</h2>
+        </header>
+        <ul class="divide-y divide-slate-200">
+          {
+            plantao.map((article) => (
+              <li>
+                <a href={`/noticia/${article.slug}`} class="group flex items-start gap-3 p-3">
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-[11px] font-bold uppercase tracking-wider text-nioaque-green">
+                      {article.category_label ?? SCOPE_LABEL[article.scope]} · {formatRelative(article.published_at)}
+                    </span>
+                    <span class="mt-1 block text-sm font-bold leading-snug text-ink group-hover:text-nioaque-green line-clamp-3">
+                      {article.title}
+                    </span>
+                  </span>
+                  <img
+                    src={isPhotoCover(article.cover_image_url) ? article.cover_image_url! : '/artes-nioarquense/arte-cultura-9gac.svg'}
+                    alt=""
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                    onerror="this.src='/artes-nioarquense/arte-cultura-9gac.svg'; this.onerror=null;"
+                    class="h-16 w-16 shrink-0 rounded-[4px] bg-nioaque-green-50 object-cover"
+                  />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
       </aside>
+    </div>
+  </div>
+
+  {/* Cotacao Agro: faixa de ponta a ponta */}
+  <div class="mt-8 sm:mt-10">
+    <AgroBand quotes={quotes} />
+  </div>
+
+  <div class="container-editorial pb-10 pt-8 sm:pt-10">
+    {/* Mais lidas ladeada por banners horizontais curtos */}
+    <div class="grid items-start gap-5 lg:grid-cols-[1fr_1.4fr_1fr]">
+      <AdStrip ad={feed.ads.home_middle} class="order-2 lg:order-1" />
+      <MostRead articles={feed.articles} authors={profilesById} limit={5} class="order-1 lg:order-2" />
+      <AdStrip ad={feed.ads.sidebar} class="order-3" />
     </div>
 
     {/* Servicos: onibus + alertas (o clima vive so no cabecalho) */}
     <div class="mt-12" data-reveal>
-      <ServiceBlock utility={feed.utility} />
+      <FarmaciaWidget utility={feed.utility} />
     </div>
 
     {/* Faixa economica + loterias */}
@@ -407,7 +402,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
     {/* Envio de pistas */}
     <section id="pistas" class="mt-16 scroll-mt-28 sm:mt-20" aria-labelledby="sec-pistas" data-reveal>
-      <div class="grid gap-8 rounded-sm bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12">
+      <div class="grid gap-8 rounded-[4px] bg-nioaque-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12">
         <div>
           <h2 id="sec-pistas" class="text-headline font-semibold leading-tight text-ink">
             Alguma coisa aconteceu na sua rua?
@@ -418,22 +413,22 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           </p>
           <ul class="mt-6 space-y-2.5 text-base text-ink-soft">
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-green" aria-hidden="true" />
               Buracos, coleta de lixo, iluminação, transporte
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-green" aria-hidden="true" />
               Escolas, saúde, eventos da cidade
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-green" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-green" aria-hidden="true" />
               Comércio, agricultura e produções locais
             </li>
           </ul>
 
           <a
             href="/mande-sua-noticia"
-            class="mt-7 inline-flex items-center gap-2 rounded-sm bg-nioaque-red px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
+            class="mt-7 inline-flex items-center gap-2 rounded-[4px] bg-nioaque-red px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-nioaque-red-dark"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -442,7 +437,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           </a>
         </div>
 
-        <div class="rounded-xl bg-editorial p-5 sm:p-6">
+        <div class="rounded-[4px] bg-editorial p-5 sm:p-6">
           <p class="text-xs font-semibold text-nioaque-red">Boca no Trombone</p>
           <p class="mt-2 font-editorial text-xl font-semibold leading-snug text-ink">
             O canal direto entre o morador de Nioaque e a redação.
@@ -454,15 +449,15 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
           <ul class="mt-5 space-y-2.5 text-base text-ink-soft">
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-red" aria-hidden="true" />
               Formulário curtinho, feito para o celular
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-red" aria-hidden="true" />
               Fotos comprimidas antes de subir
             </li>
             <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-nioaque-red" aria-hidden="true" />
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-[4px] bg-nioaque-red" aria-hidden="true" />
               Ou chame a redação no WhatsApp
             </li>
           </ul>
@@ -478,4 +473,6 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       </div>
     </section>
   </div>
+
+  <SponsorCarousel />
 </MainLayout>

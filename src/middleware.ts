@@ -36,9 +36,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Paginas do painel e suas APIs precisam da sessao resolvida no servidor.
   const isAdminPage = pathname.startsWith('/admin');
-  // APIs autenticadas: gestao (/api/admin/*) e editorias com IA (/api/ai/*),
-  // que tambem chamam requireSession() e precisam da sessao resolvida.
-  const isAdminApi = pathname.startsWith('/api/admin') || pathname.startsWith('/api/ai');
+  // APIs autenticadas: gestao (/api/admin/*), editorias com IA (/api/ai/*)
+  // e extrator de noticias (/api/cron/*), que tambem chamam requireSession()
+  // e precisam da sessao resolvida.
+  const isAdminApi =
+    pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/api/ai') ||
+    pathname.startsWith('/api/cron');
   // Troca de senha: usa a sessao do painel, mas mora em /api/auth.
   const isSelfServiceRoute = pathname === '/api/auth/change-password';
 

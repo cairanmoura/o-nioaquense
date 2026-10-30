@@ -1250,6 +1250,24 @@ export const mockMarketQuotes: MarketQuote[] = [
     unit: 'pts',
     updated_at: '2026-10-22T05:10:00Z',
   },
+  {
+    id: '80000000-0000-4000-8000-000000000005',
+    symbol: 'boi_gordo',
+    label: 'Arroba do Boi Gordo (MS)',
+    value: 300,
+    change_percent: 0,
+    unit: 'R$/@',
+    updated_at: '2026-10-22T05:10:00Z',
+  },
+  {
+    id: '80000000-0000-4000-8000-000000000006',
+    symbol: 'soja',
+    label: 'Saca de Soja 60kg (Maracaju)',
+    value: 125,
+    change_percent: 0,
+    unit: 'R$/sc',
+    updated_at: '2026-10-22T05:10:00Z',
+  },
 ];
 
 /* =============================================================================

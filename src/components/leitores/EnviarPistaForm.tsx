@@ -72,7 +72,7 @@ export default function EnviarPistaForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const inputClass =
-    'w-full rounded-xl border border-line bg-editorial px-4 py-3.5 text-base text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none';
+    'w-full rounded-[4px] border border-line bg-editorial px-4 py-3.5 text-base text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none';
 
   async function handleFiles(list: FileList | null) {
     if (!list) return;
@@ -129,8 +129,8 @@ export default function EnviarPistaForm() {
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-sm bg-nioaque-green text-white">
+      <div className="rounded-[4px] border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-[4px] bg-nioaque-green text-white">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M20 6 9 17l-5-5" />
           </svg>
@@ -151,7 +151,7 @@ export default function EnviarPistaForm() {
             setMessage('');
             setPhotos([]);
           }}
-          className="mt-5 rounded-sm border border-nioaque-green px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
+          className="mt-5 rounded-[4px] border border-nioaque-green px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
         >
           Enviar outra
         </button>
@@ -232,13 +232,13 @@ export default function EnviarPistaForm() {
                 <img
                   src={photo.dataUrl}
                   alt=""
-                  className="h-20 w-20 rounded-lg object-cover ring-1 ring-line"
+                  className="h-20 w-20 rounded-[4px] object-cover ring-1 ring-line"
                 />
                 <button
                   type="button"
                   onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}
                   aria-label={`Remover ${photo.name}`}
-                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-sm bg-ink text-white shadow"
+                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-[4px] bg-ink text-white shadow"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
                     <path d="M18 6 6 18M6 6l12 12" />
@@ -253,7 +253,7 @@ export default function EnviarPistaForm() {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={photos.length >= MAX_PHOTOS}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-editorial px-4 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green disabled:opacity-50"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-line-strong bg-editorial px-4 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-green hover:text-nioaque-green disabled:opacity-50"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
@@ -278,7 +278,7 @@ export default function EnviarPistaForm() {
       {error && (
         <p
           role="alert"
-          className="rounded-xl bg-nioaque-red-50 px-4 py-3 text-sm font-semibold text-nioaque-red-dark"
+          className="rounded-[4px] bg-nioaque-red-50 px-4 py-3 text-sm font-semibold text-nioaque-red-dark"
         >
           {error}
         </p>
@@ -287,7 +287,7 @@ export default function EnviarPistaForm() {
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-[4px] bg-nioaque-red px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-red-dark disabled:opacity-60"
       >
         {busy ? 'Enviando...' : 'Mandar para a redação'}
       </button>

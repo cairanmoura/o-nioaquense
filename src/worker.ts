@@ -11,7 +11,11 @@ export function createExports(manifest: any) {
   };
 
   const scheduled = async (_event: any, env: any, ctx: any) => {
-    const base = 'https://o-nioaquense.o-nioaquense.workers.dev';
+    // Base do proprio worker: permite sobrescrever via env, mas o fallback
+    // aponta para o worker dev real (onioaquense.com ainda nao propagou DNS).
+    const base =
+      env?.WORKER_BASE_URL ??
+      'https://o-nioaquense.cairan-dev.workers.dev';
     ctx.waitUntil(
       (globalThis as any).fetch(`${base}/api/cron/extract-news`, {
         headers: { 'x-cron-secret': env?.CRON_SECRET ?? '' },

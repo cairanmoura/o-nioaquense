@@ -18,7 +18,7 @@ const socials = Object.entries(profile.social_links).filter(([, value]) => Boole
 ---
 
 <article
-  class="group flex h-full flex-col rounded-2xl border border-line bg-nioaque-white p-5 transition-shadow hover:shadow-lift"
+  class="group flex h-full flex-col rounded-[4px] border border-line bg-nioaque-white p-5 transition-shadow hover:shadow-lift"
 >
   <div class="flex items-start gap-4">
     {
@@ -30,11 +30,11 @@ const socials = Object.entries(profile.social_links).filter(([, value]) => Boole
           height="72"
           loading="lazy"
           decoding="async"
-          class="h-18 w-18 shrink-0 rounded-full object-cover ring-[3px] ring-nioaque-green transition-transform group-hover:scale-105"
+          class="h-18 w-18 shrink-0 rounded-[4px] object-cover ring-[3px] ring-nioaque-green transition-transform group-hover:scale-105"
           style="height:4.5rem;width:4.5rem"
         />
       ) : (
-        <span class="flex h-18 w-18 shrink-0 items-center justify-center rounded-full bg-nioaque-green font-editorial text-2xl font-semibold text-white ring-[3px] ring-nioaque-green" style="height:4.5rem;width:4.5rem">
+        <span class="flex h-18 w-18 shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green font-editorial text-2xl font-semibold text-white ring-[3px] ring-nioaque-green" style="height:4.5rem;width:4.5rem">
           {profile.full_name.charAt(0)}
         </span>
       )
@@ -69,7 +69,7 @@ const socials = Object.entries(profile.social_links).filter(([, value]) => Boole
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex rounded-full bg-editorial px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
+              class="inline-flex rounded-[4px] bg-editorial px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-nioaque-green-50 hover:text-nioaque-green-dark"
             >
               {network}
             </a>

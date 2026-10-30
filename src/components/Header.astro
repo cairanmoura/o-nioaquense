@@ -1,23 +1,28 @@
 ---
 import LogoNioaquense from './LogoNioaquense.astro';
+import WeatherIcon from './WeatherIcon.astro';
+import { getNioaqueWeather } from '../lib/weather';
 
 /**
  * Header.astro
  * -----------------------------------------------------------------------------
- * Cabecalho editorial em uma unica linha:
+ * Header de LINHA UNICA, fundo branco opaco, borda/sombra sutil.
  *
- *   [Logo] [Navegacao categorias] [whitespace] [Busca] [CTA]
+ * Ordem esquerda -> direita:
+ *   [Logo] [Menu geografico] ... [Clima] [Busca] [+ Mande sua noticia] [Secoes]
  *
- * Logo e navegacao agrupadas a ESQUERDA (justify-start), busca e CTA à DIREITA,
- * tudo na mesma linha (items-center + whitespace-nowrap).
+ * As editorias tematicas ficam escondidas no painel "Secoes".
  */
 
-const categorias = [
-  { href: '/editoria/nioaque', label: 'Nioaque', accent: true },
-  { href: '/editoria/regiao', label: 'Regiao' },
-  { href: '/editoria/ms', label: 'Mato Grosso do Sul' },
+const categoriasGeograficas = [
+  { href: '/editoria/nioaque', label: 'Nioaque' },
+  { href: '/editoria/regiao', label: 'Região' },
+  { href: '/editoria/ms', label: 'MS' },
   { href: '/editoria/brasil', label: 'Brasil' },
-  // { href: '/radar-oficial', label: 'Radar Oficial' }, // area adormecida
+  { href: '/radar-oficial', label: 'Radar' },
+];
+
+const secoesTematicas = [
   { href: '/editoria/politica-poder', label: 'Política & Poder' },
   { href: '/editoria/agro-campo', label: 'Agro & Campo' },
   { href: '/editoria/policia-justica', label: 'Polícia & Justiça' },
@@ -27,157 +32,141 @@ const categorias = [
   { href: '/editoria/cultura', label: 'Cultura' },
 ];
 
-const searchTerm = Astro.url.searchParams.get('q') ?? '';
-const activeScope = Astro.url.searchParams.get('escopo');
-
-const isActive = (href: string) => {
-  const slug = href.split('/').pop();
-  return activeScope === slug || (activeScope === null && href === '/editoria/nioaque');
-};
+const weather = await getNioaqueWeather(Astro.locals);
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href;
 ---
 
-<header class="bg-nioaque-white border-b border-line">
-  <div class="container-editorial w-full box-border overflow-x-clip">
-    <div class="flex items-center justify-between gap-2 whitespace-nowrap py-2.5 sm:gap-6 sm:py-4">
+<header class="h-16 border-b border-slate-200 bg-white shadow-sm">
+  <div class="container-editorial box-border flex h-full w-full flex-row items-center justify-between gap-2">
+    <div class="flex min-w-0 items-center gap-3 lg:gap-5">
+      <a href="/" class="flex shrink-0" aria-label="O Nioaquense - página inicial">
+        <LogoNioaquense class="h-7 w-auto max-w-[120px] sm:h-10 sm:max-w-none" />
+      </a>
 
-      {/* Esquerda: Logo + Navegacao de categorias */}
-      <div class="flex min-w-0 items-center gap-4 sm:gap-6">
-        <a
-          href="/"
-          class="flex shrink-0 min-w-0 max-w-[190px] sm:max-w-none"
-          aria-label="O Nioaquense - pagina inicial"
-        >
-          {/* Mobile: h-8 (32px) + proporcao 470:100 = ~150px de largura,
-              sempre dentro de max-w-[190px]. Nunca estoura a viewport. */}
-          <LogoNioaquense class="h-8 w-auto max-w-[190px] sm:h-10 lg:h-12" />
-        </a>
-
-        <nav aria-label="Categorias" class="hidden sm:flex items-center gap-1 sm:gap-2">
-          <ul class="flex flex-wrap gap-1">
-            {
-              categorias.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <li>
-                    <a
-                      href={item.href}
-                      aria-current={active ? 'page' : undefined}
-                      class:list={[
-                        'inline-flex items-center gap-1.5 rounded-sm border border-line px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap',
-                        active
-                          ? 'bg-nioaque-green text-white border-nioaque-green hover:bg-nioaque-green-dark'
-                          : 'text-ink-soft border-transparent hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
-                      ]}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                );
-              })
-            }
-          </ul>
-        </nav>
-      </div>
-
-      {/* Direita: Busca + CTA */}
-      <div class="flex items-center gap-3 shrink-0">
-        {/* Busca rapida */}
-        <form
-          action="/busca"
-          method="get"
-          role="search"
-          class="hidden sm:flex items-center gap-2 rounded-sm border border-line bg-editorial px-3 py-2 sm:px-3 sm:py-2 transition-colors focus-within:border-nioaque-green focus-within:bg-nioaque-white"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-          </svg>
-          <label for="busca-desktop" class="sr-only">Buscar no O Nioaquense</label>
-          <input
-            id="busca-desktop"
-            type="search"
-            name="q"
-            value={searchTerm}
-            placeholder="Buscar notícia..."
-            class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
-          />
-        </form>
-
-        {/* Botao de destaque (mobile: icon + "Noticia" = "+ Noticia") */}
-        <a
-          href="/mane-sua-noticia"
-          class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-sm bg-nioaque-red px-2.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-nioaque-red-dark sm:gap-2 sm:px-3 sm:py-2.5"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="shrink-0">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span class="hidden sm:inline">Mande sua notícia</span>
-          <span class="sm:hidden">Notícia</span>
-        </a>
-      </div>
-
-    </div>
-
-    {/* Busca mobile (abaixo da linha principal, apenas mobile) */}
-    <div class="hidden sm:hidden mt-3 flex items-center gap-2 rounded-sm border border-line bg-nioaque-white px-4 py-2.5">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-ink-muted">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-      </svg>
-      <label for="busca-mobile" class="sr-only">Buscar no O Nioaquense</label>
-      <input
-        id="busca-mobile"
-        type="search"
-        name="q"
-        value={searchTerm}
-        placeholder="Buscar notícia..."
-        class="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none"
-      />
-    </div>
-
-    {/* Menu mobile (painel lateral) */}
-    <div id="menu-mobile" hidden class="border-t border-line bg-nioaque-white lg:hidden">
-      <div class="container-editorial py-4">
-        <nav aria-label="Categorias">
-          <ul class="grid grid-cols-2 gap-2">
-            {
-              categorias.map((item) => (
+      <nav aria-label="Categorias geográficas" class="hidden min-w-0 lg:block">
+        <ul class="flex items-center gap-0.5">
+          {
+            categoriasGeograficas.map((item) => {
+              const active = isActive(item.href);
+              return (
                 <li>
                   <a
                     href={item.href}
+                    aria-current={active ? 'page' : undefined}
                     class:list={[
-                      'block rounded-sm px-4 py-3 text-sm font-semibold transition-colors',
-                      isActive(item.href)
+                      'inline-flex items-center whitespace-nowrap rounded-[4px] px-2.5 py-1.5 text-sm font-semibold transition-colors',
+                      active
                         ? 'bg-nioaque-green text-white'
-                        : 'bg-nioaque-white text-ink border border-line hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                        : 'bg-white text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
                     ]}
                   >
                     {item.label}
                   </a>
                 </li>
-              ))
-            }
-          </ul>
-        </nav>
-      </div>
+              );
+            })
+          }
+        </ul>
+      </nav>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+      <a
+        href="/#clima"
+        class="flex items-center gap-1 rounded-[4px] px-1.5 py-1.5 text-sm font-semibold text-ink hover:bg-nioaque-green-50"
+        aria-label={`Clima em Nioaque: ${weather.temperature} graus`}
+      >
+        <WeatherIcon icon={weather.icon ?? 'cloud'} size={18} />
+        <span class="tabular-nums">{weather.temperature}°C</span>
+      </a>
+
+      <a
+        href="/busca"
+        class="rounded-[4px] p-2 text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green"
+        aria-label="Buscar"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5" stroke-linecap="round"></path>
+        </svg>
+      </a>
+
+      <a
+        href="/mande-sua-noticia"
+        class="hidden items-center whitespace-nowrap rounded-[4px] border border-nioaque-red px-3 py-1.5 text-sm font-semibold text-nioaque-red transition-colors hover:bg-nioaque-red hover:text-white md:inline-flex"
+      >
+        + Mande sua notícia
+      </a>
+
+      <button
+        id="menu-toggle"
+        type="button"
+        class="inline-flex items-center gap-1 rounded-[4px] border border-slate-200 bg-white p-2 text-sm font-semibold text-ink hover:bg-nioaque-green-50 sm:px-3 sm:py-1.5"
+        aria-label="Abrir menu de seções"
+        aria-expanded="false"
+        aria-controls="menu-mobile"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <path d="M3 12h18M3 6h18M3 18h18"></path>
+        </svg>
+        <span class="hidden sm:inline">Seções ▾</span>
+      </button>
     </div>
   </div>
 </header>
 
+<div id="menu-mobile" class="fixed inset-0 z-50 hidden overflow-y-auto bg-white">
+  <div class="container-editorial py-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">Menu</span>
+      <button id="menu-close" type="button" class="rounded-[4px] p-2 text-ink-muted hover:text-nioaque-red" aria-label="Fechar menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <p class="mt-4 text-xs font-bold uppercase tracking-wider text-nioaque-green">Onde</p>
+    <ul class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+      {
+        categoriasGeograficas.map((c) => (
+          <li>
+            <a href={c.href} class="block rounded-[4px] border border-slate-200 px-3 py-2.5 text-sm font-semibold text-ink hover:bg-nioaque-green-50">
+              {c.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="mt-6 text-xs font-bold uppercase tracking-wider text-nioaque-green">Seções</p>
+    <ul class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {
+        secoesTematicas.map((s) => (
+          <li>
+            <a href={s.href} class="block rounded-[4px] border border-slate-200 px-4 py-3 text-sm font-semibold text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green">
+              {s.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <a href="/mande-sua-noticia" class="mt-6 inline-flex items-center rounded-[4px] bg-nioaque-red px-4 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-red-dark">
+      + Mande sua notícia
+    </a>
+  </div>
+</div>
+
 <script>
-  const toggle = document.getElementById('menu-toggle');
-  const panel = document.getElementById('menu-mobile');
-
-  toggle?.addEventListener('click', () => {
-    if (!panel) return;
-
-    const willOpen = panel.hasAttribute('hidden');
-    if (willOpen) {
-      panel.removeAttribute('hidden');
-    } else {
-      panel.setAttribute('hidden', '');
-    }
-
-    toggle?.setAttribute('aria-expanded', String(willOpen));
-  });
+  const toggle = document.getElementById('menu-toggle')!;
+  const panel = document.getElementById('menu-mobile')!;
+  const setOpen = (open: boolean) => {
+    panel.classList.toggle('hidden', !open);
+    toggle.setAttribute('aria-expanded', String(open));
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  toggle.addEventListener('click', () => setOpen(panel.classList.contains('hidden')));
+  document.getElementById('menu-close')?.addEventListener('click', () => setOpen(false));
 </script>

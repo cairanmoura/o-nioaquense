@@ -37,6 +37,59 @@ const ENTITIES: Record<string, string> = {
   ndash: '–',
   mdash: '—',
   hellip: '…',
+  aacute: 'á',
+  eacute: 'é',
+  iacute: 'í',
+  oacute: 'ó',
+  uacute: 'ú',
+  atilde: 'ã',
+  otilde: 'õ',
+  ccedil: 'ç',
+  agrave: 'à',
+  egrave: 'è',
+  igrave: 'ì',
+  ograve: 'ò',
+  ugrave: 'ù',
+  auml: 'ä',
+  euml: 'ë',
+  iuml: 'ï',
+  ouml: 'ö',
+  uuml: 'ü',
+  acirc: 'â',
+  ecirc: 'ê',
+  ocirc: 'ô',
+  ucirc: 'û',
+  raquo: '»',
+  laquo: '«',
+  copy: '©',
+  reg: '®',
+  trade: '™',
+  deg: '°',
+  times: '×',
+  divide: '÷',
+  pound: '£',
+  euro: '€',
+  cent: '¢',
+  sect: '§',
+  para: '¶',
+  middot: '·',
+  bull: '•',
+  dagger: '†',
+  permil: '‰',
+  plusmn: '±',
+  frac12: '½',
+  frac14: '¼',
+  sup2: '²',
+  sup3: '³',
+  ordm: 'º',
+  ordf: 'ª',
+  iexcl: '¡',
+  iquest: '¿',
+  not: '¬',
+  macr: '¯',
+  acute: '´',
+  cedil: '¸',
+  micro: 'µ',
 };
 
 export function decodeEntities(value: string): string {
@@ -605,4 +658,552 @@ export function detectCategory(title: string): string {
   }
 
   return 'Geral';
+}
+
+/* -------------------------------------------------------------------------- */
+/* Extracao de conteudo completo da materia original                          */
+/* -------------------------------------------------------------------------- */
+
+/** Seletores comuns de corpo de materia em portais de noticias. */
+const CONTENT_SELECTORS: string[] = [
+  'article',
+  '[itemprop="articleBody"]',
+  '.article-body',
+  '.article-content',
+  '.post-content',
+  '.entry-content',
+  '.content',
+  '.materia',
+  '.noticia',
+  '.texto',
+  '.corpo',
+  'main',
+];
+
+/**
+ * Remove elementos indesejados (scripts, styles, navegação, rodapé, anúncios)
+ * de um trecho HTML para deixar apenas o corpo da matéria.
+ */
+function cleanArticleHtml(html: string, sourceUrl: string): string {
+  let cleaned = html;
+
+  // Remove scripts e styles
+  cleaned = cleaned.replace(/<script[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<style[\s\S]*?<\/style>/gi, '');
+
+  // Remove seções de navegação, header, footer, aside, figuras de anúncio
+  cleaned = cleaned.replace(/<nav[\s\S]*?<\/nav>/gi, '');
+  cleaned = cleaned.replace(/<header[\s\S]*?<\/header>/gi, '');
+  cleaned = cleaned.replace(/<footer[\s\S]*?<\/footer>/gi, '');
+  cleaned = cleaned.replace(/<aside[\s\S]*?<\/aside>/gi, '');
+
+  // Remove iframes e embeds (videos externos, anúncios)
+  cleaned = cleaned.replace(/<iframe[\s\S]*?<\/iframe>/gi, '');
+  cleaned = cleaned.replace(/<embed[\s\S]*?>/gi, '');
+
+  // Remove elementos com classes de anúncio/social
+  cleaned = cleaned.replace(
+    /<[^>]+(class=["'][^"']*(ad|advertisement|banner|social|share|related|pub|anuncio)[^"']*["'][^>]*>[\s\S]*?<\/[^>]+>)/gi,
+    '',
+  );
+
+  // Converte imagens relativas para absolutas
+  cleaned = cleaned.replace(
+    /<img[^>]+src=["']([^"']+)["']/gi,
+    (match, src) => {
+      const absolute = resolveImageUrl(src, sourceUrl);
+      return match.replace(src, absolute);
+    },
+  );
+
+  // Adiciona referrerpolicy e loading lazy nas imagens
+  cleaned = cleaned.replace(
+    /<img([^>]*)\/?>/gi,
+    (match, attrs) => {
+      if (!/referrerpolicy/i.test(attrs)) {
+        attrs += ' referrerpolicy="no-referrer"';
+      }
+      if (!/loading=/i.test(attrs)) {
+        attrs += ' loading="lazy"';
+      }
+      return `<img${attrs} />`;
+    },
+  );
+
+  // Limpa atributos onclick / eventos indesejados
+  cleaned = cleaned.replace(/\s+on\w+=["'][^"']*["']/gi, '');
+
+  return cleaned.trim();
+}
+
+/**
+ * Busca o HTML da URL original da materia e extrai o corpo completo do texto.
+ *
+ * Estrategia:
+ *   1) Procura por tag <article>
+ *   2) Tenta seletores comuns (.article-body, .post-content, etc.)
+ *   3) Fallback: pega todos os <p> do corpo
+ *
+ * Retorna o HTML limpo do corpo da materia, pronto para ser inserido no
+ * campo `content` do banco.
+ */
+export async function fetchArticleContent(
+  articleUrl: string,
+  sourceUrl: string,
+): Promise<string> {
+  try {
+    const response = await fetch(articleUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      },
+    } as RequestInit);
+
+    if (!response.ok) return '';
+
+    const html = await response.text();
+
+    // Tenta encontrar o conteudo principal por seletor
+    let contentHtml = '';
+
+    for (const selector of CONTENT_SELECTORS) {
+      const regex = new RegExp(
+        `<${selector}[\\s\\S]*?<\\/${selector}>`,
+        'i',
+      );
+      const match = html.match(regex);
+      if (match && match[0].length > 200) {
+        contentHtml = match[0];
+        break;
+      }
+    }
+
+    // Fallback: se nao encontrou tag article/outro, pega todos os <p> do body
+    if (!contentHtml) {
+      const bodyMatch = html.match(/<body[\s\S]*?<\/body>/i);
+      const bodyHtml = bodyMatch ? bodyMatch[0] : html;
+      const paragraphs = bodyHtml.match(/<p[\s\S]*?<\/p>/gi);
+      if (paragraphs && paragraphs.length > 0) {
+        contentHtml = paragraphs.join('');
+      }
+    }
+
+    if (!contentHtml) return '';
+
+    return cleanArticleHtml(contentHtml, sourceUrl);
+  } catch {
+    return '';
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bing News RSS (feeds de busca — alternativa ao Google News)                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Detecta feeds de busca do Bing News (`bing.com/news/search?q=...&format=RSS`).
+ * Alternativa ao Google News: funciona direto do IP de datacenter (sem
+ * bloqueio 503) e o link real da materia vem no parametro `url=` do
+ * redirect `apiclick.aspx` (resolucao local, sem fetch extra).
+ */
+export function isBingNewsFeed(url: string): boolean {
+  return /bing\.com\/news\/search/i.test(url);
+}
+
+/**
+ * Extrai a URL real de um redirect do Bing News
+ * (`bing.com/news/apiclick.aspx?...&url=<URL real>`).
+ * Retorna a propria URL se nao for um redirect do Bing.
+ */
+export function resolveBingUrl(link: string): string {
+  try {
+    // Desescapa entidades XML comuns do RSS (&amp; etc.)
+    const clean = link.replace(/&amp;/g, '&').replace(/&#160;/g, ' ').replace(/&quot;/g, '"');
+    if (!/bing\.com\/news\/apiclick/i.test(clean)) return clean;
+    const inner = new URL(clean).searchParams.get('url');
+    return inner || clean;
+  } catch {
+    return link;
+  }
+}
+
+/**
+ * Parseia o XML de um feed de busca do Bing News (RSS 2.0) e devolve os
+ * itens com o link JA resolvido (URL real da materia do portal).
+ */
+export function parseBingNewsItems(xml: string, maxItems = 20): GoogleNewsItem[] {
+  const items: GoogleNewsItem[] = [];
+  const itemRegex = /<item\b([\s\S]*?)<\/item>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = itemRegex.exec(xml)) !== null && items.length < maxItems) {
+    const block = match[1];
+
+    let title = (block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
+      block.match(/<title>([\s\S]*?)<\/title>/))?.[1]?.trim();
+    const link = (block.match(/<link>([\s\S]*?)<\/link>/))?.[1]?.trim();
+    const pubDate = (block.match(/<pubDate>([\s\S]*?)<\/pubDate>/))?.[1]?.trim();
+    const descRaw = (block.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) ||
+      block.match(/<description>([\s\S]*?)<\/description>/))?.[1]?.trim();
+
+    if (!title || !link) continue;
+
+    title = stripHtml(title).trim();
+    if (title.length < 10) continue;
+
+    items.push({
+      title,
+      link: resolveBingUrl(link),
+      sourceUrl: null,
+      sourceName: null,
+      pubDate: pubDate ? new Date(pubDate).toISOString() : null,
+      description: descRaw ? stripHtml(descRaw) : null,
+    });
+  }
+
+  return items;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Google News RSS (feeds de busca)                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Detecta feeds do Google News (`news.google.com/rss/search?q=...`).
+ * Sao a forma mais estavel de acompanhar portais sem RSS proprio.
+ */
+export function isGoogleNewsFeed(url: string): boolean {
+  return /news\.google\.com\/rss/i.test(url);
+}
+
+export interface GoogleNewsItem {
+  title: string;
+  /** Link do Google News (redirecionamento) — resolver antes de usar.
+   *  No Bing News o link ja e' a URL real da materia. */
+  link: string;
+  /** URL do portal de origem, se declarada em <source url="...">. */
+  sourceUrl: string | null;
+  /** Nome do portal de origem (<source>...</source>). */
+  sourceName: string | null;
+  pubDate: string | null;
+  /** Resumo do item (Bing News preenche; Google News nao). */
+  description?: string | null;
+}
+
+/**
+ * Parseia o XML de um feed do Google News (mesmo formato RSS 2.0).
+ * O <title> vem no padrao "Titulo da materia - Nome do Portal"; o sufixo
+ * e' removido aqui para nao poluir o cabecalho do artigo.
+ */
+export function parseGoogleNewsItems(xml: string, maxItems = 20): GoogleNewsItem[] {
+  const items: GoogleNewsItem[] = [];
+  const itemRegex = /<item\b([\s\S]*?)<\/item>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = itemRegex.exec(xml)) !== null && items.length < maxItems) {
+    const block = match[1];
+
+    const sourceTag = block.match(/<source[^>]*url=["']([^"']+)["'][^>]*>([\s\S]*?)<\/source>/i);
+    const sourceUrl = sourceTag?.[1]?.trim() ?? null;
+    const sourceName = sourceTag?.[2] ? stripHtml(sourceTag[2]).trim() : null;
+
+    let title = (block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
+      block.match(/<title>(.*?)<\/title>/))?.[1]?.trim();
+    const link = (block.match(/<link>(.*?)<\/link>/))?.[1]?.trim();
+    const pubDate = (block.match(/<pubDate>(.*?)<\/pubDate>/))?.[1]?.trim();
+
+    if (!title || !link) continue;
+
+    // Remove o sufixo " - Nome do Portal" do titulo do Google News
+    if (sourceName) {
+      title = title.replace(new RegExp(`\\s*-\\s*${escapeRegExp(sourceName)}\\s*$`, 'i'), '').trim();
+    } else {
+      title = title.replace(/\s*-\s*[^-]{1,60}$/, '').trim();
+    }
+    if (title.length < 10) continue;
+
+    items.push({
+      title,
+      link,
+      sourceUrl,
+      sourceName,
+      pubDate: pubDate ?? null,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Busca o XML de um feed do Google News. Tenta o fetch direto primeiro e, se
+ * o servidor responder 403/503 (bloqueio de IP de datacenter — Cloudflare
+ * Workers), usa proxies publicos como fallback:
+ *
+ *   1) rss2json  — devolve JSON (ate 10 itens no plano gratuito)
+ *   2) cors.lol  — devolve o XML original (ate 100 itens)
+ *
+ * Os itens sao normalizados para blocos <item> XML que o
+ * parseGoogleNewsItems ja entende. Retorna '' se tudo falhar.
+ */
+export async function fetchGoogleNewsFeed(feedUrl: string, maxItems = 20): Promise<string> {
+  // --- 1) Fetch direto ---
+  try {
+    const res = await fetch(feedUrl, {
+      headers: {
+        ...GN_HEADERS,
+        Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+      },
+    } as RequestInit);
+    if (res.ok) {
+      const xml = await res.text();
+      if (/<item\b/i.test(xml)) return xml;
+    }
+  } catch {
+    // segue para os proxies
+  }
+
+  // --- 2) Proxy rss2json (JSON; plano gratuito nao aceita `count`) ---
+  try {
+    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+    const res = await fetch(proxyUrl, {
+      headers: { ...GN_HEADERS, Accept: 'application/json' },
+    } as RequestInit);
+    if (res.ok) {
+      const data = (await res.json()) as {
+        status?: string;
+        items?: Array<{ title?: string; link?: string; pubDate?: string; content?: string }>;
+      };
+      if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+        const xml =
+          '<rss>' +
+          data.items
+            .slice(0, maxItems)
+            .map(
+              (it) =>
+                `<item><title><![CDATA[${it.title ?? ''}]]></title><link>${it.link ?? ''}</link>` +
+                `<pubDate>${it.pubDate ?? ''}</pubDate>` +
+                `<description><![CDATA[${it.content ?? ''}]]></description></item>`,
+            )
+            .join('') +
+          '</rss>';
+        if (xml.length > 100) return xml;
+      }
+    }
+  } catch {
+    // segue para o proximo proxy
+  }
+
+  // --- 3) Proxy cors.lol (devolve o XML original) ---
+  try {
+    const proxyUrl = `https://api.cors.lol/?url=${encodeURIComponent(feedUrl)}`;
+    const res = await fetch(proxyUrl, { headers: GN_HEADERS } as RequestInit);
+    if (res.ok) {
+      const xml = await res.text();
+      if (/<item\b/i.test(xml)) return xml;
+    }
+  } catch {
+    // todos os caminhos falharam
+  }
+
+  return '';
+}
+
+const GN_HEADERS: Record<string, string> = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+};
+
+/**
+ * Resolve o link de redirecionamento do Google News para a URL real da materia.
+ *
+ * Estrategias (em ordem, a primeira que funcionar vence):
+ *   1) Decodificar o article ID em base64 (formato antigo "CBMi<url>": o
+ *      payload embute a URL real) — zero fetch, gratis.
+ *   2) Formato novo (AU_yqL...): busca a pagina do artigo no Google News e
+ *      usa a API batchexecute com os parametros `data-n-a-id`, `data-n-a-sg`
+ *      e `data-n-a-ts` embutidos na pagina (mesmo metodo da biblioteca
+ *      googlenewsdecoder). Custo: 2 fetches (pagina + batchexecute).
+ *
+ * Retorna null quando nao consegue resolver (item deve ser descartado).
+ */
+export async function resolveGoogleNewsUrl(gnUrl: string): Promise<string | null> {
+  // --- Estrategia 1: decodifica o article ID em base64 (formato antigo) ---
+  const idMatch = gnUrl.match(/\/(?:rss\/)?articles\/([A-Za-z0-9_-]+)/);
+  if (idMatch) {
+    try {
+      let b64 = idMatch[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4 !== 0) b64 += '=';
+      const binary = atob(b64);
+      // Formato antigo: a URL real aparece embutida no binario
+      const urlMatch = binary.match(/https?:\/\/[^\s"'<>\\]+/);
+      if (urlMatch?.[0]) return urlMatch[0];
+    } catch {
+      // segue para a estrategia 2
+    }
+  }
+
+  // --- Estrategia 2: pagina do artigo + batchexecute (formato AU_yqL) ---
+  try {
+    const res = await fetch(gnUrl, { headers: GN_HEADERS, redirect: 'follow' } as RequestInit);
+
+    // Redirect HTTP direto (raro, mas possivel)
+    const finalUrl = res.url;
+    if (finalUrl && !/news\.google\.com|consent\.google\.com|accounts\.google\.com/.test(finalUrl)) {
+      return finalUrl;
+    }
+
+    const html = await res.text();
+
+    // a) data-n-au direto no HTML (algumas versoes)
+    const dataAu = html.match(/data-n-au=["'](https?:\/\/[^"']+)["']/i);
+    if (dataAu?.[1] && !/google\.com/.test(dataAu[1])) return dataAu[1];
+
+    // b) API batchexecute com os parametros da pagina (metodo estavel)
+    const aId = html.match(/data-n-a-id="([^"]+)"/)?.[1];
+    const aSg = html.match(/data-n-a-sg="([^"]+)"/)?.[1];
+    const aTs = html.match(/data-n-a-ts="([^"]+)"/)?.[1];
+
+    if (aId && aSg && aTs) {
+      const payload = JSON.stringify([
+        'garturlreq',
+        [
+          ['X', 'X', ['X', 'X'], null, null, 1, 1, 'US:en', null, 1, null, null, null, null, null, 0, 1],
+          'X', 'X', 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0,
+        ],
+        aId,
+        parseInt(aTs, 10),
+        aSg,
+      ]);
+      const freq = JSON.stringify([[['Fbv4je', payload, null, 'generic']]]);
+
+      const bres = await fetch('https://news.google.com/_/DotsSplashUi/data/batchexecute', {
+        method: 'POST',
+        headers: {
+          ...GN_HEADERS,
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        },
+        body: `f.req=${encodeURIComponent(freq)}`,
+      } as RequestInit);
+
+      if (bres.ok) {
+        const btxt = await bres.text();
+        const urlMatch = btxt.match(
+          /https?:\/\/(?!news\.google|consent\.google|www\.google|accounts\.google)[^\\"\s]+/,
+        );
+        if (urlMatch?.[0]) {
+          try {
+            return decodeURIComponent(urlMatch[0]);
+          } catch {
+            return urlMatch[0];
+          }
+        }
+      }
+    }
+  } catch {
+    // ignora
+  }
+
+  return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sitemap XML (fallback quando o feed do portal falha)                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Descobre URLs de materias lendo `/robots.txt` do dominio a procura de
+ * `Sitemap:` (prioriza `news-sitemap.xml`) e, se necessario, baixa o
+ * sitemap (ou sub-sitemaps de um sitemap index, 1 nivel) e extrai os `<loc>`.
+ *
+ * Devolve no maximo `maxUrls` URLs que parecem materias.
+ */
+export async function discoverSitemapUrls(pageUrl: string, maxUrls = 15): Promise<string[]> {
+  const origin = new URL(pageUrl).origin;
+  const candidates: string[] = [];
+
+  // --- a) robots.txt ---
+  try {
+    const res = await fetch(`${origin}/robots.txt`, { headers: GN_HEADERS, redirect: 'follow' } as RequestInit);
+    if (res.ok) {
+      const txt = await res.text();
+      for (const m of txt.matchAll(/^sitemap:\s*(\S+)/gim)) {
+        candidates.push(m[1].trim());
+      }
+    }
+  } catch {
+    // sem robots.txt — tenta padroes comuns
+  }
+
+  // --- b) padroes comuns de sitemap ---
+  candidates.push(
+    `${origin}/sitemap.xml`,
+    `${origin}/news-sitemap.xml`,
+    `${origin}/sitemap_index.xml`,
+  );
+
+  // Dedup preservando prioridade: news-sitemap primeiro
+  const unique = [...new Set(candidates)].sort((a, b) => {
+    const score = (u: string) => (u.includes('news-sitemap') ? 2 : u.includes('sitemap') ? 1 : 0);
+    return score(b) - score(a);
+  });
+
+  const isXmlUrl = (u: string) => /\.xml(\?|$)/i.test(u);
+  const extractLocs = (xml: string) =>
+    [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
+
+  for (const smUrl of unique.slice(0, 3)) {
+    let xml = '';
+    try {
+      const res = await fetch(smUrl, { headers: GN_HEADERS, redirect: 'follow' } as RequestInit);
+      if (!res.ok) continue;
+      xml = await res.text();
+    } catch {
+      continue;
+    }
+
+    const locs = extractLocs(xml);
+    if (locs.length === 0) continue;
+
+    let articleUrls = locs.filter((l) => !isXmlUrl(l));
+
+    // Sitemap index: baixa ate 2 sub-sitemaps (1 nivel)
+    if (articleUrls.length === 0) {
+      const subSitemaps = locs.filter(isXmlUrl).slice(0, 2);
+      for (const sub of subSitemaps) {
+        try {
+          const res = await fetch(sub, { headers: GN_HEADERS, redirect: 'follow' } as RequestInit);
+          if (!res.ok) continue;
+          const subXml = await res.text();
+          articleUrls.push(...extractLocs(subXml).filter((l) => !isXmlUrl(l)));
+        } catch {
+          // ignora sub-sitemap quebrado
+        }
+        if (articleUrls.length >= maxUrls) break;
+      }
+    }
+
+    if (articleUrls.length > 0) {
+      return articleUrls.filter(looksLikeArticleUrl).slice(0, maxUrls);
+    }
+  }
+
+  return [];
+}
+
+/** Heuristica leve: URL do mesmo site com caminho de materia (>= 2 segmentos). */
+function looksLikeArticleUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (!/^https?:$/.test(u.protocol)) return false;
+    if (/\.(?:jpe?g|png|gif|svg|webp|pdf|css|js|mp4|woff2?|zip)$/i.test(u.pathname)) return false;
+    const segments = u.pathname.split('/').filter(Boolean);
+    return segments.length >= 2;
+  } catch {
+    return false;
+  }
 }

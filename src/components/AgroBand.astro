@@ -1,0 +1,54 @@
+---
+import type { MarketQuote } from '../lib/types';
+
+/**
+ * AgroBand.astro
+ * Faixa verde-escura de ponta a ponta: Dolar, Arroba do Boi Gordo (MS) e
+ * Saca de Soja 60kg (Maracaju/Regiao). Valores vem de `market_quotes`
+ * (symbols: dolar, boi_gordo, soja); sem dado, o bloco mostra "--".
+ */
+interface Props {
+  quotes: MarketQuote[];
+}
+const { quotes } = Astro.props;
+
+const find = (...symbols: string[]) => quotes.find((q) => symbols.includes(q.symbol));
+
+const blocks = [
+  { label: 'Dólar Comercial', sub: 'Cotação do dia', quote: find('dolar', 'usd'), prefix: 'R$ ' },
+  { label: 'Arroba do Boi Gordo', sub: 'Mato Grosso do Sul', quote: find('boi_gordo', 'boi', 'arroba_boi'), prefix: 'R$ ' },
+  { label: 'Saca de Soja 60kg', sub: 'Maracaju / Região', quote: find('soja', 'soja_maracaju', 'saca_soja'), prefix: 'R$ ' },
+];
+
+const fmt = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+---
+
+<section aria-label="Cotação Agro de Nioaque" class="w-full bg-[#00661E] text-white">
+  <div class="container-editorial py-4">
+    <p class="text-xs font-bold uppercase tracking-wider text-white/80">Cotação Agro de Nioaque</p>
+    <dl class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {
+        blocks.map(({ label, sub, quote, prefix }) => {
+          const up = (quote?.change_percent ?? 0) >= 0;
+          return (
+            <div class="rounded-[4px] border border-white/20 bg-[#005018] px-4 py-3">
+              <dt class="text-sm font-semibold">{label}</dt>
+              <dd class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-extrabold tabular-nums">
+                  {quote ? `${prefix}${fmt(quote.value)}` : '--'}
+                </span>
+                {quote && (
+                  <span class:list={['text-xs font-bold', up ? 'text-green-300' : 'text-red-300']}>
+                    {up ? '▲ +' : '▼ '}
+                    {fmt(quote.change_percent)}%
+                  </span>
+                )}
+              </dd>
+              <p class="mt-0.5 text-xs text-white/70">{sub}</p>
+            </div>
+          );
+        })
+      }
+    </dl>
+  </div>
+</section>

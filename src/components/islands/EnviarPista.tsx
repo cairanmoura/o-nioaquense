@@ -48,7 +48,7 @@ export default function EnviarPista() {
 
   if (status === 'loading') {
     return (
-      <div className="rounded-2xl border border-line bg-nioaque-white p-6 text-center text-sm text-ink-muted">
+      <div className="rounded-[4px] border border-line bg-nioaque-white p-6 text-center text-sm text-ink-muted">
         Carregando configuracao...
       </div>
     );
@@ -100,7 +100,7 @@ export default function EnviarPista() {
 
   if (status === 'sent') {
     return (
-      <div className="rounded-2xl border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
+      <div className="rounded-[4px] border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
         <p className="font-editorial text-lg font-semibold text-nioaque-green-dark">
           Obrigado pela pista!
         </p>
@@ -111,7 +111,7 @@ export default function EnviarPista() {
             setStatus('idle');
             setMessage('');
           }}
-          className="mt-4 rounded-sm border border-nioaque-green px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
+          className="mt-4 rounded-[4px] border border-nioaque-green px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green hover:text-white"
         >
           Enviar outra
         </button>
@@ -131,7 +131,7 @@ export default function EnviarPista() {
             value={form.sender_name}
             onChange={(event) => update('sender_name', event.target.value)}
             placeholder="Como podemos te chamar?"
-            className="mt-1.5 w-full rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
+            className="mt-1.5 w-full rounded-[4px] border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
           />
         </label>
 
@@ -145,7 +145,7 @@ export default function EnviarPista() {
             value={form.sender_whatsapp}
             onChange={(event) => update('sender_whatsapp', event.target.value)}
             placeholder="(67) 9 9999-9999"
-            className="mt-1.5 w-full rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
+            className="mt-1.5 w-full rounded-[4px] border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
           />
         </label>
       </div>
@@ -159,7 +159,7 @@ export default function EnviarPista() {
           value={form.neighborhood}
           onChange={(event) => update('neighborhood', event.target.value)}
           placeholder="Ex.: Vila Nova"
-          className="mt-1.5 w-full rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
+          className="mt-1.5 w-full rounded-[4px] border border-line bg-nioaque-white px-4 py-3 text-sm text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
         />
       </label>
 
@@ -172,14 +172,14 @@ export default function EnviarPista() {
           value={form.message}
           onChange={(event) => update('message', event.target.value)}
           placeholder="Conte o que voce viu, ouviu ou sabe."
-          className="mt-1.5 w-full resize-y rounded-xl border border-line bg-nioaque-white px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
+          className="mt-1.5 w-full resize-y rounded-[4px] border border-line bg-nioaque-white px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted/70 focus:border-nioaque-green focus:outline-none"
         />
       </label>
 
       {message && (
         <p
           role="status"
-          className={`rounded-xl px-4 py-3 text-sm ${
+          className={`rounded-[4px] px-4 py-3 text-sm ${
             status === 'error'
               ? 'bg-nioaque-red-50 text-nioaque-red-dark'
               : 'bg-nioaque-green-50 text-nioaque-green-dark'
@@ -193,7 +193,7 @@ export default function EnviarPista() {
         <button
           type="submit"
           disabled={status === 'sending'}
-          className="inline-flex items-center justify-center rounded-sm bg-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-[4px] bg-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-nioaque-green-dark disabled:opacity-60"
         >
           {status === 'sending' ? 'Enviando...' : 'Enviar pista'}
         </button>
@@ -202,7 +202,7 @@ export default function EnviarPista() {
           href="https://wa.me/5567999990000?text=Tenho%20uma%20pista%20para%20o%20O%20Nioaquense"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-sm border border-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green-50"
+          className="inline-flex items-center justify-center rounded-[4px] border border-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green-50"
         >
           Enviar pelo WhatsApp
         </a>

@@ -30,10 +30,14 @@ export type AdOfferType = 'banner' | 'daily_deal';
 /* Tabelas                                                                    */
 /* -------------------------------------------------------------------------- */
 
+export type NewsSourceType = 'rss' | 'html_scraper';
+
 export interface NewsSource {
   id: string;
   name: string;
   rss_url: string;
+  /** 'rss' = feed XML; 'html_scraper' = raspagem de HTML da pagina inicial. */
+  source_type: NewsSourceType;
   is_active: boolean;
   auto_publish: boolean;
   ai_rewrite: boolean;

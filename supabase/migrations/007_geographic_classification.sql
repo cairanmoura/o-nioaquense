@@ -30,7 +30,9 @@ create index if not exists idx_articles_local_tags
 comment on column public.articles.local_tags is
   'Cidades e locais detectados no titulo/conteudo da materia (ex.: Niooque, Jardim, BR-060, Rota Bioceania).';
 
--- Atualiza o index de escopo para incluir o novo valor
+-- Indice parcial para o novo escopo. Compara como TEXTO (scope::text) porque
+-- o Postgres nao permite usar um valor de enum recem-criado na mesma
+-- transacao (erro 55P04) — o cast para text evita o problema.
 create index if not exists idx_articles_scope_regiao
   on public.articles (scope)
-  where scope = 'regiao';
+  where scope::text = 'regiao';

@@ -36,6 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { data, error } = await client.from('news_sources').insert({
       name: String(payload.name ?? ''),
       rss_url: String(payload.rss_url ?? ''),
+      source_type: payload.source_type === 'html_scraper' ? 'html_scraper' : 'rss',
       is_active: payload.is_active !== false,
       auto_publish: payload.auto_publish !== false,
       ai_rewrite: payload.ai_rewrite !== false,
