@@ -67,12 +67,15 @@ const horaAgora = new Intl.DateTimeFormat('pt-BR', {
 }).format(agora);
 
 /* --- Manchete principal: prioriza Nioaque --- */
-const leadPool = photoFirst(
+const leadPool = (
   activeScope === null
-    ? [...feed.featured.filter((a) => a.scope === 'nioaque'), ...feed.byScope.nioaque, ...feed.featured, ...feed.articles]
+    ? [
+        ...photoFirst([...feed.featured.filter((a) => a.scope === 'nioaque'), ...feed.byScope.nioaque]),
+        ...photoFirst([...feed.featured, ...feed.articles]),
+      ]
     : activeScope === 'regiao'
       ? regiaoArticles
-      : [...feed.byScope[activeScope], ...feed.articles],
+      : photoFirst([...feed.byScope[activeScope], ...feed.articles])
 );
 const lead = leadPool[0] ?? null;
 

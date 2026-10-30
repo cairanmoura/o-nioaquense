@@ -151,12 +151,16 @@ export function getWeekDays(reference: Date = new Date()): WeekDay[] {
 export function cleanTitle(raw: string): string {
   let t = String(raw ?? '')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/^\s*(t[ií]tulo(\s+reescrito)?|novo t[ií]tulo|reescrito)\s*[:\-–]\s*/gi, '')
     .replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}(\s+\d{1,2}:\d{2}(:\d{2})?)?\.?/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  // Se sobrou "Federal." ou similar no comeco (resto de dateline), remove
-  t = t.replace(/^[A-ZÁ-Ú][a-zá-ú]{2,12}\.\s+(?=[A-ZÁ-Ú])/, '');
+  // resto de dateline no comeco ("Federal.") e prefixos de modelo, em qualquer ordem
+  for (let i = 0; i < 2; i++) {
+    t = t
+      .replace(/^[A-ZÁ-Ú][a-zá-ú]{2,12}\.\s+(?=[A-ZÁ-Ú])/, '')
+      .replace(/^\s*(t[ií]tulo(\s+reescrito)?|novo t[ií]tulo|reescrito)\s*[:\-–]\s*/i, '')
+      .trim();
+  }
   t = t.replace(/^["“”']+|["“”']+$/g, '').trim();
   return t.length >= 15 ? t : '';
 }
