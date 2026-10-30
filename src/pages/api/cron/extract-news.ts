@@ -25,7 +25,7 @@ import {
 } from '../../../lib/rss';
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from '../../../lib/scraper';
 
-import { refreshDollarQuote } from '../../../lib/quotes';
+import { refreshDollarQuote, refreshAgroQuotes } from '../../../lib/quotes';
 import type { ArticleScope } from '../../../lib/types';
 
 /**
@@ -742,6 +742,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   );
 
   await refreshDollarQuote(supabase);
+  await refreshAgroQuotes(supabase);
 
   return new Response(JSON.stringify({ ok: true, ...totals, results }), {
     status: 200,

@@ -7,10 +7,8 @@ import LocalAdBanner from '../components/LocalAdBanner.astro';
 import LocalDailyDeal from '../components/LocalDailyDeal.astro';
 import LotteryResults from '../components/LotteryResults.astro';
 import MainLayout from '../layouts/MainLayout.astro';
-import MarketTicker from '../components/MarketTicker.astro';
 import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
-import FarmaciaWidget from '../components/FarmaciaWidget.astro';
 import AdStrip from '../components/AdStrip.astro';
 import AgroBand from '../components/AgroBand.astro';
 import ArticlePills from '../components/ArticlePills.astro';
@@ -229,24 +227,11 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       <AdStrip ad={feed.ads.sidebar} class="order-3" />
     </div>
 
-    {/* Servicos: onibus + alertas (o clima vive so no cabecalho) */}
-    <div class="mt-12" data-reveal>
-      <FarmaciaWidget utility={feed.utility} />
-    </div>
-
-    {/* Faixa economica + loterias */}
-    <div class="mt-6 grid gap-6 sm:grid-cols-2" data-reveal>
-      <MarketTicker quotes={quotes} />
+    {/* Loterias compactas (1/3) + mosaico de anunciantes (2/3) */}
+    <div class="mt-10 grid items-start gap-6 lg:grid-cols-[1fr_2fr]" data-reveal>
       <LotteryResults results={lotteries} />
+      <AdMosaic ads={feed.ads} slots={['home_middle', 'sidebar']} label="Publicidade local" />
     </div>
-
-    {/* Mosaico de anunciantes locais (padrao Google 300x250) */}
-    <AdMosaic
-      ads={feed.ads}
-      slots={['home_middle', 'sidebar']}
-      label="Publicidade local"
-      class="mt-10"
-    />
 
     {/* Colunistas em destaque — desativado temporariamente (sem colunistas) */}
 
