@@ -25,6 +25,7 @@ import {
 } from '../../../lib/rss';
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from '../../../lib/scraper';
 
+import { cleanTitle } from '../../../lib/format';
 import { refreshDollarQuote, refreshAgroQuotes } from '../../../lib/quotes';
 import type { ArticleScope } from '../../../lib/types';
 
@@ -589,7 +590,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               env,
             );
             if (rewriteRes.text.trim()) {
-              finalTitle = rewriteRes.text.trim().slice(0, 200);
+              finalTitle = cleanTitle(rewriteRes.text.trim().slice(0, 200)) || cleanTitle(title) || title;
               rewritten++;
             }
 
@@ -661,7 +662,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           : null;
 
         const article = {
-          title: finalTitle.slice(0, 200),
+          title: (cleanTitle(finalTitle) || finalTitle).slice(0, 200),
           subtitle: null,
           slug,
           summary_bullets: summaryBullets,

@@ -9,6 +9,7 @@
 import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-js';
 
 import { mockReaderSubmissions } from './mock-data';
+import { cleanTitle } from './format';
 import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
 import { isAdLive, pickLiveAd } from './ads';
@@ -38,7 +39,7 @@ function toStringArray(value: unknown): string[] {
 function normalizeArticle(row: Record<string, unknown>): Article {
   return {
     id: String(row.id),
-    title: String(row.title ?? ''),
+    title: cleanTitle(String(row.title ?? '')) || String(row.title ?? ''),
     subtitle: row.subtitle ? String(row.subtitle) : null,
     slug: String(row.slug ?? ''),
     summary_bullets: toStringArray(row.summary_bullets),

@@ -12,12 +12,13 @@ import RadarOficialBlock from '../components/RadarOficialBlock.astro';
 import AdStrip from '../components/AdStrip.astro';
 import AgroBand from '../components/AgroBand.astro';
 import ArticlePills from '../components/ArticlePills.astro';
-import SponsorCarousel from '../components/SponsorCarousel.astro';
 
 import { getHomeFeed, getRegiaoArticles, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
 import { formatRelative } from '../lib/format';
 import { isPhotoCover } from '../lib/rss';
+const hasPhoto = (a: Article) => isPhotoCover(a.cover_image_url);
+const photoFirst = (list: Article[]) => [...list.filter(hasPhoto), ...list.filter((a) => !hasPhoto(a))];
 import type { ArticleScope, Profile, Article } from '../lib/types';
 
 /**
@@ -66,16 +67,17 @@ const horaAgora = new Intl.DateTimeFormat('pt-BR', {
 }).format(agora);
 
 /* --- Manchete principal: prioriza Nioaque --- */
-const featuredNioaque = feed.featured.find((article) => article.scope === 'nioaque');
-const lead =
+const leadPool = photoFirst(
   activeScope === null
-    ? (featuredNioaque ?? feed.featured[0] ?? feed.articles[0] ?? null)
+    ? [...feed.featured.filter((a) => a.scope === 'nioaque'), ...feed.byScope.nioaque, ...feed.featured, ...feed.articles]
     : activeScope === 'regiao'
-      ? (regiaoArticles[0] ?? null)
-      : (feed.byScope[activeScope][0] ?? feed.articles[0] ?? null);
+      ? regiaoArticles
+      : [...feed.byScope[activeScope], ...feed.articles],
+);
+const lead = leadPool[0] ?? null;
 
 /* --- Submanchetes --- */
-const nioaquePool = feed.byScope.nioaque.filter((article) => article.id !== lead?.id);
+const nioaquePool = photoFirst(feed.byScope.nioaque).filter((article) => article.id !== lead?.id);
 const subLeads = (
   activeScope && activeScope !== 'nioaque' && activeScope !== 'regiao'
     ? feed.byScope[activeScope].filter((article) => article.id !== lead?.id)
@@ -86,7 +88,7 @@ const subLeads = (
 
 const secondary = feed.articles.filter((article) => article.id !== lead?.id);
 const usedIds = new Set([lead?.id, ...subLeads.map((a) => a.id)]);
-const plantao = [...secondary.filter((a) => !usedIds.has(a.id)), ...secondary.filter((a) => usedIds.has(a.id))].slice(0, 5);
+const plantao = photoFirst(secondary.filter((a) => !usedIds.has(a.id))).slice(0, 5);
 const breaking = feed.breaking.slice(0, 3);
 const nioaqueGrid = nioaquePool.filter((article) => !subLeads.some((item) => item.id === article.id)).slice(0, 4);
 const ms = feed.byScope.ms.slice(0, 6);
@@ -154,7 +156,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
       <section aria-label="Manchete principal" class="min-w-0">
         {
           lead && (
-            <div class="rounded-[4px] border-2 border-[#00661E] bg-white p-3 shadow-sm sm:p-4">
+            <div class="border-t-4 border-[#00661E] pt-3">
               <div class="mb-3">
                 <ArticlePills article={lead} showEditor />
               </div>
@@ -163,9 +165,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           )
         }
         {/* Publicidade mobile: abaixo da 1a manchete */}
-        <div class="mt-5 lg:hidden">
-          <AdStrip ad={feed.ads.header_billboard} />
-        </div>
+        {feed.ads.header_billboard && (<div class="mt-5 lg:hidden"><AdStrip ad={feed.ads.header_billboard} /></div>)}
       </section>
 
       <section aria-label="Sub-manchetes" class="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-1">
@@ -221,16 +221,16 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
   <div class="container-editorial pb-10 pt-8 sm:pt-10">
     {/* Mais lidas ladeada por banners horizontais curtos */}
-    <div class="grid items-start gap-5 lg:grid-cols-[1fr_1.4fr_1fr]">
-      <AdStrip ad={feed.ads.home_middle} class="order-2 lg:order-1" />
+    <div class={feed.ads.home_middle || feed.ads.sidebar ? 'grid items-start gap-5 lg:grid-cols-[1fr_1.4fr_1fr]' : 'mx-auto max-w-3xl'}>
+      {feed.ads.home_middle && <AdStrip ad={feed.ads.home_middle} class="order-2 lg:order-1" />}
       <MostRead articles={feed.articles} authors={profilesById} limit={5} class="order-1 lg:order-2" />
-      <AdStrip ad={feed.ads.sidebar} class="order-3" />
+      {feed.ads.sidebar && <AdStrip ad={feed.ads.sidebar} class="order-3" />}
     </div>
 
     {/* Loterias compactas (1/3) + mosaico de anunciantes (2/3) */}
-    <div class="mt-10 grid items-start gap-6 lg:grid-cols-[1fr_2fr]" data-reveal>
+    <div class={`mt-10 grid items-start gap-6 ${feed.ads.home_middle || feed.ads.sidebar ? "lg:grid-cols-[1fr_2fr]" : "lg:grid-cols-3"}`} data-reveal>
       <LotteryResults results={lotteries} />
-      <AdMosaic ads={feed.ads} slots={['home_middle', 'sidebar']} label="Publicidade local" />
+      {(feed.ads.home_middle || feed.ads.sidebar) && <AdMosaic ads={feed.ads} slots={['home_middle', 'sidebar']} label="Publicidade local" />}
     </div>
 
     {/* Colunistas em destaque — desativado temporariamente (sem colunistas) */}
@@ -459,5 +459,4 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     </section>
   </div>
 
-  <SponsorCarousel />
 </MainLayout>
