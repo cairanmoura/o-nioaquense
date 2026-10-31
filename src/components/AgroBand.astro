@@ -20,13 +20,13 @@ const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDi
 ---
 
 <section aria-label="Cotações" class="w-full bg-[#00661E] text-white">
-  <ul class="no-scrollbar mx-auto flex h-12 w-full items-center justify-start gap-6 overflow-x-auto whitespace-nowrap px-4 sm:h-14 sm:justify-center sm:gap-10">
+  <ul class="no-scrollbar mx-auto flex w-full items-center justify-start gap-8 overflow-x-auto whitespace-nowrap px-4 py-4 sm:justify-center sm:gap-14">
     {
       items.map(({ icon, label, quote }) => (
         <li class="flex shrink-0 items-center gap-2 text-sm">
           <span aria-hidden="true">{icon}</span>
-          <span class="font-semibold text-white/85">{label}</span>
-          <span class="font-extrabold tabular-nums">{quote ? brl(quote.value) : '--'}</span>
+          <span class="font-normal text-white/85">{label}</span>
+          <span class="text-lg font-bold tabular-nums text-white">{quote ? brl(quote.value) : '--'}</span>
         </li>
       ))
     }

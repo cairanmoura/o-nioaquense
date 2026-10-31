@@ -68,27 +68,9 @@ function pickIcon(categoryLabel: string | null, scope: string): string | null {
   return icons[h % icons.length] ?? null;
 }
 
-/* Padrões de marca d'água variados (posicao/tamanho/opacidade). */
-const WATERMARK_PATTERNS = [
-  { cx: 930, cy: 338, r: 170, color: '#008026', opacity: 0.12 },
-  { cx: 270, cy: 200, r: 120, color: '#E60000', opacity: 0.1 },
-  { cx: 930, cy: 120, r: 90, color: '#008026', opacity: 0.08 },
-  { cx: 270, cy: 450, r: 140, color: '#E60000', opacity: 0.09 },
-  { cx: 600, cy: 300, r: 200, color: '#008026', opacity: 0.07 },
-];
-const watermark = WATERMARK_PATTERNS[h % WATERMARK_PATTERNS.length];
-
-/* Cores de destaque variadas. */
-const ACCENT_COLORS = ['#E60000', '#008026', '#1E293B'];
-const accentColor = ACCENT_COLORS[h % ACCENT_COLORS.length];
-
-/* Layout da caixa branca (posicao variada). */
-const BOX_VARIANTS = [
-  { x: 72, y: 188, w: 720, h: 300, rx: 4 },
-  { x: 72, y: 220, w: 640, h: 260, rx: 4 },
-  { x: 120, y: 188, w: 680, h: 280, rx: 4 },
-];
-const box = BOX_VARIANTS[h % BOX_VARIANTS.length];
+const BG_COLORS = ['#00661E', '#008026', '#1E293B'];
+const bg = BG_COLORS[h % BG_COLORS.length];
+const bandColor = bg === '#1E293B' ? '#008026' : '#1E293B';
 
 const rotulo = label.trim();
 const EDITORIAS = new Set([
@@ -110,111 +92,24 @@ const iconPath = pickIcon(label, scope);
 <svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 1200 675"
-  class:list={['block', className]}
+  class:list={['block h-full w-full object-cover', className]}
   role={alt ? 'img' : undefined}
   aria-label={alt}
   aria-hidden={alt ? undefined : 'true'}
   preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
 >
-  <rect width="1200" height="675" fill="#FAF9F6" />
+  <rect width="1200" height="675" fill={bg} />
+  <rect y="615" width="1200" height="60" fill={bandColor} />
+  <rect y="615" width="1200" height="8" fill="#E60000" />
 
-  {/* Faixas da bandeira de Nioaque */}
-  <rect width="1200" height="96" fill="#008026" />
-  <rect y="579" width="1200" height="96" fill="#E60000" />
-
-  {/* Marca d'agua geometrica variada (hash do slug) */}
-  <circle
-    cx={watermark.cx}
-    cy={watermark.cy}
-    r={watermark.r}
-    fill={watermark.color}
-    opacity={watermark.opacity}
-  />
-  <circle
-    cx={1200 - watermark.cx}
-    cy={675 - watermark.cy}
-    r={watermark.r * 0.6}
-    fill={watermark.color === '#008026' ? '#E60000' : '#008026'}
-    opacity={watermark.opacity * 0.7}
-  />
-
-  {/* Assinatura no topo */}
-  <text
-    x="72"
-    y="60"
-    fill="#FFFFFF"
-    font-family="'Plus Jakarta Sans', Arial, sans-serif"
-    font-size="22"
-    font-weight="700"
-    letter-spacing="5"
-  >O NIOAQUENSE</text>
-  <text
-    x="1128"
-    y="60"
-    fill="#FFFFFF"
-    text-anchor="end"
-    opacity="0.75"
-    font-family="'Plus Jakarta Sans', Arial, sans-serif"
-    font-size="18"
-    font-weight="500"
-    letter-spacing="2"
-  >NIOAQUE · MS</text>
-
-  {/* Caixa branca variada (posicao/tamanho baseado no hash) */}
-  <rect x={box.x} y={box.y} width={box.w} height={box.h} rx={box.rx} fill="#FFFFFF" />
-
-  <text
-    x={box.x + 44}
-    y={box.y + 66}
-    fill="#008026"
-    font-family="'Plus Jakarta Sans', Arial, sans-serif"
-    font-size="22"
-    font-weight="700"
-    letter-spacing="3"
-  >{kicker}</text>
-
-  <text
-    x={box.x + 40}
-    y={box.y + 164}
-    fill="#1E293B"
-    font-family="Newsreader, Georgia, 'Times New Roman', serif"
-    font-size={tituloSize}
-    font-weight="600"
-    letter-spacing="-1"
-  >{titulo}</text>
-
-  <rect x={box.x + 44} y={box.y + 198} width="72" height="7" rx="3.5" fill={accentColor} />
-
-  <text
-    x={box.x + 44}
-    y={box.y + 258}
-    fill="#64748B"
-    font-family="'Plus Jakarta Sans', Arial, sans-serif"
-    font-size="21"
-    font-weight="500"
-  >Jornalismo hiperlocal, apurado na fonte.</text>
-
-  {/* Icone editorial tematico (opcional, baseado na categoria e hash) */}
-  {
-    iconPath && (
-      <image
-        href={iconPath}
-        x={1200 - 220}
-        y={box.y + box.h - 120}
-        width="160"
-        height="160"
-        preserveAspectRatio="xMidYMid meet"
-        opacity="0.15"
-      />
-    )
-  }
-
-  {/* Cruz da bandeira, no canto inferior direito */}
-  <g transform="translate(1092 616) scale(0.42)">
-    <rect x="0" y="0" width="100" height="18" fill="#008026" />
-    <rect x="0" y="18" width="100" height="64" fill="#FFFFFF" />
-    <rect x="0" y="82" width="100" height="18" fill="#E60000" />
-    <rect x="26" y="28" width="8" height="44" fill="#E60000" />
-    <rect x="18" y="37" width="24" height="8" fill="#E60000" />
+  {/* Cruz latina da bandeira, em branco */}
+  <g fill="#FFFFFF" opacity="0.18">
+    <rect x="900" y="120" width="70" height="400" />
+    <rect x="780" y="230" width="310" height="70" />
   </g>
+
+  <text x="72" y="84" fill="#FFFFFF" opacity="0.8" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="5">{kicker}</text>
+  <text x="72" y="330" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size={tituloSize + 24} font-weight="800" letter-spacing="-2">{titulo}</text>
+  <rect x="72" y="372" width="96" height="8" fill="#FFFFFF" />
+  <text x="72" y="652" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="4">O NIOAQUENSE · NIOAQUE, MS</text>
 </svg>

@@ -17,7 +17,7 @@
   --color-nioaque-green: #008026; /* Verde Nioaque (primaria) */
   --color-nioaque-red: #e60000; /* Vermelho Nioaque (acento / urgencia) */
   --color-nioaque-white: #ffffff; /* Branco puro (cards / faixa central) */
-  --color-editorial: #faf9f6; /* Fundo editorial */
+  --color-editorial: #f1f4f1; /* Fundo editorial */
   --color-ink: #1e293b; /* Texto principal */
 
   /* --- Derivados uteis (mesma familia cromatica) --- */
@@ -276,3 +276,6 @@
     display: none;
   }
 }
+
+/* Titulos sem vi\u00favas (guideline: text-wrap balance) */
+h1, h2, h3 { text-wrap: balance; }
