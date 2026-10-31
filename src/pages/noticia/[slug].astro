@@ -10,6 +10,8 @@ import { getArticlePage, getHomeFeed } from '../../lib/content';
 import { excerpt } from '../../lib/seo';
 import { linkifyArticle } from '../../lib/linkify';
 import { renderEventCards } from '../../lib/events';
+
+
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { SCOPE_LABEL } from '../../lib/types';
 import { isPhotoCover } from '../../lib/rss';
@@ -54,6 +56,17 @@ const related = page.related.length
   ? page.related
   : feed.byScope.nioaque.filter((item) => item.id !== article.id).slice(0, 3);
 
+// "Outras versoes": outros veiculos que noticiaram o mesmo fato (guardados sem reescrita)
+let otherVersions: { id: string; source_name: string | null; source_url: string; title: string }[] = [];
+try {
+  const sb = Astro.locals.supabase;
+  if (sb) {
+    const { data } = await sb.from('duplicate_articles').select('id,source_name,source_url,title').eq('duplicate_of', article.id).order('created_at', { ascending: false }).limit(6);
+    otherVersions = (data as typeof otherVersions) ?? [];
+  }
+} catch {
+  /* migracao 021 ainda nao rodou */
+}
 const words = article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 const readingMinutes = Math.max(1, Math.round(words / 200));
 const rawSourceUrl = article.source_url ?? null;
@@ -312,6 +325,21 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           class="prose-editorial space-y-5 font-editorial text-[1.125rem] leading-[1.8] text-ink sm:text-[1.1875rem]"
           set:html={renderEventCards(linkifyArticle(article.content, { tags: article.tags ?? [], localTags: article.local_tags ?? [] }))}
         />
+
+        {otherVersions.length > 0 && (
+          <aside class="mt-8 rounded-[6px] border border-slate-200 bg-white p-4" aria-label="Outras versões deste fato">
+            <p class="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">Outras versões</p>
+            <p class="mt-1 text-sm text-ink-soft">O mesmo assunto também foi noticiado por:</p>
+            <ul class="mt-2 space-y-1.5 text-sm">
+              {otherVersions.map((v) => (
+                <li>
+                  <a href={v.source_url} target="_blank" rel="noopener noreferrer" class="font-semibold text-nioaque-green-dark hover:underline">{v.source_name ?? 'Veículo'}</a>
+                  <span class="text-ink-muted"> · {v.title}</span>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
 
         {sourceName && sourceUrl && (
           <p class="mt-8 border-t border-line pt-4 text-sm leading-relaxed text-ink-soft">

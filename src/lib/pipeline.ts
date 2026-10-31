@@ -176,6 +176,64 @@ export function titleSimilarity(a: string, b: string): number {
   return inter >= 4 ? inter / (A.size + B.size - inter) : 0;
 }
 
+const STOP = new Set(['para','como','mais','sobre','apos','entre','pelo','pela','pelos','pelas','esta','este','esse','essa','sera','serao','foi','ser','tem','dos','das','nos','nas','uma','uns','com','sem','por','que','onde','quando','quem','ainda','depois','contra','durante','segundo','novo','nova','anuncia','diz','afirma','veja','saiba']);
+/** Palavras-tema (radical de 5 letras) de um texto: "publica/publicou" casam, "Groenlandia" e' ancora forte. */
+function topicStems(t: string): Set<string> {
+  return new Set(
+    t
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 4 && !STOP.has(w))
+      .map((w) => w.slice(0, 5)),
+  );
+}
+/** Nomes proprios (palavra capitalizada fora do inicio): pessoas, lugares, orgaos. */
+function properNouns(t: string): Set<string> {
+  const words = t.split(/[\s,:;()"'“”|\-–—]+/).filter(Boolean);
+  return new Set(
+    words
+      .filter((w) => /^[A-ZÀ-Ý][\p{L}]{3,}$/u.test(w))
+      .map((w) => w.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().slice(0, 6)),
+  );
+}
+/** Mesmo fato? Titulos parecidos, ou temas + nomes proprios em comum (nomes diferentes = fatos diferentes). */
+export function sameStory(a: string, b: string): boolean {
+  const PA = properNouns(a);
+  const PB = properNouns(b);
+  let caps = 0;
+  for (const w of PA) if (PB.has(w)) caps++;
+  // Cada titulo tem um nome proprio que o outro nao tem (ex.: Nioaque x Jardim) -> fatos diferentes
+  if (caps < 2 && PA.size > caps && PB.size > caps) return false;
+  if (titleSimilarity(a, b) >= 0.5) return true;
+  const A = topicStems(a);
+  const B = topicStems(b);
+  if (A.size < 4 || B.size < 4) return false;
+  let inter = 0;
+  for (const w of A) if (B.has(w)) inter++;
+  const ratio = inter / Math.min(A.size, B.size);
+  return (caps >= 2 && inter >= 3 && ratio >= 0.4) || (caps >= 1 && inter >= 4 && ratio >= 0.6);
+}
+
+async function findDuplicate(supabase: any, title: string): Promise<{ id: string; title: string } | null> {
+  const since = new Date(Date.now() - 5 * 86400000).toISOString();
+  const { data } = await supabase.from('articles').select('id,title,subtitle').gte('created_at', since).order('created_at', { ascending: false }).limit(400);
+  const hit = (data ?? []).find((r: any) => sameStory(title, `${r.title ?? ''} ${r.subtitle ?? ''}`) || sameStory(title, String(r.title ?? '')));
+  return hit ? { id: hit.id, title: hit.title } : null;
+}
+
+async function recordDuplicate(supabase: any, dup: { id: string }, info: { sourceName: string; link: string; title: string; excerpt: string | null; pubDate: string | null }) {
+  try {
+    await supabase.from('duplicate_articles').upsert(
+      { duplicate_of: dup.id, source_name: info.sourceName, source_url: info.link, title: info.title.slice(0, 250), excerpt: info.excerpt?.slice(0, 500) ?? null, published_at: info.pubDate && !Number.isNaN(new Date(info.pubDate).getTime()) ? new Date(info.pubDate).toISOString() : null },
+      { onConflict: 'source_url' },
+    );
+  } catch {
+    /* tabela ainda nao criada (migracao 021): so ignora */
+  }
+}
+
 const hostOf = (u: string): string | null => {
   try {
     return new URL(u).hostname.replace(/^www\./, '');
@@ -450,7 +508,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   if (!ex || ex.text.length < 150) return { status: 'skipped', reason: 'nao foi possivel ler a pagina da materia (portal bloqueou e o feed nao traz o texto)' };
 
   // Capa/legenda/data: a extracao limpa; se faltar e houver HTML, o parser do scraper completa
-  let cover = ex.coverImage && !isLogoImage(ex.coverImage) ? ex.coverImage : ex.images.find((i) => !isLogoImage(i.url))?.url ?? null;
+  // Foto de destaque do proprio feed (WordPress) e' a mais confiavel; depois a da pagina, sem logos/fotos de autor
+  let cover = entry.rssImage && !isLogoImage(entry.rssImage) ? entry.rssImage : ex.coverImage && !isLogoImage(ex.coverImage) ? ex.coverImage : ex.images.find((i) => !isLogoImage(i.url))?.url ?? null;
   let caption = ex.coverCaption;
   let pubDate = entry.pubDate ?? ex.publishedAt ?? null;
   let rawDesc = entry.rawDesc ?? (ex.description || null);
@@ -482,11 +541,11 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   const { data: slugDup } = await supabase.from('articles').select('id').eq('slug', slug).limit(1);
   if (slugDup?.length) return { status: 'skipped', reason: 'titulo ja publicado' };
 
-  // Mesmo fato noticiado por outro veiculo (titulos quase iguais nas ultimas 72 h)
-  const since = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
-  const { data: recent } = await supabase.from('articles').select('title').gte('created_at', since).limit(300);
-  if (recent?.some((r: any) => titleSimilarity(title, String(r.title ?? '')) >= 0.5)) {
-    return { status: 'skipped', reason: 'mesmo fato ja publicado por outro veiculo' };
+  // Mesmo fato noticiado por outro veiculo: NAO gasta IA; vai para "Outras versoes" da materia original
+  const dup = await findDuplicate(supabase, title);
+  if (dup) {
+    await recordDuplicate(supabase, dup, { sourceName: entry.publisherName || ex.siteName || publisherFromHost(entry.link) || source.name, link: entry.link, title, excerpt: ex.text.slice(0, 500), pubDate });
+    return { status: 'skipped', reason: `duplicada de "${dup.title.slice(0, 50)}" (guardada em Outras versoes)`, title };
   }
 
   const link = entry.link;
@@ -614,8 +673,10 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   const blockedByAi = blockedByViolencePolicy({ title: finalTitle, text: bodyText, mentionsNioaque: nioaqueInText || localTags.includes('Nioaque'), aiViolence, aiImportance });
   if (blockedByAi) return { status: 'skipped', reason: blockedByAi, title: finalTitle };
   // Mesmo fato ja publicado (agora comparando com o titulo reescrito)
-  if (recent?.some((r: any) => titleSimilarity(finalTitle, String(r.title ?? '')) >= 0.45)) {
-    return { status: 'skipped', reason: 'mesmo fato ja publicado por outro veiculo', title: finalTitle };
+  const dup2 = await findDuplicate(supabase, finalTitle);
+  if (dup2) {
+    await recordDuplicate(supabase, dup2, { sourceName: publisher, link, title, excerpt: bodyText.slice(0, 500), pubDate });
+    return { status: 'skipped', reason: `duplicada de "${dup2.title.slice(0, 50)}" (guardada em Outras versoes)`, title: finalTitle };
   }
 
   const categoryLabel = normalizeCategory(aiCategory) || detectCategory(finalTitle, bodyText);

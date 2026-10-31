@@ -43,8 +43,9 @@ const credit = article.source_name ?? authorName;
 const photo = isPhotoCover(article.cover_image_url) ? article.cover_image_url : null;
 const coverLabel = article.category_label ?? SCOPE_LABEL[article.scope];
 const coverScope = SCOPE_LABEL[article.scope];
-const words = article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
-const readingMinutes = Math.max(1, Math.round(words / 200));
+// As listas nao carregam o corpo (pesado): so mostra o tempo de leitura quando o texto veio junto
+const words = article.content ? article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length : 0;
+const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
 ---
 
 {
@@ -146,7 +147,7 @@ const readingMinutes = Math.max(1, Math.round(words / 200));
             {formatRelative(article.published_at)}
           </time>
           <span aria-hidden="true">&middot;</span>
-          <span>{readingMinutes} min de leitura</span>
+          {readingMinutes > 0 && <span>{readingMinutes} min de leitura</span>}
         </div>
       </div>
 

@@ -95,10 +95,23 @@ export async function fetchViaJina(url: string): Promise<ExtractedArticle | null
     if (cut > 400) md = md.slice(0, cut);
     if (md.length < 300 || isBotWall(String(data?.title ?? ''), md)) return null;
 
-    const blocks = md
+    let blocks = md
       .split(/\n{2,}/)
-      .map((b) => b.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`>#]/g, '').trim())
-      .filter((b) => b.length >= 30);
+      .map((b) => b.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`>#]/g, '').replace(/\s+/g, ' ').trim())
+      .filter((b) => b.length > 0);
+    // Cabecalho do portal (editoria, titulo, linha fina, autor, "Publicado em", cidade): o corpo comeca no 1o paragrafo longo
+    const first = blocks.findIndex((b) => b.length >= 120);
+    if (first > 0) blocks = blocks.slice(first);
+    // Rodape: relacionadas ("sab, 31/10/2026 - 15:47"), "Ver mais", "Leia tambem"...
+    const tail = blocks.findIndex(
+      (b, i) =>
+        i >= 2 &&
+        (/^(seg|ter|qua|qui|sex|s[aá]b|dom)[a-z]*,? \d{1,2}\/\d{1,2}\/\d{4}/i.test(b) ||
+          /^(ver mais|leia (tamb[eé]m|mais)|veja (tamb[eé]m|mais)|not[ií]cias relacionadas|mais lidas|compartilh)/i.test(b) ||
+          /^[A-ZÀ-Ý][\p{L} ]{3,25}(?=[A-ZÀ-Ý][a-zà-ý])/u.test(b) && b.length < 140),
+    );
+    if (tail > 0) blocks = blocks.slice(0, tail);
+    blocks = blocks.filter((b) => b.length >= 30 && !/^(publicado|atualizado) em\b|^edi[cç][aã]o\s*:|^(reportagem|colaborou)\b.{0,60}$/i.test(b));
     const html = blocks.map((b) => `<p>${b.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('');
     const clean = sanitizeArticleHtml(html);
 
@@ -176,7 +189,7 @@ const ARTICLE_SELECTORS = [
 ];
 
 /** Logo/marca/brasao/icone do site (nunca e' foto da materia). Ex.: capa errada da Agencia MS. */
-const LOGO_IMG = /(logo|brasao|marca[-_ ]?d.agua|favicon|icone|cropped-|sprite|selo|assinatura|governo[-_ ]?(ms|do[-_ ]?estado)|gov[-_ ]?ms|topo|header|cabecalho|default[-_ ]?(image|share|og)|share[-_ ]?default|sem[-_ ]?foto|placeholder)/i;
+const LOGO_IMG = /(avatar|author|autor[a-z]*|colunista|perfil|profile|jornalista|reporter|byline|gravatar|equipe|staff|logo|brasao|marca[-_ ]?d.agua|favicon|icone|cropped-|sprite|selo|assinatura|governo[-_ ]?(ms|do[-_ ]?estado)|gov[-_ ]?ms|topo|header|cabecalho|default[-_ ]?(image|share|og)|share[-_ ]?default|sem[-_ ]?foto|placeholder)/i;
 export function isLogoImage(url: string | null | undefined, alt = ''): boolean {
   if (!url) return true;
   let file = url.split('?')[0];
@@ -186,6 +199,16 @@ export function isLogoImage(url: string | null | undefined, alt = ''): boolean {
     /* mantem */
   }
   file = file.split('/').slice(-3).join('/');
+  // miniaturas quadradas pequenas (ex.: -150x150, 96x96) sao fotos de perfil, nao capa
+  const sq = file.match(/[-_](\d{2,3})x(\d{2,3})(?=\.\w+$|$)/);
+  if (sq && Number(sq[1]) <= 260 && Number(sq[2]) <= 260 && Math.abs(Number(sq[1]) - Number(sq[2])) <= 20) return true;
+  let w = 0;
+  try {
+    w = Number(new URL(url, 'https://x.invalid').searchParams.get('w') ?? '');
+  } catch {
+    /* ignora */
+  }
+  if (w && w <= 200) return true;
   return LOGO_IMG.test(file) || LOGO_IMG.test(alt) || /\.(svg|ico|gif)(\?|$)/i.test(url);
 }
 

@@ -146,13 +146,27 @@ async function query<T>(
   table: string,
   build: (query: AnyFilterBuilder) => AnyFilterBuilder,
   normalize: (row: Record<string, unknown>) => T,
+  columns = '*',
 ): Promise<T[] | null> {
-  const builder = supabase.from(table).select('*') as unknown as AnyFilterBuilder;
-  const { data, error } = await build(builder);
+  const builder = supabase.from(table).select(columns) as unknown as AnyFilterBuilder;
+  let { data, error } = await build(builder);
+  // Coluna inexistente (migracao pendente): refaz com todas as colunas
+  if (error && columns !== '*') {
+    ({ data, error } = await build(supabase.from(table).select('*') as unknown as AnyFilterBuilder));
+  }
 
   if (error || !data) return null;
   return (data as Record<string, unknown>[]).map(normalize);
 }
+
+/**
+ * Listas (home, materias, busca) NAO precisam do corpo (`content`): ele pesa dezenas de KB por
+ * materia e, parseado para centenas de linhas, estourava o limite de CPU do Worker (erro 1102).
+ */
+const LIST_COLUMNS =
+  'id,title,subtitle,slug,summary_bullets,cover_image_url,cover_image_caption,scope,local_tags,category_label,tags,is_breaking,is_featured,featured_until,author_name,author_id,status,views_count,published_at,created_at,updated_at,source_name,source_url';
+/** Teto de materias nas listas: as mais recentes bastam para home, filtros e busca. */
+const FEED_LIMIT = 200;
 
 export interface HomeFeed {
   articles: Article[];
@@ -244,8 +258,9 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
       query(
         supabase,
         'articles',
-        (q) => q.eq('status', 'published').lte('published_at', new Date().toISOString()),
+        (q) => q.eq('status', 'published').lte('published_at', new Date().toISOString()).order('published_at', { ascending: false }).limit(FEED_LIMIT),
         normalizeArticle,
+        LIST_COLUMNS,
       ),
       query(supabase, 'profiles', (q) => q.eq('active', true), normalizeProfile),
       query(
@@ -397,10 +412,11 @@ export async function getRegiaoArticles(locals: App.Locals): Promise<Article[]> 
   if (supabase) {
     const { data, error } = await supabase
       .from('articles')
-      .select('*')
+      .select(LIST_COLUMNS)
       .eq('status', 'published')
       .or(`scope.eq.regiao,local_tags.cs.{"Jardim","Guia Lopes da Laguna","Bonito","Anastacio","Aquidauana","Sidrolandia","Maracaju","Miranda","Bodoquena","Porto Murtinho","BR-060","BR-419"}`)
-      .order('published_at', { ascending: false });
+      .order('published_at', { ascending: false })
+      .limit(60);
 
     if (error || !data) return [];
     return (data as Record<string, unknown>[]).map(normalizeArticle);
@@ -538,8 +554,9 @@ export async function getArticlePage(
       const relatedRows = await query(
         supabase,
         'articles',
-        (q) => q.eq('status', 'published').eq('scope', article.scope).limit(4),
+        (q) => q.eq('status', 'published').eq('scope', article.scope).order('published_at', { ascending: false }).limit(4),
         normalizeArticle,
+        LIST_COLUMNS,
       );
 
       return {

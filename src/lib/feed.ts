@@ -48,7 +48,12 @@ function imageOf(item: any): string | null {
   const enc = item.enclosure;
   const encOne = Array.isArray(enc) ? enc[0] : enc;
   if (encOne?.['@_url'] && /image/i.test(String(encOne['@_type'] ?? 'image'))) return String(encOne['@_url']);
-  return pick(item['media:content']) ?? pick(item['media:thumbnail']) ?? null;
+  const media = pick(item['media:content']) ?? pick(item['media:thumbnail']);
+  if (media) return media;
+  // WordPress sem <media>: imagem de destaque dentro do HTML do item (data-orig-file = tamanho original)
+  const html = String(item['content:encoded']?.['#cdata'] ?? item['content:encoded'] ?? item.description?.['#cdata'] ?? item.description ?? '');
+  const m = html.match(/data-orig-file="([^"]+)"/) ?? html.match(/<img[^>]+src="(https?:[^"]+)"/);
+  return m ? m[1].replace(/&amp;/g, '&') : null;
 }
 
 export function parseFeedItems(xml: string, max = 30): FeedItem[] {

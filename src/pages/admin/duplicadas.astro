@@ -1,0 +1,56 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+import { formatDateTime } from '../../lib/format';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+let rows: any[] = [];
+let error = '';
+if (Astro.locals.supabase) {
+  const { data, error: err } = await Astro.locals.supabase
+    .from('duplicate_articles')
+    .select('id,source_name,source_url,title,published_at,created_at,duplicate_of, original:articles!duplicate_of(title,slug,status)')
+    .order('created_at', { ascending: false })
+    .limit(150);
+  rows = data ?? [];
+  if (err) error = err.message + ' (rode a migracao 021)';
+}
+---
+
+<AdminLayout title="Matérias duplicadas" subtitle="Mesmo fato noticiado por outro veículo: guardadas sem gastar IA">
+  <div class="mx-auto max-w-4xl">
+    <p class="text-sm text-ink-soft">Quando outro veículo noticia um fato que já temos, a segunda versão não é reescrita. Ela fica aqui e aparece como "Outras versões" na matéria original. Se o sistema errou, abra o link e importe em Importar link.</p>
+    {error && <p class="mt-3 text-sm text-nioaque-red-dark">{error}</p>}
+    <div class="mt-4 flex items-center gap-3">
+      <span class="text-sm font-semibold text-ink">{rows.length} duplicada(s)</span>
+      {rows.length > 0 && <button id="clear-all" type="button" class="rounded-[4px] border border-nioaque-red px-3 py-1.5 text-xs font-semibold text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Limpar todas</button>}
+    </div>
+    <ul class="mt-3 space-y-3">
+      {rows.map((r) => (
+        <li class="rounded-[4px] border border-slate-200 bg-white p-3 shadow-sm">
+          <p class="text-xs font-bold text-nioaque-green-dark">{r.source_name ?? 'Veículo'} · {formatDateTime(r.published_at ?? r.created_at)}</p>
+          <a href={r.source_url} target="_blank" rel="noopener noreferrer" class="mt-0.5 block text-sm font-extrabold text-ink hover:text-nioaque-green">{r.title}</a>
+          {r.original && <p class="mt-1 text-xs text-ink-muted">Repete: <a class="underline" href={`/noticia/${r.original.slug}`} target="_blank">{r.original.title}</a> ({r.original.status})</p>}
+          <button type="button" data-del={r.id} class="mt-2 text-xs font-semibold text-nioaque-red-dark underline">Descartar</button>
+        </li>
+      ))}
+    </ul>
+  </div>
+</AdminLayout>
+
+<script>
+  document.addEventListener('click', async (e) => {
+    const t = e.target as HTMLElement;
+    const id = t.closest<HTMLElement>('[data-del]')?.dataset.del;
+    if (id) {
+      await fetch(`/api/admin/duplicadas?id=${id}`, { method: 'DELETE' });
+      t.closest('li')?.remove();
+    } else if (t.id === 'clear-all' && confirm('Descartar todas as duplicadas?')) {
+      await fetch('/api/admin/duplicadas?all=1', { method: 'DELETE' });
+      location.reload();
+    }
+  });
+</script>
