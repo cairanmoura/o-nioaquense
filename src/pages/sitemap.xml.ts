@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
    */
   const staticPages = [
     { loc: `${base}/`, priority: '1.0', changefreq: 'hourly' },
-    { loc: `${base}/editoria/nioaque`, priority: '0.9', changefreq: 'hourly' },
+    { loc: `${base}/materias`, priority: '0.9', changefreq: 'hourly' },
     { loc: `${base}/radar-oficial`, priority: '0.9', changefreq: 'daily' },
     { loc: `${base}/colunistas`, priority: '0.7', changefreq: 'weekly' },
     { loc: `${base}/editoria/coluna`, priority: '0.8', changefreq: 'daily' },

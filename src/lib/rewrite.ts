@@ -3,10 +3,23 @@
  * -----------------------------------------------------------------------------
  * Reescrita jornalistica com IA (Gemini principal, Workers AI de reserva),
  * com retorno estruturado em JSON.
+ *
+ * CRITERIOS EDITORIAIS (o prompt e a validacao abaixo existem para cumpri-los):
+ *  1. Fidelidade: nenhum nome, cargo, numero, data, hora, local ou valor muda
+ *     nem e inventado; nada do original e' omitido (inclui servico: horario,
+ *     endereco, contato, prazo).
+ *  2. Tamanho: a materia reescrita tem de 85% a 115% das palavras do original.
+ *     Resposta com menos de 75% e' recusada e refeita uma vez.
+ *  3. Titulo concreto: 55-95 caracteres com QUEM + O QUE + ONDE (e numero,
+ *     quando houver). Sem "entenda", "veja", "saiba", sem vagueza.
+ *  4. Autoral: texto proprio (nao copia frases); aspas de falas podem ficar.
+ *  5. Classificacao pelo ASSUNTO: local, tema e tags vem da materia, nunca da
+ *     fonte onde ela foi publicada.
  */
 
 import { runAI } from './ai';
 import { CATEGORY_LABELS, normalizeCategory, detectCategory } from './categories';
+import { normalizeScope } from './geo';
 import { sanitizeArticleHtml } from './clean-content';
 
 export interface Rewritten {
@@ -14,18 +27,50 @@ export interface Rewritten {
   subtitle: string | null;
   summary_bullets: string[];
   content_html: string;
+  /** Tema (uma das editorias oficiais). */
   suggested_category: string | null;
+  /** Local sugerido pela IA: nioaque | regiao | ms | brasil | mundo (ou null). */
+  suggested_scope: string | null;
+  /** Tags livres: cidades, orgaos, pessoas, assuntos. */
+  tags: string[];
   provider: string;
+  words_src: number;
+  words_out: number;
+  /** Avisos de qualidade (ex.: texto curto demais) para a revisao humana. */
+  warnings: string[];
 }
 
+const wordCount = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+
 const SYSTEM = `Você é o Editor-Chefe d'O Nioaquense, portal de notícias hiperlocal de Nioaque (MS).
-Reescreva a matéria recebida de forma 100% autoral e inédita, otimizada para SEO e Google Discover, com fidelidade estrita aos fatos: nomes, cargos, datas, horários, locais e valores não podem ser alterados nem inventados. Sem sensacionalismo ou clickbait.
+Reescreva a matéria recebida com texto 100% autoral, otimizado para SEO e Google Discover, SEM perder informação.
+
+REGRAS DE CONTEÚDO
+- Fidelidade estrita: nomes, cargos, idades, números, valores, datas, horários e locais não podem ser alterados nem inventados. Não acrescente fatos que não estejam no original.
+- Não omita nada relevante: mantenha todos os fatos, as falas (pode manter aspas, sempre atribuídas a quem falou), o contexto e as informações de serviço (horário, endereço, contato, prazo, como participar).
+- TAMANHO: o texto novo deve ter entre 85% e 115% das palavras do original (a contagem vem no pedido). Matéria curta fica curta, mas nunca resuma matéria longa.
+- Estrutura: primeiro parágrafo responde quem, o quê, quando, onde e por quê; depois detalhes em ordem decrescente de importância; parágrafos de 2 a 4 frases; use <h2> só em matérias longas (mais de 300 palavras).
+- Cite a fonte de forma natural uma vez (ex.: "segundo o portal NOME DA FONTE").
+- Sem sensacionalismo, sem clickbait, sem opinião.
+
+TÍTULO: de 55 a 95 caracteres, CONCRETO: quem + o quê + onde (e o número principal, se houver). Proibido título vago ou de curiosidade ("Entenda...", "Veja...", "Saiba...", "O que se sabe"). Exemplos:
+  ruim: "MPF denuncia 11 por tráfico"  ->  bom: "MPF denuncia 11 investigados por tráfico de drogas na fronteira de MS com o Paraguai"
+  ruim: "Homem é preso em Campo Grande"  ->  bom: "Trabalhador é preso por incendiar chácara após discussão sobre dívida em Campo Grande"
+SUBTÍTULO: até 160 caracteres, traz um dado novo (não repete o título).
+RESUMO (summary_bullets): EXATAMENTE 3 tópicos de até 18 palavras, cada um com um fato diferente.
+
+CLASSIFICAÇÃO (decida pelo ASSUNTO da matéria, nunca pelo jornal onde foi publicada)
+- "suggested_scope" (local onde a matéria importa), um entre:
+  "nioaque" = cita a cidade de Nioaque ou seus moradores/órgãos;
+  "regiao" = cita Jardim, Guia Lopes da Laguna, Bonito, Anastácio, Aquidauana, Sidrolândia, Maracaju, Miranda, Bodoquena, Porto Murtinho ou BR-060/BR-419 (sem Nioaque);
+  "ms" = fato do estado de Mato Grosso do Sul ou de outra cidade sul-mato-grossense (Campo Grande, Dourados...), governo estadual, TJMS, Assembleia;
+  "brasil" = fato nacional ou de instituição federal (Senado, Câmara dos Deputados, STF, Planalto, ministérios, PF, Receita, Banco Central), mesmo que publicado por jornal de MS;
+  "mundo" = fato ocorrido fora do Brasil.
+- "suggested_category" (tema): EXATAMENTE uma destas: ${CATEGORY_LABELS.join(', ')}. "Política" para prefeitura, Câmara, governos e eleições; "Cidade" só para serviços e vida comunitária de Nioaque; "Geral" apenas se nenhuma servir.
+- "tags": de 3 a 8 etiquetas curtas (cidades, órgãos, pessoas e assuntos centrais citados), sem repetir o tema.
+
 Responda SOMENTE com um objeto JSON válido, sem markdown, com as chaves:
-"title" (título jornalístico, até 90 caracteres),
-"subtitle" (linha fina complementar, até 160 caracteres),
-"summary_bullets" (array com EXATAMENTE 3 tópicos curtos, até 15 palavras cada),
-"content_html" (corpo em HTML apenas com <p> e <h2>; parágrafos claros, intertítulos quando útil; cite a fonte de forma natural, por exemplo "Segundo informações apuradas pelo portal NOME DA FONTE, ..."),
-"suggested_category" (escolha EXATAMENTE uma destas: ${CATEGORY_LABELS.join(", ")}; "Política" para prefeitura, Câmara, governos e eleições; "Cidade" só para serviços e vida comunitária de Nioaque; "Geral" apenas se nenhuma servir).`;
+"title", "subtitle", "summary_bullets" (array de 3), "content_html" (apenas <p> e <h2>), "suggested_scope", "suggested_category", "tags" (array).`;
 
 function parseJson(raw: string): any | null {
   const t = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -42,36 +87,66 @@ function parseJson(raw: string): any | null {
   }
 }
 
-export async function rewriteArticle(
-  input: { text: string; sourceName: string; sourceUrl: string; extraInstruction?: string },
-  env: unknown,
-): Promise<Rewritten> {
-  const prompt = `Fonte: ${input.sourceName} (${input.sourceUrl})${input.extraInstruction ? `\n${input.extraInstruction}` : ''}\n\nTexto original:\n${input.text.slice(0, 7000)}`;
-  const diag: string[] = [];
-  let data: any = null;
-  let provider = '';
-  // Gemini primeiro; se nao vier JSON valido, tenta o Workers AI
+/** Uma chamada completa (Gemini, depois Workers AI) que devolve o JSON bruto. */
+async function callOnce(prompt: string, env: unknown, diag: string[]): Promise<{ data: any; provider: string } | null> {
   for (const only of ['gemini', 'cloudflare'] as const) {
     try {
-      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 8192 : 3500, diag });
+      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 8192 : 4096, diag });
       const parsed = parseJson(res.text);
-      if (parsed && typeof parsed.title === 'string') {
-        data = parsed;
-        provider = res.provider;
-        break;
-      }
-      diag.push(`${only}: resposta sem JSON valido (${res.text.slice(0, 80).replace(/s+/g, ' ')}…)`);
+      if (parsed && typeof parsed.title === 'string') return { data: parsed, provider: res.provider };
+      diag.push(`${only}: resposta sem JSON valido (${res.text.slice(0, 80).replace(/\s+/g, ' ')}…)`);
     } catch {
       // motivo ja registrado em diag
     }
   }
-  if (!data) throw new Error('A IA não devolveu JSON válido. Detalhes: ' + (diag.join(' | ') || 'sem detalhes'));
+  return null;
+}
 
-  const clean = sanitizeArticleHtml(String(data.content_html ?? ''));
+export async function rewriteArticle(
+  input: { text: string; sourceName: string; sourceUrl: string; extraInstruction?: string },
+  env: unknown,
+): Promise<Rewritten> {
+  const source = input.text.slice(0, 16000);
+  const wordsSrc = wordCount(source);
+  const lo = Math.round(wordsSrc * 0.85);
+  const hi = Math.round(wordsSrc * 1.15);
+
+  const base = `Fonte: ${input.sourceName} (${input.sourceUrl})${input.extraInstruction ? `\n${input.extraInstruction}` : ''}\n\nO texto original tem ${wordsSrc} palavras. Escreva a matéria com ${lo} a ${hi} palavras.\n\nTexto original:\n${source}`;
+
+  const diag: string[] = [];
+  let attempt = await callOnce(base, env, diag);
+  if (!attempt) throw new Error('A IA não devolveu JSON válido. Detalhes: ' + (diag.join(' | ') || 'sem detalhes'));
+
+  let clean = sanitizeArticleHtml(String(attempt.data.content_html ?? ''));
+  let wordsOut = wordCount(clean.text);
+
+  // Curta demais: refaz uma vez dizendo exatamente o que faltou
+  if (wordsSrc >= 120 && wordsOut < wordsSrc * 0.75) {
+    const retryPrompt = `${base}\n\nATENÇÃO: sua versão anterior ficou curta (${wordsOut} de ${wordsSrc} palavras) e perdeu informações. Reescreva COMPLETA, cobrindo todos os parágrafos do original, com ${lo} a ${hi} palavras.`;
+    const second = await callOnce(retryPrompt, env, diag);
+    if (second) {
+      const clean2 = sanitizeArticleHtml(String(second.data.content_html ?? ''));
+      if (wordCount(clean2.text) > wordsOut) {
+        attempt = second;
+        clean = clean2;
+        wordsOut = wordCount(clean2.text);
+      }
+    }
+  }
+
+  const data = attempt.data;
   const bullets = Array.isArray(data.summary_bullets)
     ? data.summary_bullets.map((b: unknown) => String(b).trim()).filter((b: string) => b.length >= 15).slice(0, 3)
     : [];
-  if (clean.paragraphs < 2) throw new Error('Texto reescrito curto demais.');
+  if (clean.paragraphs < 2 && wordsSrc >= 120) throw new Error('Texto reescrito curto demais.');
+
+  const warnings: string[] = [];
+  if (wordsSrc >= 120 && wordsOut < wordsSrc * 0.75) warnings.push(`texto curto: ${wordsOut} de ${wordsSrc} palavras do original`);
+  if (String(data.title ?? '').trim().length < 40) warnings.push('título curto/vago');
+
+  const tags = Array.isArray(data.tags)
+    ? [...new Set(data.tags.map((t: unknown) => String(t).trim()).filter((t: string) => t.length >= 2 && t.length <= 40))].slice(0, 8) as string[]
+    : [];
 
   return {
     title: data.title.trim().slice(0, 200),
@@ -79,6 +154,11 @@ export async function rewriteArticle(
     summary_bullets: bullets,
     content_html: clean.html,
     suggested_category: normalizeCategory(data.suggested_category) ?? detectCategory(data.title, clean.text),
-    provider,
+    suggested_scope: normalizeScope(data.suggested_scope),
+    tags,
+    provider: attempt.provider,
+    words_src: wordsSrc,
+    words_out: wordsOut,
+    warnings,
   };
 }

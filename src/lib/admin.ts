@@ -36,8 +36,10 @@ import type {
 
 export const SCOPE_OPTIONS: { value: ArticleScope; label: string }[] = [
   { value: 'nioaque', label: 'Nioaque' },
+  { value: 'regiao', label: 'Região' },
   { value: 'ms', label: 'Mato Grosso do Sul' },
   { value: 'brasil', label: 'Brasil' },
+  { value: 'mundo', label: 'Mundo' },
   { value: 'coluna', label: 'Coluna' },
   { value: 'radar_oficial', label: 'Radar Oficial' },
 ];

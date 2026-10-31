@@ -1,0 +1,152 @@
+---
+import ArticleCard from '../components/ArticleCard.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import { getHomeFeed } from '../lib/content';
+import { CATEGORIES, norm } from '../lib/categories';
+import { PUBLIC_SCOPES, SCOPE_NAMES } from '../lib/geo';
+import { REGION_CITIES } from '../lib/rss';
+import type { Profile } from '../lib/types';
+
+/**
+ * /materias - todas as matérias, com filtros.
+ * Hierarquia: LOCAL (Nioaque, Região, MS, Brasil, Mundo) > TEMA (Polícia, Saúde...) > tag.
+ * Todo "Ver tudo" do portal cai aqui já com o filtro certo (?local=, ?tema=, ?tag=).
+ */
+
+const PAGE_SIZE = 24;
+const url = Astro.url;
+const local = url.searchParams.get('local') ?? '';
+const tema = url.searchParams.get('tema') ?? '';
+const tag = (url.searchParams.get('tag') ?? '').trim();
+const page = Math.max(1, Number(url.searchParams.get('pagina') ?? '1') || 1);
+
+const feed = await getHomeFeed(Astro.locals);
+const profilesById = new Map<string, Profile>(feed.profiles.map((p) => [p.id, p]));
+const authorOf = (id: string) => profilesById.get(id) ?? null;
+
+const regionSet = new Set(REGION_CITIES.map((c) => norm(c)));
+const isRegiao = (a: (typeof feed.articles)[number]) =>
+  a.scope === 'regiao' || a.local_tags.some((t) => regionSet.has(norm(t)));
+
+const matchLocal = (a: (typeof feed.articles)[number], l: string) => (l === 'regiao' ? isRegiao(a) : a.scope === l);
+const themeObj = CATEGORIES.find((c) => c.slug === tema) ?? null;
+const matchTema = (a: (typeof feed.articles)[number]) =>
+  !themeObj || [norm(themeObj.label), ...themeObj.synonyms.map(norm)].includes(norm(a.category_label));
+const matchTag = (a: (typeof feed.articles)[number]) =>
+  !tag || [...a.tags, ...a.local_tags].some((t) => norm(t) === norm(tag));
+
+const base = feed.articles.filter((a) => a.scope !== 'coluna' && a.scope !== 'radar_oficial');
+const validLocal = (PUBLIC_SCOPES as string[]).includes(local) ? local : '';
+
+// Contagens para os chips (cada eixo considera o filtro do outro)
+const byTema = base.filter(matchTema).filter(matchTag);
+const byLocal = base.filter((a) => (validLocal ? matchLocal(a, validLocal) : true)).filter(matchTag);
+const localCount = (l: string) => byTema.filter((a) => matchLocal(a, l)).length;
+const themeCount = (slug: string) => {
+  const c = CATEGORIES.find((x) => x.slug === slug)!;
+  const keys = [norm(c.label), ...c.synonyms.map(norm)];
+  return byLocal.filter((a) => keys.includes(norm(a.category_label))).length;
+};
+
+const filtered = base
+  .filter((a) => (validLocal ? matchLocal(a, validLocal) : true))
+  .filter(matchTema)
+  .filter(matchTag);
+const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+const current = Math.min(page, totalPages);
+const items = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+const href = (patch: Record<string, string | null>) => {
+  const q = new URLSearchParams();
+  const next = { local: validLocal, tema: themeObj?.slug ?? '', tag, ...patch };
+  for (const [k, v] of Object.entries(next)) if (v) q.set(k, v);
+  const s = q.toString();
+  return s ? `/materias?${s}` : '/materias';
+};
+const pageHref = (n: number) => {
+  const q = new URLSearchParams(url.searchParams);
+  if (n <= 1) q.delete('pagina');
+  else q.set('pagina', String(n));
+  const s = q.toString();
+  return s ? `/materias?${s}` : '/materias';
+};
+
+const title = [validLocal && SCOPE_NAMES[validLocal], themeObj?.label, tag && `#${tag}`].filter(Boolean).join(' · ') || 'Matérias';
+const chip = (active: boolean) =>
+  `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border px-3 py-1.5 text-xs font-semibold transition-colors ${
+    active ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-slate-300 bg-white text-ink hover:border-nioaque-green'
+  }`;
+---
+
+<MainLayout
+  title={title === 'Matérias' ? 'Matérias' : `${title} · Matérias`}
+  description="Todas as matérias do O Nioaquense: filtre por local (Nioaque, Região, Mato Grosso do Sul, Brasil, Mundo) e por tema."
+>
+  <div class="container-editorial py-6 sm:py-10">
+    <header class="border-b-2 border-nioaque-green pb-4">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red-dark">Matérias</p>
+      <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">{title}</h1>
+      <p class="mt-2 text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">
+        {filtered.length} {filtered.length === 1 ? 'matéria' : 'matérias'}
+        {(validLocal || themeObj || tag) && (
+          <a href="/materias" class="ml-3 normal-case tracking-normal text-nioaque-red-dark underline-offset-2 hover:underline">Limpar filtros</a>
+        )}
+      </p>
+    </header>
+
+    <section class="mt-5 space-y-4" aria-label="Filtros">
+      <div>
+        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">Onde</p>
+        <nav class="no-scrollbar -mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Filtrar por local">
+          <a href={href({ local: null })} class={chip(!validLocal)} aria-current={!validLocal ? 'true' : undefined}>Todos</a>
+          {PUBLIC_SCOPES.map((l) => (
+            <a href={href({ local: l })} class={chip(validLocal === l)} aria-current={validLocal === l ? 'true' : undefined}>
+              {SCOPE_NAMES[l]} <span class="text-[10px] opacity-70">{localCount(l)}</span>
+            </a>
+          ))}
+        </nav>
+      </div>
+      <div>
+        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">Tema</p>
+        <nav class="no-scrollbar -mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Filtrar por tema">
+          <a href={href({ tema: null })} class={chip(!themeObj)} aria-current={!themeObj ? 'true' : undefined}>Todos</a>
+          {CATEGORIES.filter((c) => c.slug !== 'geral').map((c) => {
+            const n = themeCount(c.slug);
+            return (
+              (n > 0 || themeObj?.slug === c.slug) && (
+                <a href={href({ tema: c.slug })} class={chip(themeObj?.slug === c.slug)} aria-current={themeObj?.slug === c.slug ? 'true' : undefined}>
+                  {c.label} <span class="text-[10px] opacity-70">{n}</span>
+                </a>
+              )
+            );
+          })}
+        </nav>
+      </div>
+      {tag && (
+        <p class="text-sm text-ink-soft">
+          Etiqueta: <strong class="text-ink">{tag}</strong> · <a href={href({ tag: null })} class="font-semibold text-nioaque-red-dark hover:underline">remover</a>
+        </p>
+      )}
+    </section>
+
+    {items.length === 0 ? (
+      <p class="mt-10 rounded-[4px] border border-dashed border-line-strong bg-nioaque-white p-10 text-center text-sm text-ink-soft">
+        Nenhuma matéria com esses filtros. <a href="/materias" class="font-semibold text-nioaque-green-dark underline">Ver todas</a>
+      </p>
+    ) : (
+      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map((article) => (
+          <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
+        ))}
+      </div>
+    )}
+
+    {totalPages > 1 && (
+      <nav class="mt-10 flex items-center justify-center gap-3 text-sm font-semibold" aria-label="Paginação">
+        {current > 1 && <a href={pageHref(current - 1)} class="rounded-[4px] border border-slate-300 px-4 py-2 hover:border-nioaque-green" rel="prev">← Anterior</a>}
+        <span class="text-ink-muted">Página {current} de {totalPages}</span>
+        {current < totalPages && <a href={pageHref(current + 1)} class="rounded-[4px] border border-slate-300 px-4 py-2 hover:border-nioaque-green" rel="next">Próxima →</a>}
+      </nav>
+    )}
+  </div>
+</MainLayout>

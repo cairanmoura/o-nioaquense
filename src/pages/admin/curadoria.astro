@@ -52,12 +52,12 @@ const lbl = 'block text-xs font-bold text-ink';
       <div id="r-body" class="prose-editorial space-y-3 text-[15px] leading-relaxed text-ink"></div>
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <label class={lbl}>Seção
+        <label class={lbl}>Local
           <select id="r-scope" class={inp}>
-            <option value="nioaque">Nioaque</option><option value="regiao">Região</option><option value="ms">Mato Grosso do Sul</option><option value="brasil">Brasil</option>
+            <option value="nioaque">Nioaque</option><option value="regiao">Região</option><option value="ms">Mato Grosso do Sul</option><option value="brasil">Brasil</option><option value="mundo">Mundo</option>
           </select>
         </label>
-        <label class={lbl}>Editoria / categoria
+        <label class={lbl}>Tema
           <input id="r-cat" class={inp} list="cats" />
           <datalist id="cats">{CATEGORY_OPTIONS.map((c) => <option value={c} />)}</datalist>
         </label>
@@ -256,9 +256,9 @@ const lbl = 'block text-xs font-bold text-ink';
       $('meta').textContent = `${data.source.name} · extração ${data.extraction} · IA ${data.provider}`;
       $('r-title').value = data.title;
       $('r-sub').value = data.subtitle ?? '';
-      $('r-scope').value = data.scope === 'ms' || data.scope === 'brasil' || data.scope === 'regiao' ? data.scope : 'nioaque';
+      $('r-scope').value = data.scope || 'nioaque';
       $('r-cat').value = data.suggested_category ?? '';
-      $('r-tags').value = '';
+      $('r-tags').value = (data.tags ?? []).join(', ');
       $('r-srcname').value = data.source.name;
       $('r-pin').value = 'none';
       $('r-bullets').innerHTML = '';
@@ -333,7 +333,7 @@ const lbl = 'block text-xs font-bold text-ink';
           subtitle: d.subtitle,
           summary_bullets: d.summary_bullets,
           content_html: d.content_html,
-          scope: d.scope === 'ms' || d.scope === 'brasil' || d.scope === 'regiao' ? d.scope : 'nioaque',
+          scope: d.scope || 'nioaque',
           category: d.suggested_category,
           local_tags: d.local_tags,
           author: 'Redação',

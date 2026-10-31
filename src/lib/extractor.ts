@@ -67,6 +67,14 @@ export async function fetchHtml(url: string): Promise<string | null> {
  * imagem principal sem navegador headless. Util quando o portal bloqueia o
  * Worker (WAF) ou renderiza so no cliente.
  */
+/** Pagina de desafio anti-bot (Cloudflare etc.) - nunca e' conteudo de materia. */
+export function isBotWall(title: string, text: string): boolean {
+  return (
+    /^(just a moment|attention required|access denied|acesso negado|verificando|checking your browser)/i.test(title.trim()) ||
+    /performing security verification|verify you are human|enable javascript and cookies|checking if the site connection is secure/i.test(text.slice(0, 600))
+  );
+}
+
 export async function fetchViaJina(url: string): Promise<ExtractedArticle | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
@@ -75,7 +83,7 @@ export async function fetchViaJina(url: string): Promise<ExtractedArticle | null
     if (!res.ok) return null;
     const data: any = (await res.json())?.data;
     const md = String(data?.content ?? '');
-    if (md.length < 300) return null;
+    if (md.length < 300 || isBotWall(String(data?.title ?? ''), md)) return null;
 
     const blocks = md
       .split(/\n{2,}/)
@@ -84,7 +92,15 @@ export async function fetchViaJina(url: string): Promise<ExtractedArticle | null
     const html = blocks.map((b) => `<p>${b.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('');
     const clean = sanitizeArticleHtml(html);
 
-    const cover = typeof data?.image === 'string' ? toHttps(data.image) : null;
+    // Fotos do corpo (markdown ![alt](url)); capa = og:image se nao for logo, senao a 1a foto
+    const imgs: ArticleImage[] = [];
+    for (const m of md.matchAll(/!\[([^\]]*)\]\((https?:[^)\s]+)[^)]*\)/g)) {
+      const u = toHttps(m[2]);
+      if (isLogoImage(u, m[1]) || BAD_IMG_WORDS.test(u) || imgs.some((i) => i.url === u)) continue;
+      imgs.push({ url: u, caption: null });
+    }
+    const ogImg = typeof data?.image === 'string' ? toHttps(data.image) : null;
+    const cover = ogImg && !isLogoImage(ogImg) ? ogImg : imgs[0]?.url ?? null;
     return {
       title: String(data?.title ?? '').trim(),
       siteName: null,
@@ -95,7 +111,7 @@ export async function fetchViaJina(url: string): Promise<ExtractedArticle | null
       paragraphs: clean.paragraphs,
       coverImage: cover,
       coverCaption: null,
-      images: [],
+      images: imgs,
       via: 'jina',
     };
   } catch {
@@ -149,7 +165,21 @@ const ARTICLE_SELECTORS = [
   'article',
 ];
 
-const BAD_IMG_WORDS = /(logo|avatar|icon|pixel|analytics|gravatar|banner|\/ads?\/|\bads\b|plugin|wp-smiley|emoji|sprite|placeholder|loading|blank)/i;
+/** Logo/marca/brasao/icone do site (nunca e' foto da materia). Ex.: capa errada da Agencia MS. */
+const LOGO_IMG = /(logo|brasao|marca[-_ ]?d.agua|favicon|icone|cropped-|sprite|selo|assinatura|governo[-_ ]?(ms|do[-_ ]?estado)|gov[-_ ]?ms|topo|header|cabecalho|default[-_ ]?(image|share|og)|share[-_ ]?default|sem[-_ ]?foto|placeholder)/i;
+export function isLogoImage(url: string | null | undefined, alt = ''): boolean {
+  if (!url) return true;
+  let file = url.split('?')[0];
+  try {
+    file = decodeURIComponent(file);
+  } catch {
+    /* mantem */
+  }
+  file = file.split('/').slice(-3).join('/');
+  return LOGO_IMG.test(file) || LOGO_IMG.test(alt) || /\.(svg|ico|gif)(\?|$)/i.test(url);
+}
+
+const BAD_IMG_WORDS =/(logo|avatar|icon|pixel|analytics|gravatar|banner|\/ads?\/|\bads\b|plugin|wp-smiley|emoji|sprite|placeholder|loading|blank)/i;
 
 function pickImgUrl(img: any): string | null {
   const attrs = ['data-src', 'data-lazy-src', 'data-original', 'data-lazy', 'data-full-url'];
@@ -239,7 +269,7 @@ export function extractArticle(html: string, url: string, siteHint?: string): Ex
 
   let coverImage: string | null = null;
   const og = meta(document, 'meta[property="og:image"]') ?? meta(document, 'meta[name="twitter:image"]');
-  if (og && !og.startsWith('data:') && !/\.(svg|ico)(\?|$)/i.test(og)) coverImage = absolutize(og, url);
+  if (og && !og.startsWith('data:') && !isLogoImage(og)) coverImage = absolutize(og, url);
 
   // Pre-limpeza do DOM
   for (const el of [...document.querySelectorAll(NOISE_TAGS)]) el.remove();
@@ -287,6 +317,8 @@ export function extractArticle(html: string, url: string, siteHint?: string): Ex
       ? parseHTML(`<div>${readabilityHtml}</div>`).document
       : container;
   const images = imgRoot ? collectImages(imgRoot, url) : [];
+  // Sem og:image (ou og:image e' a logo do site): usa a primeira foto do corpo da materia
+  if (!coverImage && images.length) coverImage = images[0].url;
 
   // Legenda da capa: figcaption da foto interna equivalente, senao credito generico
   let coverCaption: string | null = null;

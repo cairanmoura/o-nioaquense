@@ -2,55 +2,64 @@
 import LogoNioaquense from './LogoNioaquense.astro';
 import WeatherIcon from './WeatherIcon.astro';
 import { getNioaqueWeather } from '../lib/weather';
+import { CATEGORIES } from '../lib/categories';
 
 /**
  * Header.astro
  * -----------------------------------------------------------------------------
- * Header de LINHA UNICA, fundo branco opaco, borda/sombra sutil.
+ * Linha unica, fundo branco.
+ *   [Logo] Início · Matérias · Utilidade Pública · Anuncie ... [Clima] [Busca] [+ Mande sua notícia] [Seções]
  *
- * Ordem esquerda -> direita:
- *   [Logo] [Menu geografico] ... [Clima] [Busca] [+ Mande sua noticia] [Secoes]
- *
- * As editorias tematicas ficam escondidas no painel "Secoes".
+ * "Seções" abre um painel compacto (dropdown ancorado ao botão, não tela cheia):
+ * locais, serviços e temas. Em telas pequenas o painel também traz a navegação principal.
  */
 
-const categoriasGeograficas = [
-  { href: '/editoria/nioaque', label: 'Nioaque' },
-  { href: '/editoria/regiao', label: 'Região' },
-  { href: '/editoria/ms', label: 'MS' },
-  { href: '/editoria/brasil', label: 'Brasil' },
-  { href: '/radar-oficial', label: 'Radar' },
+const principal = [
+  { href: '/', label: 'Início' },
+  { href: '/materias', label: 'Matérias' },
+  { href: '/utilidade', label: 'Utilidade Pública' },
+  { href: '/anuncie', label: 'Anuncie' },
 ];
 
-const secoesTematicas = [
-  { href: '/editoria/politica-poder', label: 'Política & Poder' },
-  { href: '/editoria/agro-campo', label: 'Agro & Campo' },
-  { href: '/editoria/policia-justica', label: 'Polícia & Justiça' },
-  { href: '/editoria/economia', label: 'Economia' },
-  { href: '/editoria/saude', label: 'Saúde' },
-  { href: '/editoria/educacao', label: 'Educação' },
-  { href: '/editoria/esporte', label: 'Esporte' },
-  { href: '/editoria/cultura', label: 'Cultura' },
-  { href: '/editoria/emprego-concursos', label: 'Concursos' },
-  { href: '/editoria/meio-ambiente', label: 'Meio Ambiente' },
+const locais = [
+  { href: '/materias?local=nioaque', label: 'Nioaque' },
+  { href: '/materias?local=regiao', label: 'Região' },
+  { href: '/materias?local=ms', label: 'Mato Grosso do Sul' },
+  { href: '/materias?local=brasil', label: 'Brasil' },
+  { href: '/materias?local=mundo', label: 'Mundo' },
 ];
+
+const servicos = [
+  { href: '/radar-oficial', label: 'Radar Oficial' },
+  { href: '/autoridades', label: 'Autoridades públicas' },
+  { href: '/colunistas', label: 'Colunistas' },
+  { href: '/mande-sua-noticia', label: 'Mande sua notícia' },
+  { href: '/expediente', label: 'Sobre o portal' },
+];
+
+const temas = CATEGORIES.filter((c) => c.slug !== 'geral').map((c) => ({
+  href: `/materias?tema=${c.slug}`,
+  label: c.label,
+}));
 
 const weather = await getNioaqueWeather(Astro.locals);
 const path = Astro.url.pathname;
-const isActive = (href: string) => path === href;
+const isActive = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`));
+const heading = 'text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green';
+const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green-dark';
 ---
 
-<header class="h-16 border-b border-slate-200 bg-white shadow-sm">
+<header class="relative z-40 h-16 border-b border-slate-200 bg-white shadow-sm">
   <div class="container-editorial box-border flex h-full w-full flex-row items-center justify-between gap-2">
     <div class="flex min-w-0 items-center gap-3 lg:gap-5">
       <a href="/" class="flex shrink-0" aria-label="O Nioaquense - página inicial">
         <LogoNioaquense class="h-7 w-auto max-w-[120px] sm:h-10 sm:max-w-none" />
       </a>
 
-      <nav aria-label="Categorias geográficas" class="hidden min-w-0 lg:block">
+      <nav aria-label="Principal" class="hidden min-w-0 lg:block">
         <ul class="flex items-center gap-0.5">
           {
-            categoriasGeograficas.map((item) => {
+            principal.map((item) => {
               const active = isActive(item.href);
               return (
                 <li>
@@ -59,9 +68,7 @@ const isActive = (href: string) => path === href;
                     aria-current={active ? 'page' : undefined}
                     class:list={[
                       'inline-flex items-center whitespace-nowrap rounded-[4px] px-2.5 py-1.5 text-sm font-semibold transition-colors',
-                      active
-                        ? 'bg-nioaque-green text-white'
-                        : 'bg-white text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                      active ? 'bg-nioaque-green text-white' : 'text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
                     ]}
                   >
                     {item.label}
@@ -102,74 +109,84 @@ const isActive = (href: string) => path === href;
         + Mande sua notícia
       </a>
 
-      <button
-        id="menu-toggle"
-        type="button"
-        class="inline-flex items-center gap-1 rounded-[4px] border border-slate-200 bg-white p-2 text-sm font-semibold text-ink hover:bg-nioaque-green-50 sm:px-3 sm:py-1.5"
-        aria-label="Abrir menu de seções"
-        aria-expanded="false"
-        aria-controls="menu-mobile"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-          <path d="M3 12h18M3 6h18M3 18h18"></path>
-        </svg>
-        <span class="hidden sm:inline">Seções ▾</span>
-      </button>
+      <div class="relative">
+        <button
+          id="secoes-toggle"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-[4px] border border-slate-200 bg-white p-2 text-sm font-semibold text-ink hover:bg-nioaque-green-50 sm:px-3 sm:py-1.5"
+          aria-label="Abrir menu de seções"
+          aria-expanded="false"
+          aria-controls="secoes-panel"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M3 12h18M3 6h18M3 18h18"></path>
+          </svg>
+          <span class="hidden sm:inline">Seções ▾</span>
+        </button>
+
+        <div
+          id="secoes-panel"
+          hidden
+          class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] w-[min(calc(100vw-2rem),30rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-xl"
+        >
+          <div class="lg:hidden">
+            <p class={heading}>Navegar</p>
+            <ul class="mt-1.5 grid grid-cols-2 gap-x-2">
+              {principal.map((i) => (<li><a href={i.href} class={itemLink}>{i.label}</a></li>))}
+            </ul>
+          </div>
+
+          <div class="grid grid-cols-2 gap-x-4 gap-y-3 lg:mt-0 mt-3">
+            <div>
+              <p class={heading}>Por local</p>
+              <ul class="mt-1.5">
+                {locais.map((i) => (<li><a href={i.href} class={itemLink}>{i.label}</a></li>))}
+              </ul>
+            </div>
+            <div>
+              <p class={heading}>Serviços</p>
+              <ul class="mt-1.5">
+                {servicos.map((i) => (<li><a href={i.href} class={itemLink}>{i.label}</a></li>))}
+              </ul>
+            </div>
+          </div>
+
+          <div class="mt-3 border-t border-slate-200 pt-3">
+            <p class={heading}>Por tema</p>
+            <ul class="mt-2 flex flex-wrap gap-1.5">
+              {
+                temas.map((i) => (
+                  <li>
+                    <a href={i.href} class="inline-block rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-ink hover:border-nioaque-green hover:bg-nioaque-green-50 hover:text-nioaque-green-dark">
+                      {i.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+            <a href="/materias" class="mt-3 inline-flex text-sm font-semibold text-nioaque-green-dark hover:underline">Ver todas as matérias →</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
 
-<div id="menu-mobile" class="fixed inset-0 z-50 hidden overflow-y-auto bg-white">
-  <div class="container-editorial py-5">
-    <div class="flex items-center justify-between">
-      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">Menu</span>
-      <button id="menu-close" type="button" class="rounded-[4px] p-2 text-ink-muted hover:text-nioaque-red-dark" aria-label="Fechar menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 6 6 18M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
-
-    <p class="mt-4 text-xs font-bold uppercase tracking-wider text-nioaque-green">Onde</p>
-    <ul class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-      {
-        categoriasGeograficas.map((c) => (
-          <li>
-            <a href={c.href} class="block rounded-[4px] border border-slate-200 px-3 py-2.5 text-sm font-semibold text-ink hover:bg-nioaque-green-50">
-              {c.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-
-    <p class="mt-6 text-xs font-bold uppercase tracking-wider text-nioaque-green">Seções</p>
-    <ul class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-      {
-        secoesTematicas.map((s) => (
-          <li>
-            <a href={s.href} class="block rounded-[4px] border border-slate-200 px-4 py-3 text-sm font-semibold text-ink hover:bg-nioaque-green-50 hover:text-nioaque-green">
-              {s.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-
-    <a href="/mande-sua-noticia" class="mt-6 inline-flex items-center rounded-[4px] bg-nioaque-red px-4 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-red-dark">
-      + Mande sua notícia
-    </a>
-  </div>
-</div>
-
 <script>
-  const toggle = document.getElementById('menu-toggle')!;
-  const panel = document.getElementById('menu-mobile')!;
+  const toggle = document.getElementById('secoes-toggle')!;
+  const panel = document.getElementById('secoes-panel')!;
   const setOpen = (open: boolean) => {
-    panel.classList.toggle('hidden', !open);
+    panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
-    document.body.style.overflow = open ? 'hidden' : '';
   };
-  toggle.addEventListener('click', () => setOpen(panel.classList.contains('hidden')));
-  document.getElementById('menu-close')?.addEventListener('click', () => setOpen(false));
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(panel.hidden);
+  });
+  document.addEventListener('click', (e) => {
+    if (!panel.hidden && !panel.contains(e.target as Node)) setOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
 </script>

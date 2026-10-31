@@ -5,7 +5,8 @@ import { isAdmin } from '../../../lib/auth';
 import { extractFromUrl } from '../../../lib/extractor';
 import { mirrorImageToStorage, proxied, isSafeRemoteUrl } from '../../../lib/media';
 import { rewriteArticle } from '../../../lib/rewrite';
-import { detectLocalTags, routeScope, detectCategory } from '../../../lib/rss';
+import { detectLocalTags, detectCategory } from '../../../lib/rss';
+import { classifyScope } from '../../../lib/geo';
 
 /**
  * POST /api/ai/curate
@@ -63,8 +64,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         summary_bullets: rewritten.summary_bullets,
         content_html: rewritten.content_html,
         suggested_category: rewritten.suggested_category ?? detectCategory(rewritten.title),
-        scope: routeScope(tags, ''),
+        scope: classifyScope({ title: rewritten.title, text: article.text, localTags: tags, aiScope: rewritten.suggested_scope, fallback: 'ms' }),
         local_tags: tags,
+        tags: rewritten.tags,
+        words: { src: rewritten.words_src, out: rewritten.words_out },
+        warnings: rewritten.warnings,
         cover: article.coverImage
           ? {
               original: article.coverImage,

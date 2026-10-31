@@ -20,7 +20,6 @@ import {
   getArteFallback,
   isPhotoCover,
   detectLocalTags,
-  routeScope,
   detectCategory,
   normCity,
   stripHtml,
@@ -33,10 +32,11 @@ import {
   parseBingNewsItems,
 } from './rss';
 import { normalizeCategory } from './categories';
+import { classifyScope } from './geo';
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from './scraper';
 import { cleanTitle } from './format';
 import { sanitizeArticleHtml, assessQuality, htmlToText } from './clean-content';
-import { extractArticle, fetchViaJina, type ExtractedArticle } from './extractor';
+import { extractArticle, fetchViaJina, isLogoImage, type ExtractedArticle } from './extractor';
 import { mirrorImageToStorage } from './media';
 import { rewriteArticle } from './rewrite';
 import { parseFeedItems } from './feed';
@@ -197,11 +197,11 @@ export async function discoverSource(
       }
     } else if (bing && xml) {
       for (const it of parseBingNewsItems(xml, 15)) {
-        entries.push({ title: it.title, link: it.link, rawDesc: it.description ?? null, pubDate: it.pubDate, needsPageFetch: true, publisherName: it.sourceName });
+        entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: it.pubDate, needsPageFetch: true, publisherName: it.sourceName });
       }
     } else if (xml && /<(item|entry)\b/i.test(xml)) {
       for (const it of parseFeedItems(xml, 30)) {
-        entries.push({ title: it.title, link: it.link, rawDesc: it.description, pubDate: it.pubDate, rssImage: it.image });
+        entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: it.pubDate, rssImage: it.image });
       }
     }
 
@@ -296,18 +296,33 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     if (dup2?.length) return { status: 'skipped', reason: 'ja existe' };
   }
 
-  const { ex, html } = await loadArticle(entry.link, source.name, env);
-  if (!ex || ex.text.length < 150) return { status: 'skipped', reason: 'nao foi possivel ler a pagina da materia' };
+  const loaded = await loadArticle(entry.link, source.name, env);
+  const html = loaded.html;
+  let ex = loaded.ex;
+  // Portal bloqueado por anti-bot (ex.: Midiamax): usa o texto do proprio feed, mas so como RASCUNHO
+  let feedOnly = false;
+  if ((!ex || ex.text.length < 150) && entry.rawDesc) {
+    const t = htmlToText(entry.rawDesc);
+    if (t.length >= 150) {
+      ex = {
+        title: entry.title ?? '', siteName: null, description: '', publishedAt: null, text: t,
+        contentHtml: `<p>${t.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`, paragraphs: 1,
+        coverImage: null, coverCaption: null, images: [], via: 'fallback',
+      };
+      feedOnly = true;
+    }
+  }
+  if (!ex || ex.text.length < 150) return { status: 'skipped', reason: 'nao foi possivel ler a pagina da materia (portal bloqueou e o feed nao traz o texto)' };
 
   // Capa/legenda/data: a extracao limpa; se faltar e houver HTML, o parser do scraper completa
-  let cover = ex.coverImage;
+  let cover = ex.coverImage && !isLogoImage(ex.coverImage) ? ex.coverImage : ex.images.find((i) => !isLogoImage(i.url))?.url ?? null;
   let caption = ex.coverCaption;
   let pubDate = entry.pubDate ?? ex.publishedAt ?? null;
   let rawDesc = entry.rawDesc ?? (ex.description || null);
   if (html && (!cover || !pubDate)) {
     const parsed = parseArticlePage(html, entry.link, source.name);
     if (parsed) {
-      cover = cover ?? parsed.coverImageUrl ?? null;
+      cover = cover ?? (parsed.coverImageUrl && !isLogoImage(parsed.coverImageUrl) ? parsed.coverImageUrl : null);
       caption = caption ?? parsed.coverImageCaption ?? null;
       pubDate = pubDate ?? parsed.pubDate ?? null;
       rawDesc = rawDesc ?? (parsed.description || null);
@@ -337,7 +352,6 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   // Classificacao geografica
   const fullText = `${title} ${rawDesc ?? ''} ${scrapedText.slice(0, 3000)}`;
   const localTags = detectLocalTags(fullText);
-  const scope = routeScope(localTags, source.name ?? '') as ArticleScope;
 
   // Imagem
   let coverImage: string | null = null;
@@ -351,14 +365,14 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
       coverCaption = `Foto: Reproducao / ${source.name}`;
     } else {
       const htmlCover = await fetchHtmlCoverImage(link, source.rss_url);
-      if (htmlCover.url) {
+      if (htmlCover.url && !isLogoImage(htmlCover.url)) {
         coverImage = htmlCover.url;
         coverCaption = htmlCover.caption ?? `Foto: Reproducao / ${source.name}`;
       }
     }
   }
   if (!coverImage || !isPhotoCover(coverImage)) {
-    coverImage = getArteFallback(scope);
+    coverImage = getArteFallback('ms');
     coverCaption = null;
   }
 
@@ -378,6 +392,9 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   let bodyText = '';
   let bodyParagraphs = 0;
   let aiCategory: string | null = null;
+  let aiScope: string | null = null;
+  let aiTags: string[] = [];
+  const warnings: string[] = feedOnly ? ['portal bloqueou a leitura: texto vindo so do feed (curto)'] : [];
 
   if (ownership === 'private') {
     // Portal privado: reescrita TOTAL obrigatoria (nunca republica o texto original)
@@ -388,6 +405,9 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
       summaryBullets = rw.summary_bullets;
       content = rw.content_html;
       aiCategory = rw.suggested_category;
+      aiScope = rw.suggested_scope;
+      aiTags = rw.tags;
+      warnings.push(...rw.warnings);
       const clean = sanitizeArticleHtml(rw.content_html);
       bodyText = clean.text;
       bodyParagraphs = clean.paragraphs;
@@ -413,6 +433,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
         const rw = await rewriteArticle({ text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction }, env);
         summaryBullets = rw.summary_bullets;
         aiCategory = rw.suggested_category;
+        aiScope = rw.suggested_scope;
+        aiTags = rw.tags;
       } catch (aiErr) {
         await noteSource(supabase, source.id, { last_message: `IA: ${String((aiErr as any)?.message ?? aiErr).slice(0, 380)}` });
       }
@@ -430,6 +452,14 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   }
 
   const categoryLabel = normalizeCategory(aiCategory) || detectCategory(finalTitle, bodyText);
+  // Local pelo ASSUNTO (IA + palavras-chave); a fonte so desempata quando nada indica o local
+  const scope = classifyScope({
+    title: finalTitle,
+    text: `${bodyText} ${scrapedText.slice(0, 1500)}`,
+    localTags,
+    aiScope,
+    fallback: source.default_scope && ['nioaque', 'regiao', 'ms', 'brasil', 'mundo'].includes(source.default_scope) ? source.default_scope : 'ms',
+  }) as ArticleScope;
 
   // Capa espelhada no nosso Storage (evita hotlink/mixed content)
   if (coverImage && isPhotoCover(coverImage) && /^https?:\/\//i.test(coverImage)) {
@@ -448,7 +478,7 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     hasPhoto: isPhotoCover(coverImage),
     bullets: summaryBullets,
   });
-  const status = ownership === 'private' ? 'draft' : source.auto_publish && quality.ok ? 'published' : 'draft';
+  const status = ownership === 'private' || feedOnly || warnings.length ? 'draft' : source.auto_publish && quality.ok ? 'published' : 'draft';
   const publishedAt = status === 'published' ? (pubDate ? new Date(pubDate).toISOString() : now) : null;
 
   // Autor padrao (evita quebrar a FK quando o perfil nao existe)
@@ -464,6 +494,7 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     cover_image_caption: coverCaption,
     scope,
     local_tags: localTags,
+    tags: aiTags,
     category_label: categoryLabel,
     is_breaking: false,
     is_featured: false,
@@ -502,7 +533,10 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     await noteSource(supabase, source.id, { last_message: `Insert: ${insErr.message.slice(0, 300)}` });
     return { status: 'retry', reason: `Insert: ${insErr.message}`, title };
   }
-  return { status: 'inserted', title: article.title, held: !quality.ok };
+  if (warnings.length) {
+    await noteSource(supabase, source.id, { last_message: `Rascunho para revisao: "${article.title.slice(0, 50)}" - ${warnings.join('; ')}` });
+  }
+  return { status: 'inserted', title: article.title, held: !quality.ok || warnings.length > 0 };
 }
 
 /* -------------------------------------------------------------------------- */

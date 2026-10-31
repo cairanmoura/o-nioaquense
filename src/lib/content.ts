@@ -170,6 +170,7 @@ const EMPTY_SCOPES: Record<ArticleScope, Article[]> = {
   regiao: [],
   ms: [],
   brasil: [],
+  mundo: [],
   coluna: [],
   radar_oficial: [],
 };

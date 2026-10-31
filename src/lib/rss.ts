@@ -336,6 +336,7 @@ const ARTE_FALLBACK: Record<ArticleScope, string> = {
   regiao: '/artes-nioarquense/arte-cultura-9gac.svg',
   ms: '/artes-nioarquense/arte-prefeitura-obras.svg',
   brasil: '/artes-nioarquense/arte-cultura-9gac.svg',
+  mundo: '/artes-nioarquense/arte-cultura-9gac.svg',
   coluna: '/artes-nioarquense/arte-educacao.svg',
   radar_oficial: '/artes-nioarquense/arte-seguranca-plantao.svg',
 };
@@ -592,19 +593,22 @@ export function normCity(name: string): string {
  * Devolve array de local_tags (sem duplicatas, ordem de aparecimento).
  */
 export function detectLocalTags(text: string): string[] {
-  const haystack = normCity(text);
+  const haystack = ` ${normCity(text).replace(/[^a-z0-9\- ]+/g, ' ')} `;
   const tags: string[] = [];
   const seen = new Set<string>();
+  // Palavra inteira: "Jardim" nao casa com "jardim botanico" so por substring de outra palavra,
+  // e "Miranda" so conta como cidade se vier com contexto de lugar.
+  const whole = (needle: string) => haystack.includes(` ${needle} `);
 
-  const nioaqueNorm = normCity('Nioaque');
-  if (haystack.includes(nioaqueNorm) && !seen.has(nioaqueNorm)) {
+  if (whole(normCity('Nioaque'))) {
     tags.push('Nioaque');
-    seen.add(nioaqueNorm);
+    seen.add(normCity('Nioaque'));
   }
 
   for (const city of REGION_CITIES) {
     const cn = normCity(city);
-    if (haystack.includes(cn) && !seen.has(cn)) {
+    if (seen.has(cn)) continue;
+    if (whole(cn)) {
       tags.push(city);
       seen.add(cn);
     }

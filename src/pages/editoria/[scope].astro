@@ -16,6 +16,16 @@ import type { ArticleScope } from '../../lib/types';
 
 const { scope = 'nioaque' } = Astro.params;
 
+/* Tudo foi centralizado em /materias (filtros de local e tema). Links antigos redirecionam. */
+const LEGACY_THEME: Record<string, string> = { 'politica-poder': 'politica', 'agro-campo': 'agro', 'policia-justica': 'policia' };
+if (['nioaque', 'regiao', 'ms', 'brasil', 'mundo'].includes(scope)) {
+  return Astro.redirect(`/materias?local=${scope}`, 301);
+}
+const themeSlug = LEGACY_THEME[scope] ?? scope;
+if (CATEGORIES.some((c) => c.slug === themeSlug)) {
+  return Astro.redirect(`/materias?tema=${themeSlug}`, 301);
+}
+
 const EDITORIAS: Record<string, { label: string; description: string; color: string }> = {
   nioaque: {
     label: 'Nioaque',

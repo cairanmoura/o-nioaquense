@@ -40,7 +40,7 @@ const profilesById = new Map<string, Profile>(feed.profiles.map((profile) => [pr
 const authorOf = (id: string) => profilesById.get(id) ?? null;
 
 const scopeParam = Astro.url.searchParams.get('escopo') as ArticleScope | null;
-const validScopes: ArticleScope[] = ['nioaque', 'regiao', 'ms', 'brasil', 'coluna', 'radar_oficial'];
+const validScopes: ArticleScope[] = ['nioaque', 'regiao', 'ms', 'brasil', 'mundo', 'coluna', 'radar_oficial'];
 const activeScope = scopeParam && validScopes.includes(scopeParam) ? scopeParam : null;
 
 /* Materias da Regiao (quando a aba Regiao esta ativa) */
@@ -97,6 +97,7 @@ const ms = feed.byScope.ms.slice(0, 6);
 // meio da pagina, a editoria Brasil comeca na seguinte.
 const sidebarTopId = secondary[0]?.id;
 const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTopId).slice(0, 3);
+const mundo = feed.byScope.mundo.slice(0, 3);
 ---
 
 <MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil.">
@@ -133,11 +134,11 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
     {/* Categorias: uma unica linha rolavel no mobile. Ativo = verde/branco; inativo = branco/escuro. */}
     <nav class="no-scrollbar -mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 sm:mx-0 sm:px-0" aria-label="Editorias">
       {
-        ['nioaque', 'regiao', 'ms', 'brasil', 'coluna'].map((scope) => {
+        ['nioaque', 'regiao', 'ms', 'brasil', 'mundo'].map((scope) => {
           const isActive = (activeScope ?? 'nioaque') === scope;
           return (
             <a
-              href={`/editoria/${scope}`}
+              href={`/materias?local=${scope}`}
               class:list={[
                 'inline-flex shrink-0 items-center whitespace-nowrap rounded-[4px] border px-3 py-1.5 text-xs font-semibold transition-colors',
                 isActive
@@ -242,7 +243,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Nioaque
             </h2>
             <a
-              href="/editoria/nioaque"
+              href="/materias?local=nioaque"
               class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
@@ -267,10 +268,10 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
         <section class="-mx-4 mt-16 bg-white px-4 py-8 sm:-mx-6 sm:mt-20 sm:px-6 lg:-mx-8 lg:px-8" aria-labelledby="sec-regiao" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-regiao" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-              Regiao
+              Região
             </h2>
             <a
-              href="/editoria/regiao"
+              href="/materias?local=regiao"
               class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
@@ -308,7 +309,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Mato Grosso do Sul
             </h2>
             <a
-              href="/editoria/ms"
+              href="/materias?local=ms"
               class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
@@ -370,17 +371,38 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
               Brasil
             </h2>
             <a
-              href="/editoria/brasil"
+              href="/materias?local=brasil"
               class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
             </a>
           </div>
-          <p class="mt-3 text-xs font-medium text-ink-muted">
-            Conteúdo da Agência Brasil, com link para a matéria original.
-          </p>
           <div class="mt-6 grid gap-6 pt-2 sm:grid-cols-2 sm:pt-4 lg:grid-cols-3">
             {brasil.map((article) => (
+              <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {/* Mundo */}
+    {
+      mundo.length > 0 && (
+        <section class="mt-16 sm:mt-20" aria-labelledby="sec-mundo" data-reveal>
+          <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
+            <h2 id="sec-mundo" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+              Mundo
+            </h2>
+            <a
+              href="/materias?local=mundo"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
+            >
+              Ver tudo
+            </a>
+          </div>
+          <div class="mt-6 grid gap-6 pt-2 sm:grid-cols-2 sm:pt-4 lg:grid-cols-3">
+            {mundo.map((article) => (
               <ArticleCard article={article} author={authorOf(article.author_id)} variant="standard" />
             ))}
           </div>

@@ -9,7 +9,7 @@
 
 export type UserRole = 'admin' | 'columnist';
 
-export type ArticleScope = 'nioaque' | 'regiao' | 'ms' | 'brasil' | 'coluna' | 'radar_oficial';
+export type ArticleScope = 'nioaque' | 'regiao' | 'ms' | 'brasil' | 'mundo' | 'coluna' | 'radar_oficial';
 
 export type ArticleStatus = 'draft' | 'pending_review' | 'published';
 
@@ -201,9 +201,10 @@ export interface ReaderSubmission {
 
 export const SCOPE_LABEL: Record<ArticleScope, string> = {
   nioaque: 'Nioaque',
-  regiao: 'Regiao',
+  regiao: 'Região',
   ms: 'Mato Grosso do Sul',
   brasil: 'Brasil',
+  mundo: 'Mundo',
   coluna: 'Coluna',
   radar_oficial: 'Radar Oficial',
 };
@@ -213,6 +214,7 @@ export const SCOPE_BADGE_CLASS: Record<ArticleScope, string> = {
   regiao: 'bg-ink text-nioaque-white',
   ms: 'bg-nioaque-green-50 text-nioaque-green-dark ring-1 ring-nioaque-green-100',
   brasil: 'bg-ink text-nioaque-white',
+  mundo: 'bg-ink text-nioaque-white',
   coluna: 'bg-nioaque-red text-nioaque-white',
   radar_oficial: 'bg-nioaque-red-50 text-nioaque-red-dark ring-1 ring-red-100',
 };
