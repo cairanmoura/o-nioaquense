@@ -56,9 +56,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     if (action === 'sync_x') {
-      const token = (locals as any)?.runtime?.env?.X_BEARER_TOKEN as string | undefined;
-      if (!token) throw new Error('Falta o segredo X_BEARER_TOKEN no Cloudflare (npx wrangler secret put X_BEARER_TOKEN).');
-      const r = await syncXColumnists(sb, token);
+      const env = (locals as any)?.runtime?.env ?? {};
+      if (!env.APIFY_TOKEN && !env.X_BEARER_TOKEN) throw new Error('Falta o segredo APIFY_TOKEN no Cloudflare (npx wrangler secret put APIFY_TOKEN).');
+      const r = await syncXColumnists(sb, env);
       return jsonOk({ ok: r.errors.length === 0, inserted: r.inserted, errors: r.errors });
     }
 

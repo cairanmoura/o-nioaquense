@@ -68,7 +68,7 @@ export function parseFeedItems(xml: string, max = 30): FeedItem[] {
     const link = linkOf(it.link) || text(it.guid);
     if (!title || !/^https?:\/\//i.test(link)) continue;
     // Feeds WordPress trazem o texto inteiro em content:encoded; usa o maior dos campos
-    const desc = [text(it.description), text(it.summary), text(it['content:encoded']), text(it.content)].sort((a, b) => b.length - a.length)[0];
+    const desc = [text(it.description), text(it.summary), text(it['content:encoded']), text(it['content_full:encoded']), text(it.content)].sort((a, b) => b.length - a.length)[0];
     items.push({
       title,
       link,

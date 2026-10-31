@@ -75,6 +75,8 @@ export type NewsJob =
 export interface ProcessOutcome {
   /** retry = falha temporaria (IA fora do ar etc.): a fila tenta de novo mais tarde. */
   status: 'inserted' | 'skipped' | 'retry';
+  /** Falha por cota da IA (429 / neuronios): tenta de novo bem mais tarde. */
+  quota?: boolean;
   reason?: string;
   title?: string;
   held?: boolean;
@@ -306,7 +308,7 @@ export async function discoverSource(
           if (seenLinks.has(it.link)) continue;
           seenLinks.add(it.link);
           const d = it.pubDate ? new Date(it.pubDate) : null;
-          entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: d && !Number.isNaN(d.getTime()) ? d.toISOString() : null, rssImage: it.image });
+          entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 24000) ?? null, pubDate: d && !Number.isNaN(d.getTime()) ? d.toISOString() : null, rssImage: it.image });
         }
       }
     }
@@ -415,7 +417,21 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     if (dup2?.length) return { status: 'skipped', reason: 'ja existe' };
   }
 
-  const loaded = await loadArticle(entry.link, source.name, env);
+  // Feeds que trazem a materia inteira (ex.: Metropoles) dispensam baixar a pagina
+  let loaded: { ex: ExtractedArticle | null; html: string | null } = { ex: null, html: null };
+  if (entry.rawDesc && htmlToText(entry.rawDesc).length >= 1200) {
+    const clean = sanitizeArticleHtml(entry.rawDesc);
+    if (clean.text.length >= 1000 && clean.paragraphs >= 3) {
+      loaded = {
+        ex: {
+          title: entry.title ?? '', siteName: null, description: '', publishedAt: null, text: clean.text,
+          contentHtml: clean.html, paragraphs: clean.paragraphs, coverImage: entry.rssImage ?? null, coverCaption: null, images: [], via: 'fallback',
+        },
+        html: null,
+      };
+    }
+  }
+  if (!loaded.ex) loaded = await loadArticle(entry.link, source.name, env);
   const html = loaded.html;
   let ex = loaded.ex;
   // Portal bloqueado por anti-bot (ex.: Midiamax): usa o texto do proprio feed, mas so como RASCUNHO
@@ -551,8 +567,9 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
       bodyParagraphs = clean.paragraphs;
     } catch (aiErr) {
       const reason = `IA: ${String((aiErr as any)?.message ?? aiErr).slice(0, 380)}`;
-      await noteSource(supabase, source.id, { last_message: reason });
-      return { status: 'retry', reason, title };
+      const quota = /429|4006|daily free allocation|quota|RESOURCE_EXHAUSTED/i.test(reason);
+      await noteSource(supabase, source.id, { last_message: quota ? 'IA sem cota agora (limite gratuito do Gemini/Cloudflare); as materias seguem na fila e tentam de novo em 30 min' : reason });
+      return { status: 'retry', reason, title, quota };
     }
   } else {
     // Fonte publica: mantem o texto limpo; a IA (se ligada) so gera o Direto ao Ponto

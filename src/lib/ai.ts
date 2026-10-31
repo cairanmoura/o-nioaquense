@@ -92,7 +92,10 @@ async function viaCloudflare(prompt: string, env: unknown, o: RunAIOptions): Pro
       if (text.trim()) return { text, provider: 'cloudflare' };
       o.diag?.push(`cloudflare ${model}: resposta vazia`);
     } catch (e: any) {
-      o.diag?.push(`cloudflare ${model}: ${String(e?.message ?? e).slice(0, 120)}`);
+      const m = String(e?.message ?? e);
+      o.diag?.push(`cloudflare ${model}: ${m.slice(0, 120)}`);
+      // Cota diaria de neuronios esgotada: os outros modelos falham igual, nao insiste
+      if (/4006|daily free allocation/i.test(m)) break;
     }
   }
   return null;
