@@ -19,8 +19,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
             Execução manual
           </h2>
           <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-            Roda a extração várias vezes seguidas (até 20 rodadas) e para sozinho quando não há mais nada novo. Matérias novas vão direto ao ar ou para rascunho, conforme a regra de cada fonte.
-          </p>
+            Põe todas as fontes ativas na fila de extração. Cada matéria é processada separadamente em segundo plano, sem o teto de 5 por rodada. Matérias novas vão direto ao ar ou para rascunho, conforme a regra de cada fonte.</p>
         </div>
         <button
           id="executar-extracao"
@@ -39,9 +38,8 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           >
             <path d="m22 2-7 20-4-9-9-4ZM22 2 11 13" />
           </svg>
-          Extrair tudo agora
+          Extrair agora
         </button>
-        <button id="parar-extracao" type="button" class="hidden rounded-sm border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-nioaque-red">Parar</button>
         <p id="msg-extracao" class="w-full text-xs font-medium leading-relaxed" aria-live="polite"></p>
       </header>
     </section>
@@ -197,6 +195,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           <p class="mt-1 text-xs text-ink-muted">
             Categoria: ${escapeHtml(s.default_category ?? '—')} · Última busca: ${escapeHtml(s.last_fetched_at ?? 'nunca')}
           </p>
+          ${s.last_message ? `<p class="mt-1 text-xs ${s.last_status === 'erro' ? 'text-nioaque-red-dark' : 'text-ink-muted'}">${escapeHtml(s.last_message)}</p>` : ''}
         </div>
         <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <!-- Switches serão hidratados pelo ToggleSwitch (client:load) -->
@@ -257,18 +256,11 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
   carregarFontes();
 
-  /* Extrair tudo: chama a extracao em sequencia. Cada chamada e' uma execucao nova
-   * do Worker (50 requisicoes novas), entao o teto de ~5 materias por rodada some. */
+  /* Extrair agora: um clique enfileira a varredura inteira. O trabalho roda em
+   * segundo plano (Cloudflare Queues, uma materia por vez); a lista de fontes
+   * e' recarregada de tempos em tempos para mostrar o andamento. */
   const btn = document.getElementById('executar-extracao') as HTMLButtonElement | null;
   const msg = document.getElementById('msg-extracao') as HTMLElement | null;
-  const stopBtn = document.getElementById('parar-extracao') as HTMLButtonElement | null;
-  let stopRequested = false;
-  stopBtn?.addEventListener('click', () => {
-    stopRequested = true;
-    stopBtn.disabled = true;
-  });
-
-  const MAX_ROUNDS = 20;
   const show = (text: string, bad = false) => {
     if (!msg) return;
     msg.textContent = text;
@@ -277,11 +269,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
   btn?.addEventListener('click', async () => {
     btn.disabled = true;
-    stopRequested = false;
-    if (stopBtn) {
-      stopBtn.disabled = false;
-      stopBtn.classList.remove('hidden');
-    }
+    show('Enfileirando…');
 
     let userToken = '';
     try {
@@ -295,51 +283,37 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       /* segue sem token */
     }
 
-    let inserted = 0;
-    let held = 0;
-    let round = 0;
-    let idle = 0;
-    const problems = new Set<string>();
-    let fatal = '';
-
-    while (round < MAX_ROUNDS && !stopRequested && idle < 2) {
-      round++;
-      show('Rodada ' + round + '… ' + inserted + ' matéria(s) até agora');
-      try {
-        const res = await fetch('/api/cron/extract-news', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', ...(userToken ? { 'x-user-token': userToken } : {}) },
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          fatal = data.error ?? 'Erro ' + res.status;
-          break;
-        }
-        const got = data.inserted ?? 0;
-        inserted += got;
-        held += (data.results ?? []).reduce((n: number, r: any) => n + (r.held ?? 0), 0);
-        for (const r of data.results ?? []) {
-          const e = r.error ?? r.ai_error;
-          if (e && !/Adiada/.test(e)) problems.add(r.source + ': ' + String(e).slice(0, 260));
-        }
-        // 2 rodadas seguidas sem nada novo = as fontes ja foram esgotadas
-        idle = got === 0 ? idle + 1 : 0;
-      } catch {
-        fatal = 'Erro de conexão.';
-        break;
+    try {
+      const res = await fetch('/api/cron/extract-news', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(userToken ? { 'x-user-token': userToken } : {}) },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        show(data.error ?? 'Erro ' + res.status, true);
+        btn.disabled = false;
+        return;
       }
+      if (data.queued) {
+        show('Varredura enfileirada. As matérias chegam aos poucos (cerca de 1 a 3 minutos); o "Última busca" de cada fonte abaixo vai se atualizando.');
+        // acompanha por ~3 minutos
+        let n = 0;
+        const timer = setInterval(() => {
+          carregarFontes();
+          if (++n >= 12) {
+            clearInterval(timer);
+            btn.disabled = false;
+          }
+        }, 15000);
+        return;
+      }
+      show('Concluído: ' + (data.inserted ?? 0) + ' matéria(s) inseridas.');
+      carregarFontes();
+    } catch {
+      show('Erro de conexão.', true);
     }
-
-    let texto = fatal
-      ? 'Parou: ' + fatal + ' (' + inserted + ' inserida(s) antes disso)'
-      : (stopRequested ? 'Interrompido. ' : 'Concluído! ') + inserted + ' matéria(s) em ' + round + ' rodada(s).';
-    if (held) texto += ' ' + held + ' em rascunho para revisão.';
-    if (problems.size) texto += ' ⚠ ' + [...problems].join(' | ');
-    show(texto, Boolean(fatal) || problems.size > 0);
     btn.disabled = false;
-    stopBtn?.classList.add('hidden');
-    if (inserted > 0 && !problems.size) setTimeout(() => window.location.reload(), 2500);
   });
 
   /* Formulário: adicionar nova fonte */

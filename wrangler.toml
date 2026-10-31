@@ -38,9 +38,28 @@ enabled = true
 enabled = true
 invocation_logs = true
 
-# Cron: extrator de noticias (Fase 2) - a cada hora
+# Cron: a cada 20 min so enfileira uma mensagem "sweep" (CPU ~0)
 [triggers]
 crons = ["*/20 * * * *"]
+
+# -----------------------------------------------------------------------------
+#  Cloudflare Queues - extracao de noticias em tarefas pequenas
+#  O plano gratis limita ~10 ms de CPU e 50 subrequests por invocacao; a fila
+#  divide o trabalho: sweep -> 1 mensagem por fonte -> 1 mensagem por materia.
+#  Filas ja criadas na conta: news-scrape e news-scrape-dlq.
+# -----------------------------------------------------------------------------
+[[queues.producers]]
+binding = "NEWS_QUEUE"
+queue = "news-scrape"
+
+[[queues.consumers]]
+queue = "news-scrape"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 3
+retry_delay = 60
+max_concurrency = 2
+dead_letter_queue = "news-scrape-dlq"
 
 # -----------------------------------------------------------------------------
 #  Variaveis publicas (nao secretas) - espelham o .env

@@ -31,10 +31,10 @@ export default defineConfig({
     // As fotos do portal sao convertidas em WebP e servidas pelo R2/CDN.
     imageService: 'compile',
     // Entrada customizada: reexporta o handler do Astro e adiciona o gatilho
-    // `scheduled` (cron) usado pelo extrator de noticias (Fase 2).
+    // `scheduled` (cron) e `queue` (consumidor do Cloudflare Queues) do extrator de noticias.
     workerEntryPoint: {
       path: 'src/worker.ts',
-      namedExports: ['scheduled'],
+      namedExports: ['scheduled', 'queue'],
     },
     // Dev local: nao abrir sessao remota da Cloudflare (o binding [ai] exige
     // autenticacao); localmente os bindings rodam via miniflare.
