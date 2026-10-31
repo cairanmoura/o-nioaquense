@@ -1,0 +1,97 @@
+---
+import data from '../data/autoridades.json';
+
+/**
+ * /autoridades - quem é quem em Nioaque, por poder.
+ * Dados reais levantados em fontes oficiais (src/data/autoridades.json). Cada
+ * item traz as fontes consultadas; o que não foi encontrado fica de fora.
+ */
+type Item = {
+  id: string;
+  nome: string;
+  cargo: string;
+  partido: string | null;
+  foto: string | null;
+  telefones: string[];
+  email: string | null;
+  endereco: string | null;
+  horario: string | null;
+  site: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  observacao: string | null;
+};
+type Group = { id: string; titulo: string; itens: Item[] };
+
+const SUBTITLES: Record<string, string> = {
+  executivo: 'Prefeito, vice e secretários municipais',
+  legislativo: 'Câmara Municipal e vereadores',
+  judiciario: 'Fórum e Comarca de Nioaque (TJMS)',
+  'ministerio-publico': 'Promotoria de Justiça de Nioaque (MPMS)',
+  advocacia: 'Advogados e escritórios em Nioaque',
+  saude: 'Secretaria de Saúde e unidades de atendimento',
+  seguranca: 'Proteção social e segurança',
+};
+
+// Ordem de leitura: os tres poderes primeiro; grupos vazios nao aparecem
+const ORDER = ['executivo', 'legislativo', 'judiciario', 'ministerio-publico', 'saude', 'seguranca', 'advocacia'];
+const groups = (data.grupos as Group[])
+  .filter((g) => g.itens.length > 0)
+  .sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+
+const initials = (n: string) => n.split(/\s+/).filter((w) => w.length > 2).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const tel = (t: string) => t.replace(/[^\d+]/g, '');
+// Vereadores: o site da Camara publica celular/e-mail pessoal; aqui ficam so o cargo, o partido e a foto.
+const isVereador = (it: Item) => /vereador/i.test(it.cargo) && !/presidente/i.test(it.cargo);
+---
+<nav class="no-scrollbar -mx-4 mb-8 flex flex-nowrap gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Poderes e órgãos">
+      {groups.map((g) => (
+        <a href={`#${g.id}`} class="shrink-0 whitespace-nowrap rounded-[4px] border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:border-nioaque-green">
+          {g.titulo}
+        </a>
+      ))}
+    </nav>
+
+    {groups.map((g) => (
+      <section id={g.id} class="mb-12 scroll-mt-24" aria-labelledby={`h-${g.id}`}>
+        <div class="border-b border-line pb-2">
+          <h2 id={`h-${g.id}`} class="font-editorial text-2xl font-semibold tracking-tight text-ink">{g.titulo}</h2>
+          <p class="text-xs text-ink-muted">{SUBTITLES[g.id] ?? ''}</p>
+        </div>
+        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+          {g.itens.map((it) => (
+            <li class="flex gap-3 rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm">
+              {it.foto ? (
+                <img src={it.foto} alt={it.nome} width="64" height="64" loading="lazy" class="h-16 w-16 shrink-0 rounded-full bg-slate-100 object-cover object-top" />
+              ) : (
+                <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-nioaque-green-50 font-sans text-lg font-extrabold text-nioaque-green-dark" aria-hidden="true">{initials(it.nome)}</span>
+              )}
+              <div class="min-w-0 flex-1">
+                <h3 class="font-sans text-[0.95rem] font-extrabold leading-snug text-ink">{it.nome}</h3>
+                <p class="text-xs font-semibold text-nioaque-green-dark">{it.cargo}{it.partido ? ` · ${it.partido}` : ''}</p>
+                <dl class="mt-2 space-y-1 text-[13px] leading-snug text-ink-soft">
+                  {!isVereador(it) && it.telefones.length > 0 && (
+                    <div class="flex gap-1.5"><dt class="sr-only">Telefone</dt><dd>{it.telefones.map((t, i) => (<>{i > 0 && ' · '}<a href={`tel:${tel(t)}`} class="font-semibold text-ink hover:text-nioaque-green">{t}</a></>))}</dd></div>
+                  )}
+                  {!isVereador(it) && it.email && <div><dt class="sr-only">E-mail</dt><dd class="break-all"><a href={`mailto:${it.email}`} class="hover:text-nioaque-green">{it.email}</a></dd></div>}
+                  {it.endereco && <div><dt class="sr-only">Endereço</dt><dd>{it.endereco}</dd></div>}
+                  {it.horario && <div><dt class="sr-only">Horário</dt><dd>{it.horario}</dd></div>}
+                </dl>
+                {(it.site || it.instagram || it.facebook) && (
+                  <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold">
+                    {it.site && <a href={it.site} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Site</a>}
+                    {it.instagram && <a href={it.instagram} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Instagram</a>}
+                    {it.facebook && <a href={it.facebook} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Facebook</a>}
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+
+    <p class="rounded-[4px] bg-nioaque-green-50 p-4 font-sans text-xs leading-relaxed text-ink-soft">
+      Algum dado está desatualizado ou faltando? <a href="/mande-sua-noticia" class="font-semibold text-nioaque-green-dark underline">Fale com a redação</a>.
+    </p>
+  
