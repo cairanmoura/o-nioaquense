@@ -7,8 +7,6 @@
  * a identidade do portal (verde, vermelho, preto editorial e tons de apoio).
  */
 
-import IconePauta from './IconePauta.astro';
-
 interface Props {
   category?: string | null;
   class?: string;
@@ -60,6 +58,5 @@ const tone = EXPLICIT[normalized] ?? PALETTE[hash(normalized) % PALETTE.length];
 ---
 
 <span class:list={['pill-scope', tone, className]}>
-  <IconePauta categoria={category} class="shrink-0 w-3 h-3" />
   {label}
 </span>

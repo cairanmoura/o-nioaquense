@@ -54,10 +54,20 @@ const related = page.related.length
 
 const words = article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 const readingMinutes = Math.max(1, Math.round(words / 200));
-const sourceName = article.source_name ?? null;
+const rawSourceUrl = article.source_url ?? null;
+const realSourceUrl = rawSourceUrl && !/news\.google\.com|bing\.com/i.test(rawSourceUrl) ? rawSourceUrl : null;
+const looksAggregator = (n: string) => /radar|google news|bing/i.test(n);
+const hostOf = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return null; } };
+/* Credito vai para o veiculo real; nome de agregador vira o dominio do link original. */
+const sourceName =
+  article.source_name && !looksAggregator(article.source_name)
+    ? article.source_name
+    : realSourceUrl
+      ? hostOf(realSourceUrl)
+      : null;
 const isColumnist = author?.role === 'columnist';
 const bylineName = article.author_name || (isColumnist ? (author?.column_name ?? author?.full_name) : null) || 'Redação';
-const sourceUrl = article.source_url ?? null;
+const sourceUrl = realSourceUrl;
 const sourceInitials = sourceName
   ? sourceName
       .split(/\s+/)
