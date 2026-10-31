@@ -62,13 +62,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return jsonOk({ ok: r.errors.length === 0, inserted: r.inserted, errors: r.errors });
     }
 
+    if (action === 'update_columnist') {
+      const id = String(body.id ?? '');
+      if (!id) throw new Error('Colunista nao informado.');
+      const patch: Record<string, unknown> = {};
+      if (typeof body.bio === 'string') patch.bio = body.bio.trim().slice(0, 600) || null;
+      if (typeof body.name === 'string' && body.name.trim()) patch.name = body.name.trim().slice(0, 80);
+      const { error } = await sb.from('x_columnists').update(patch).eq('id', id);
+      if (error) throw new Error(error.message);
+      return jsonOk({ ok: true });
+    }
+
     if (action === 'refresh_profiles') {
-      const { data: list } = await sb.from('x_columnists').select('id, handle');
+      const { data: list } = await sb.from('x_columnists').select('id, handle, bio');
       let n = 0;
       for (const c of list ?? []) {
         const prof = await fetchXProfile(c.handle);
         if (prof) {
-          await sb.from('x_columnists').update({ name: prof.name, bio: prof.bio, avatar_url: prof.avatar }).eq('id', c.id);
+          // a bio editada a mao no painel nunca e' sobrescrita: so completa quando esta vazia
+          const upd: Record<string, unknown> = { name: prof.name, avatar_url: prof.avatar };
+          if (!c.bio) upd.bio = prof.bio;
+          await sb.from('x_columnists').update(upd).eq('id', c.id);
           n++;
         }
       }
