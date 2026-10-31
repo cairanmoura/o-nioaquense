@@ -11,26 +11,36 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
   <div class="mx-auto max-w-5xl space-y-6">
     <section class="rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
       <header class="mb-4">
-        <h2 class="text-sm font-extrabold text-ink">Colar URL de notícia</h2>
+        <h2 class="text-sm font-extrabold text-ink">Colar links de notícias</h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-          O sistema extrai só o corpo da matéria (sem menus e rodapé), pega a capa e as fotos
-          do texto, e reescreve com IA em texto autoral, citando a fonte.
+          Um link por linha. Com um link, você vê o resultado e escolhe a foto de capa. Com vários,
+          o sistema processa um de cada vez, numa fila, e salva cada um como rascunho (capa já
+          escolhida automaticamente) para você revisar em <a href="/admin/rascunhos" class="font-semibold text-nioaque-green underline">Rascunhos</a>.
         </p>
       </header>
 
-      <form id="curate" class="flex flex-col gap-3 sm:flex-row">
-        <input
-          name="url"
-          type="url"
-          placeholder="https://fato67.com/interior/..."
-          class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm"
+      <form id="curate" class="space-y-3">
+        <textarea
+          id="urls"
+          name="urls"
+          rows="5"
+          placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...\nhttps://midiamax.uol.com.br/...'}
+          class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm leading-relaxed"
           required
-        />
-        <button id="go" type="submit" class="shrink-0 rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
-          Extrair e reescrever
-        </button>
+        ></textarea>
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="go" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">
+            Extrair e reescrever
+          </button>
+          <button id="stop" type="button" class="hidden rounded-[4px] border border-slate-300 px-4 py-3 text-sm font-semibold text-ink hover:border-nioaque-red hover:text-nioaque-red">
+            Parar fila
+          </button>
+          <span id="count" class="text-xs text-ink-muted"></span>
+        </div>
       </form>
       <p id="status" class="mt-3 hidden text-sm text-ink-muted" role="status" aria-live="polite"></p>
+
+      <ul id="queue" class="mt-4 hidden divide-y divide-slate-200 rounded-[4px] border border-slate-200 text-sm"></ul>
     </section>
 
     <section id="result" class="hidden space-y-5 rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -62,9 +72,73 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
   type Photo = { original: string; preview: string; caption: string | null; stored?: string | null };
   let data: any = null;
   let chosen: Photo | null = null;
+  let stopRequested = false;
 
   const $ = (id: string) => document.getElementById(id)!;
   const form = $('curate') as HTMLFormElement;
+  const box = $('urls') as HTMLTextAreaElement;
+
+  const parseUrls = (): string[] => {
+    const seen = new Set<string>();
+    for (const line of box.value.split(/\r?\n/)) {
+      const u = line.trim();
+      if (/^https?:\/\/\S+$/i.test(u)) seen.add(u);
+    }
+    return [...seen];
+  };
+  box.addEventListener('input', () => {
+    const n = parseUrls().length;
+    $('count').textContent = n ? `${n} link${n > 1 ? 's' : ''}` : '';
+  });
+
+  async function curate(url: string): Promise<any> {
+    const res = await fetch('/api/ai/curate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const d = await res.json().catch(() => ({ error: `Resposta inválida (HTTP ${res.status})` }));
+    if (!res.ok || d.error) throw new Error(d.error ?? `HTTP ${res.status}`);
+    return d;
+  }
+
+  async function saveDraft(d: any, photo: Photo | null): Promise<void> {
+    let coverUrl: string | null = null;
+    if (photo) {
+      coverUrl = photo.stored ?? null;
+      if (!coverUrl) {
+        const m = await fetch('/api/admin/mirror-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: photo.original, ref: d.source.url }),
+        });
+        const mj = await m.json().catch(() => ({}));
+        coverUrl = mj.url ?? null;
+      }
+    }
+    const fonte = `<p>Fonte: <a href="${d.source.url}" target="_blank" rel="noopener noreferrer">${d.source.name}</a>.</p>`;
+    const res = await fetch('/api/admin/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: d.title,
+        subtitle: d.subtitle,
+        summary_bullets: d.summary_bullets,
+        content: d.content_html + fonte,
+        cover_image_url: coverUrl,
+        cover_image_caption: photo?.caption ?? null,
+        scope: d.scope,
+        category_label: d.suggested_category,
+        source_name: d.source.name,
+        source_url: d.source.url,
+        status: 'draft',
+      }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.error ?? 'Falha ao salvar.');
+  }
+
+  /* ---------------- Modo unitario: previa + escolha da capa ---------------- */
 
   function renderPhotos() {
     const grid = $('photos');
@@ -100,24 +174,12 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     }
   }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function runSingle(url: string) {
     const status = $('status');
-    const btn = $('go') as HTMLButtonElement;
     status.classList.remove('hidden');
     status.textContent = 'Extraindo e reescrevendo… (até 30 s)';
-    btn.disabled = true;
-    $('result').classList.add('hidden');
-    chosen = null;
     try {
-      const res = await fetch('/api/ai/curate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: new FormData(form).get('url') }),
-      });
-      data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Falha ao processar.');
-
+      data = await curate(url);
       $('meta').textContent = `${data.source.name} · ${data.suggested_category} · extração ${data.extraction} · IA ${data.provider}`;
       $('r-title').textContent = data.title;
       $('r-sub').textContent = data.subtitle ?? '';
@@ -133,48 +195,111 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       status.classList.add('hidden');
     } catch (err: any) {
       status.textContent = err?.message ?? 'Erro ao processar.';
-    } finally {
-      btn.disabled = false;
     }
-  });
+  }
 
   $('save').addEventListener('click', async () => {
     const msg = $('save-msg');
     msg.textContent = 'Salvando…';
     try {
-      let coverUrl: string | null = null;
-      if (chosen) {
-        coverUrl = chosen.stored ?? null;
-        if (!coverUrl) {
-          const m = await fetch('/api/admin/mirror-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: chosen.original, ref: data.source.url }),
-          });
-          const mj = await m.json();
-          coverUrl = mj.url ?? null;
-        }
-      }
-      const fonte = `<p>Fonte: <a href="${data.source.url}" target="_blank" rel="noopener noreferrer">${data.source.name}</a>.</p>`;
-      const res = await fetch('/api/admin/articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title,
-          subtitle: data.subtitle,
-          summary_bullets: data.summary_bullets,
-          content: data.content_html + fonte,
-          cover_image_url: coverUrl,
-          cover_image_caption: chosen?.caption ?? null,
-          scope: data.scope,
-          category_label: data.suggested_category,
-          status: 'draft',
-        }),
+      await saveDraft(data, chosen);
+      msg.textContent = 'Rascunho salvo. Veja em Rascunhos.';
+    } catch (e: any) {
+      msg.textContent = e?.message ?? 'Falha ao salvar.';
+    }
+  });
+
+  /* ---------------- Modo lote: fila sequencial ---------------- */
+
+  type Row = { url: string; el: HTMLLIElement; label: HTMLElement; state: 'wait' | 'run' | 'ok' | 'err' };
+
+  function setRow(r: Row, state: Row['state'], text: string) {
+    r.state = state;
+    r.label.textContent = text;
+    r.label.className =
+      state === 'ok' ? 'text-nioaque-green' : state === 'err' ? 'text-nioaque-red' : state === 'run' ? 'font-semibold text-ink' : 'text-ink-muted';
+  }
+
+  async function processRow(r: Row) {
+    setRow(r, 'run', 'Processando…');
+    try {
+      const d = await curate(r.url);
+      const photo: Photo | null = d.cover ?? d.images?.[0] ?? null;
+      await saveDraft(d, photo);
+      setRow(r, 'ok', `Rascunho salvo: ${String(d.title).slice(0, 70)}`);
+    } catch (e: any) {
+      setRow(r, 'err', e?.message ?? 'Erro');
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'Tentar de novo';
+      retry.className = 'ml-3 rounded-[4px] border border-slate-300 px-2 py-0.5 text-xs font-semibold text-ink hover:border-nioaque-green';
+      retry.addEventListener('click', async () => {
+        retry.remove();
+        await processRow(r);
       });
-      const j = await res.json();
-      msg.textContent = res.ok ? 'Rascunho salvo. Revise em Revisão.' : (j.error ?? 'Falha ao salvar.');
-    } catch {
-      msg.textContent = 'Falha ao salvar.';
+      r.el.appendChild(retry);
+    }
+  }
+
+  async function runBatch(urls: string[]) {
+    const list = $('queue');
+    list.innerHTML = '';
+    list.classList.remove('hidden');
+    const rows: Row[] = urls.map((url) => {
+      const el = document.createElement('li');
+      el.className = 'flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2';
+      const u = document.createElement('span');
+      u.className = 'max-w-[40ch] truncate text-xs text-ink-muted';
+      u.textContent = url.replace(/^https?:\/\/(www\.)?/, '');
+      const label = document.createElement('span');
+      el.append(u, label);
+      list.appendChild(el);
+      const row: Row = { url, el, label, state: 'wait' };
+      setRow(row, 'wait', 'Na fila');
+      return row;
+    });
+
+    $('stop').classList.remove('hidden');
+    stopRequested = false;
+    let done = 0;
+    for (const r of rows) {
+      if (stopRequested) {
+        setRow(r, 'err', 'Cancelado');
+        continue;
+      }
+      await processRow(r);
+      done++;
+      $('status').textContent = `Fila: ${done} de ${rows.length} processado(s)…`;
+    }
+    const ok = rows.filter((r) => r.state === 'ok').length;
+    $('status').textContent = `Fila concluída: ${ok} rascunho(s) salvo(s), ${rows.length - ok} com erro/cancelado.`;
+    $('stop').classList.add('hidden');
+  }
+
+  $('stop').addEventListener('click', () => {
+    stopRequested = true;
+    $('status').textContent = 'Parando após o item atual…';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const urls = parseUrls();
+    if (!urls.length) {
+      $('status').classList.remove('hidden');
+      $('status').textContent = 'Cole ao menos um link começando com http(s)://';
+      return;
+    }
+    const btn = $('go') as HTMLButtonElement;
+    btn.disabled = true;
+    $('result').classList.add('hidden');
+    $('queue').classList.add('hidden');
+    chosen = null;
+    $('status').classList.remove('hidden');
+    try {
+      if (urls.length === 1) await runSingle(urls[0]);
+      else await runBatch(urls);
+    } finally {
+      btn.disabled = false;
     }
   });
 </script>

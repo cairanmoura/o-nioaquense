@@ -351,6 +351,8 @@ export interface ArticleInput {
   cover_image_caption?: string | null;
   scope: ArticleScope;
   local_tags?: string[];
+  source_name?: string | null;
+  source_url?: string | null;
   category_label?: string | null;
   /** Tags da materia. */
   tags?: string[];
@@ -446,6 +448,7 @@ export async function saveArticle(
       scope: payload.scope,
       category_label: payload.category_label,
       tags: payload.tags,
+      ...(input.source_url ? { source_url: input.source_url, source_name: input.source_name ?? null } : {}),
       is_breaking: payload.is_breaking,
       is_featured: payload.is_featured,
       status: payload.status,

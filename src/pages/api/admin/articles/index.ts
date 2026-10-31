@@ -34,6 +34,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
       is_breaking: Boolean(payload.is_breaking),
       is_featured: Boolean(payload.is_featured),
+      source_name: payload.source_name ? String(payload.source_name) : null,
+      source_url: payload.source_url ? String(payload.source_url) : null,
       status: payload.status ? (String(payload.status) as ArticleStatus) : 'draft',
     };
 

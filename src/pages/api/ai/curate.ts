@@ -23,6 +23,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const payload = await readPayload(request);
     const url = String(payload.url ?? '').trim();
     if (!url || !isSafeRemoteUrl(url)) throw new Error('URL inválida');
+    // Ja importada? (mesmo source_url)
+    const sb = (locals as any).supabase;
+    if (sb) {
+      const { data: dup } = await sb.from('articles').select('id,status').eq('source_url', url).maybeSingle();
+      if (dup) throw new Error(`Já importada (${dup.status === 'draft' ? 'em rascunho' : dup.status}).`);
+    }
     const hostname = new URL(url).hostname.replace(/^www\./, '');
 
     const article = await extractFromUrl(url, hostname);
