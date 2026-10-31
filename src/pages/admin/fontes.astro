@@ -19,8 +19,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
             Execução manual
           </h2>
           <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-            Dispara a extração de todas as fontes ativas agora. Matérias novas são
-            inseridas direto na Home quando a fonte tem "Publicar Direto" ativado.
+            Roda a extração várias vezes seguidas (até 20 rodadas) e para sozinho quando não há mais nada novo. Matérias novas vão direto ao ar ou para rascunho, conforme a regra de cada fonte.
           </p>
         </div>
         <button
@@ -40,9 +39,10 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           >
             <path d="m22 2-7 20-4-9-9-4ZM22 2 11 13" />
           </svg>
-          Executar Extração Agora
-          <span id="msg-extracao" class="ml-2 text-[11px]"></span>
+          Extrair tudo agora
         </button>
+        <button id="parar-extracao" type="button" class="hidden rounded-sm border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-nioaque-red">Parar</button>
+        <p id="msg-extracao" class="w-full text-xs font-medium leading-relaxed" aria-live="polite"></p>
       </header>
     </section>
 
@@ -257,66 +257,89 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
   carregarFontes();
 
-  /* Botão Executar Extração Agora */
+  /* Extrair tudo: chama a extracao em sequencia. Cada chamada e' uma execucao nova
+   * do Worker (50 requisicoes novas), entao o teto de ~5 materias por rodada some. */
   const btn = document.getElementById('executar-extracao') as HTMLButtonElement | null;
   const msg = document.getElementById('msg-extracao') as HTMLElement | null;
-  btn?.addEventListener('click', async () => {
-    if (btn) btn.disabled = true;
-    if (msg) msg.textContent = 'Executando…';
-    try {
-      // Envia o access token do Supabase logado no header (mais confiavel que cookie no Worker)
-      let userToken = '';
-      try {
-        const { createSupabaseBrowserClient } = await import('../../lib/supabase/client');
-        const sb = await createSupabaseBrowserClient();
-        if (sb) {
-          const { data } = await sb.auth.getSession();
-          userToken = data.session?.access_token ?? '';
-        }
-      } catch {
-        /* segue sem token */
-      }
+  const stopBtn = document.getElementById('parar-extracao') as HTMLButtonElement | null;
+  let stopRequested = false;
+  stopBtn?.addEventListener('click', () => {
+    stopRequested = true;
+    stopBtn.disabled = true;
+  });
 
-      const res = await fetch('/api/cron/extract-news', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(userToken ? { 'x-user-token': userToken } : {}),
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        // Mostra erros por fonte (se houver)
-        const comErro = (data.results ?? []).filter(
-          (r: any) => r.error || r.ai_error || (r.insert_errors && r.insert_errors.length),
-        );
-        if (msg) {
-          let texto = 'Concluído! ' + (data.inserted ?? 0) + ' inserida(s), ' + (data.skipped ?? 0) + ' ignorada(s).';
-          const retidas = (data.results ?? []).reduce((n: number, r: any) => n + (r.held ?? 0), 0);
-          if (retidas) texto += ' ' + retidas + ' em rascunho para revisão.';
-          if (comErro.length) {
-            texto += ' ⚠ ' + comErro.map((r: any) => r.source + ': ' + (r.error ?? r.ai_error ?? r.insert_errors.join('; '))).join(' | ');
-          }
-          msg.textContent = texto;
-          msg.style.color = comErro.length ? '#E60000' : '#008026';
-        }
-        setTimeout(() => window.location.reload(), comErro.length ? 30000 : 1500);
-        if (comErro.length && btn) btn.disabled = false;
-      } else {
-        if (msg) {
-          msg.textContent = 'Erro: ' + (data.error ?? 'Não autorizado');
-          msg.style.color = '#E60000';
-        }
-        if (btn) btn.disabled = false;
-      }
-    } catch (err) {
-      if (msg) {
-        msg.textContent = 'Erro de conexão.';
-        msg.style.color = '#E60000';
-      }
-      if (btn) btn.disabled = false;
+  const MAX_ROUNDS = 20;
+  const show = (text: string, bad = false) => {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.style.color = bad ? '#B80000' : '#006B1F';
+  };
+
+  btn?.addEventListener('click', async () => {
+    btn.disabled = true;
+    stopRequested = false;
+    if (stopBtn) {
+      stopBtn.disabled = false;
+      stopBtn.classList.remove('hidden');
     }
+
+    let userToken = '';
+    try {
+      const { createSupabaseBrowserClient } = await import('../../lib/supabase/client');
+      const sb = await createSupabaseBrowserClient();
+      if (sb) {
+        const { data } = await sb.auth.getSession();
+        userToken = data.session?.access_token ?? '';
+      }
+    } catch {
+      /* segue sem token */
+    }
+
+    let inserted = 0;
+    let held = 0;
+    let round = 0;
+    let idle = 0;
+    const problems = new Set<string>();
+    let fatal = '';
+
+    while (round < MAX_ROUNDS && !stopRequested && idle < 2) {
+      round++;
+      show('Rodada ' + round + '… ' + inserted + ' matéria(s) até agora');
+      try {
+        const res = await fetch('/api/cron/extract-news', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', ...(userToken ? { 'x-user-token': userToken } : {}) },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          fatal = data.error ?? 'Erro ' + res.status;
+          break;
+        }
+        const got = data.inserted ?? 0;
+        inserted += got;
+        held += (data.results ?? []).reduce((n: number, r: any) => n + (r.held ?? 0), 0);
+        for (const r of data.results ?? []) {
+          const e = r.error ?? r.ai_error;
+          if (e && !/Adiada/.test(e)) problems.add(r.source + ': ' + String(e).slice(0, 260));
+        }
+        // 2 rodadas seguidas sem nada novo = as fontes ja foram esgotadas
+        idle = got === 0 ? idle + 1 : 0;
+      } catch {
+        fatal = 'Erro de conexão.';
+        break;
+      }
+    }
+
+    let texto = fatal
+      ? 'Parou: ' + fatal + ' (' + inserted + ' inserida(s) antes disso)'
+      : (stopRequested ? 'Interrompido. ' : 'Concluído! ') + inserted + ' matéria(s) em ' + round + ' rodada(s).';
+    if (held) texto += ' ' + held + ' em rascunho para revisão.';
+    if (problems.size) texto += ' ⚠ ' + [...problems].join(' | ');
+    show(texto, Boolean(fatal) || problems.size > 0);
+    btn.disabled = false;
+    stopBtn?.classList.add('hidden');
+    if (inserted > 0 && !problems.size) setTimeout(() => window.location.reload(), 2500);
   });
 
   /* Formulário: adicionar nova fonte */
