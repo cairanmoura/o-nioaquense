@@ -5,11 +5,24 @@
  */
 export async function refreshDollarQuote(supabase: any): Promise<boolean> {
   try {
-    const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
-    if (!res.ok) return false;
-    const data = (await res.json())?.USDBRL;
-    const value = Number(data?.bid);
-    const change = Number(data?.pctChange);
+    const headers = { 'User-Agent': 'Mozilla/5.0 (compatible; ONioaquenseBot/1.0)', Accept: 'application/json' };
+    let value = NaN;
+    let change = 0;
+    try {
+      const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL', { headers });
+      if (res.ok) {
+        const data = (await res.json())?.USDBRL;
+        value = Number(data?.bid);
+        change = Number(data?.pctChange);
+      }
+    } catch {
+      // cai no fallback
+    }
+    if (!Number.isFinite(value) || value <= 0) {
+      // Fallback: open.er-api.com (sem chave)
+      const res2 = await fetch('https://open.er-api.com/v6/latest/USD', { headers });
+      if (res2.ok) value = Number((await res2.json())?.rates?.BRL);
+    }
     if (!Number.isFinite(value) || value <= 0) return false;
     const { error } = await supabase.from('market_quotes').upsert(
       {

@@ -26,6 +26,7 @@ import {
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from '../../../lib/scraper';
 
 import { cleanTitle } from '../../../lib/format';
+import { sanitizeArticleHtml, assessQuality, htmlToText } from '../../../lib/clean-content';
 import { refreshDollarQuote, refreshAgroQuotes } from '../../../lib/quotes';
 import type { ArticleScope } from '../../../lib/types';
 
@@ -397,6 +398,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       let skipped = 0;
       let rewritten = 0;
       const insertErrors: string[] = [];
+      const heldForReview: string[] = [];
 
       // Filtro de palavras-chave (se configurado na fonte)
       const keywords: string[] =
@@ -632,30 +634,34 @@ export const GET: APIRoute = async ({ request, locals }) => {
           }
         }
 
-        let content: string;
-        if (fullContent) {
-          // Conteudo completo extraido da fonte original (ja vem com imagens limpas)
-          content = `<p>${finalTitle}</p>${fullContent}`;
-        } else {
-          // Fallback: so descricao do RSS + link para a materia original
-          content = `<p>${finalTitle}</p>`;
-          if (rawDesc) {
-            const cleanDesc = (rawDesc ?? '')
-              .replace(/<script[\s\S]*?<\/script>/gi, '')
-              .replace(/<style[\s\S]*?<\/style>/gi, '')
-              .replace(/\s+/g, ' ')
-              .trim()
-              .slice(0, 2000);
-            content += `<p>${cleanDesc}</p>`;
-          }
+        // Corpo reconstruido (so paragrafos de texto); nunca HTML bruto da fonte
+        const clean = sanitizeArticleHtml(fullContent);
+        const descClean = htmlToText(rawDesc ?? '');
+        let content = clean.html;
+        let bodyText = clean.text;
+        let bodyParagraphs = clean.paragraphs;
+        if (clean.text.length < 400 && descClean.length >= 80) {
+          // Fonte sem corpo aproveitavel: usa so a descricao
+          content = `<p>${descClean.slice(0, 1500).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`;
+          bodyText = descClean;
+          bodyParagraphs = 1;
         }
 
         content += `<p><br/></p><p>Fonte: <a href="${link}" target="_blank" rel="noopener noreferrer">${source.name}</a>.</p>`;
 
         // --- Status: publicado direto ou rascunho ---
         const now = new Date().toISOString();
-        const status = source.auto_publish ? 'published' : 'draft';
-        const publishedAt = source.auto_publish
+        const quality = assessQuality({
+          title: cleanTitle(finalTitle) || finalTitle,
+          bodyText,
+          paragraphs: bodyParagraphs,
+          hasPhoto: isPhotoCover(coverImage),
+          bullets: summaryBullets,
+        });
+        // Auto-publica so o que passa no porteiro; o resto vai para revisao
+        const status = source.auto_publish && quality.ok ? 'published' : 'draft';
+        if (!quality.ok) heldForReview.push(`${title.slice(0, 50)} [${quality.issues.join('; ')}]`);
+        const publishedAt = status === 'published'
           ? pubDate
             ? new Date(pubDate).toISOString()
             : now
@@ -726,6 +732,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         skipped,
         rewritten,
         ...(insertErrors.length ? { insert_errors: insertErrors.slice(0, 3) } : {}),
+        ...(heldForReview.length ? { held_for_review: heldForReview.slice(0, 5), held: heldForReview.length } : {}),
       });
     } catch (err: any) {
       results.push({ source: source.name, inserted: 0, skipped: 0, rewritten: 0, error: err?.message });
