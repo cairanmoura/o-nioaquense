@@ -56,11 +56,12 @@ const advantages = [
 ---
 
 <MainLayout title="Anuncie no O Nioaquense" description="Anuncie sua empresa no portal de notícias de Nioaque (MS). Formatos: Topo, Meio de Página, Rodapé, Vitrine do Comércio e Informe Publicitário.">
+  <div class="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6 [&_.container-editorial]:!max-w-none [&_.container-editorial]:!px-0">
   <header class="mt-8 mb-10 border-b-2 border-nioaque-green pb-6">
     <h1 class="font-editorial text-3xl font-semibold tracking-tight text-ink sm:text-5xl">
       Anuncie no O Nioaquense
     </h1>
-    <p class="mt-3 text-base leading-relaxed text-ink-soft sm:text-lg">
+    <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
       Leve sua marca para quem mais importa: os moradores de Nioaque (MS). O portal
       hiperlocal que cobre o que acontece na cidade, no Sul de Mato Grosso do Sul
       e no Brasil.
@@ -75,7 +76,7 @@ const advantages = [
     <p class="mt-3 text-sm text-ink-muted">
       Escolha o espaço que melhor combina com o seu objetivo de campanha.
     </p>
-    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-8 grid gap-4 sm:grid-cols-2">
       {formats.map((fmt) => (
         <article class="border border-line bg-nioaque-white p-5 sm:p-6">
           <h3 class="font-editorial text-lg font-semibold text-ink">{fmt.name}</h3>
@@ -88,8 +89,8 @@ const advantages = [
   </section>
 
   {/* Vantagens */}
-  <section id="vantagens" class="mt-16 bg-nioaque-white" data-reveal>
-    <div class="container-editorial py-12">
+  <section id="vantagens" class="mt-14 rounded-[6px] border border-line bg-nioaque-white" data-reveal>
+    <div class="container-editorial p-6 sm:p-10">
       <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
         Por que anunciar no O Nioaquense?
       </h2>
@@ -105,13 +106,13 @@ const advantages = [
   </section>
 
   {/* Contratacao direta */}
-  <section id="contratacao" class="mt-16" data-reveal>
+  <section id="contratacao" class="mt-14" data-reveal>
     <div class="container-editorial">
-      <div class="border border-line bg-nioaque-white p-8 sm:p-12">
+      <div class="rounded-[6px] border border-line bg-nioaque-white p-6 sm:p-10">
         <h2 class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
           Quer anunciar? Fale com a redação.
         </h2>
-        <p class="mt-3 text-sm text-ink-muted">
+        <p class="mt-3 max-w-xl text-sm leading-relaxed text-ink-muted">
           Envie uma mensagem pelo WhatsApp ou preencha o formulário abaixo. Retornamos em
           até 24 horas úteis com tabela de preços e disponibilidade de espaços.
         </p>
@@ -138,4 +139,5 @@ const advantages = [
       </div>
     </div>
   </section>
+  </div>
 </MainLayout>

@@ -33,6 +33,7 @@ import {
 } from './rss';
 import { normalizeCategory } from './categories';
 import { classifyScope } from './geo';
+import { blockedByViolencePolicy, violenceInfo } from './importance';
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from './scraper';
 import { cleanTitle } from './format';
 import { sanitizeArticleHtml, assessQuality, htmlToText } from './clean-content';
@@ -60,11 +61,13 @@ export interface QueueEntry {
   needsResolution?: boolean;
   /** Link ja real, mas a pagina precisa ser baixada (Bing News, scraper, sitemap). */
   needsPageFetch?: boolean;
+  /** Veio de Bing/Google News: o veiculo real e' o credito, nunca o nome da busca. */
+  aggregator?: boolean;
 }
 
 export type NewsJob =
-  | { type: 'sweep' }
-  | { type: 'source'; sourceId: string }
+  | { type: 'sweep'; backfill?: boolean }
+  | { type: 'source'; sourceId: string; backfill?: boolean }
   | { type: 'article'; sourceId: string; entry: QueueEntry }
   | { type: 'quotes' };
 
@@ -79,6 +82,56 @@ export interface ProcessOutcome {
 const DEFAULT_AUTHOR_ID = '10000000-0000-4000-8000-000000000001';
 /** Materias novas enfileiradas por fonte a cada varredura (o resto entra na proxima). */
 const MAX_NEW_PER_SOURCE = 8;
+const MAX_NEW_BACKFILL = 30;
+/** So entram materias publicadas nos ultimos 30 dias (data do veiculo original). */
+const MAX_AGE_DAYS = 30;
+
+const PUBLISHERS: Record<string, string> = {
+  'opantaneiro.com.br': 'O Pantaneiro',
+  'campograndenews.com.br': 'Campo Grande News',
+  'midiamax.com.br': 'Midiamax',
+  'topmidianews.com.br': 'TopMídiaNews',
+  'g1.globo.com': 'g1',
+  'correiodoestado.com.br': 'Correio do Estado',
+  'primeirapagina.com.br': 'Primeira Página',
+  'agenciadenoticias.ms.gov.br': 'Agência de Notícias MS',
+  'agenciabrasil.ebc.com.br': 'Agência Brasil',
+  'infomoney.com.br': 'InfoMoney',
+  'ms.gov.br': 'Governo de MS',
+  'campograndenews.com': 'Campo Grande News',
+};
+
+/** Nome do veiculo a partir do endereco (ex.: opantaneiro.com.br -> O Pantaneiro). */
+export function publisherFromHost(link: string): string | null {
+  let h: string;
+  try {
+    h = new URL(link).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+  for (const [k, v] of Object.entries(PUBLISHERS)) if (h === k || h.endsWith('.' + k)) return v;
+  return h;
+}
+
+/** Bing/Google embrulham o link real em apiclick/redirect: devolve a URL do veiculo. */
+function unwrapAggregatorUrl(link: string): string {
+  try {
+    const u = new URL(link);
+    if (/bing\.com$/i.test(u.hostname)) {
+      const real = u.searchParams.get('url');
+      if (real && /^https?:/i.test(real)) return real;
+    }
+  } catch {
+    /* mantem */
+  }
+  return link;
+}
+
+const isFresh = (iso: string | null | undefined) => {
+  if (!iso) return true; // sem data: decide depois, com a pagina
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) || t >= Date.now() - MAX_AGE_DAYS * 86400000;
+};
 
 /* -------------------------------------------------------------------------- */
 /* Utilitarios                                                                */
@@ -176,6 +229,7 @@ export async function sweepSources(supabase: any): Promise<{ id: string; name: s
 export async function discoverSource(
   supabase: any,
   source: any,
+  opts: { backfill?: boolean } = {},
 ): Promise<{ entries: QueueEntry[]; skipped: number; note?: string }> {
   const isScraper = (source.source_type ?? 'rss') === 'html_scraper';
   const matches = keywordMatcher(source);
@@ -185,7 +239,7 @@ export async function discoverSource(
   if (isScraper) {
     const homeHtml = await fetchPageHtml(source.rss_url);
     if (!homeHtml) throw new Error(`Falha ao baixar a pagina inicial de ${source.name}`);
-    const links = await extractArticleLinks(homeHtml, source.rss_url, 14);
+    const links = await extractArticleLinks(homeHtml, source.rss_url, opts.backfill ? 30 : 14);
     entries = links.map((link) => ({ link, needsPageFetch: true }));
   } else {
     const gnews = isGoogleNewsFeed(source.rss_url);
@@ -193,35 +247,66 @@ export async function discoverSource(
     let xml = '';
     let feedNote = '';
 
+    // Varias paginas do mesmo feed (so no "povoar": ultimo mes). Bing: &first=11,21...; WordPress: &paged=2...
+    const xmls: string[] = [];
+
     if (gnews) {
-      xml = await fetchGoogleNewsFeed(source.rss_url, 20);
+      const gurl = opts.backfill ? source.rss_url.replace(/when:\d+[dh]/i, 'when:30d') : source.rss_url;
+      xml = await fetchGoogleNewsFeed(gurl, 40);
       if (!xml) feedNote = 'Google News recusou o Worker e todos os proxies';
+      else xmls.push(xml);
     } else {
-      try {
-        const res = await fetch(source.rss_url, {
-          headers: {
-            ...BROWSER_HEADERS,
-            Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
-          },
-        });
-        if (res.ok) xml = await res.text();
-        else feedNote = `HTTP ${res.status}`;
-      } catch (e: any) {
-        feedNote = String(e?.message ?? e).slice(0, 120);
+      const pages = opts.backfill ? (bing ? 6 : 5) : 1;
+      for (let pg = 0; pg < pages; pg++) {
+        let url = source.rss_url as string;
+        if (pg > 0) {
+          const sep = url.includes('?') ? '&' : '?';
+          url = bing ? `${url}${sep}first=${pg * 10 + 1}` : `${url}${sep}paged=${pg + 1}`;
+        }
+        try {
+          const res = await fetch(url, {
+            headers: {
+              ...BROWSER_HEADERS,
+              Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+            },
+          });
+          if (!res.ok) {
+            if (pg === 0) feedNote = `HTTP ${res.status}`;
+            break;
+          }
+          const text = await res.text();
+          if (pg === 0) xml = text;
+          if (!/<(item|entry)\b/i.test(text)) break;
+          xmls.push(text);
+        } catch (e: any) {
+          if (pg === 0) feedNote = String(e?.message ?? e).slice(0, 120);
+          break;
+        }
       }
     }
 
-    if (gnews && xml) {
-      for (const it of parseGoogleNewsItems(xml, 20)) {
-        entries.push({ title: it.title, link: it.link, pubDate: it.pubDate, needsResolution: true, publisherName: it.sourceName });
-      }
-    } else if (bing && xml) {
-      for (const it of parseBingNewsItems(xml, 15)) {
-        entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: it.pubDate, needsPageFetch: true, publisherName: it.sourceName });
-      }
-    } else if (xml && /<(item|entry)\b/i.test(xml)) {
-      for (const it of parseFeedItems(xml, 30)) {
-        entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: it.pubDate, rssImage: it.image });
+    const seenLinks = new Set<string>();
+    for (const x of xmls) {
+      if (gnews) {
+        for (const it of parseGoogleNewsItems(x, 40)) {
+          if (seenLinks.has(it.link)) continue;
+          seenLinks.add(it.link);
+          entries.push({ title: it.title, link: it.link, pubDate: it.pubDate, needsResolution: true, aggregator: true, publisherName: it.sourceName });
+        }
+      } else if (bing) {
+        for (const it of parseBingNewsItems(x, 15)) {
+          const link = unwrapAggregatorUrl(it.link);
+          if (seenLinks.has(link)) continue;
+          seenLinks.add(link);
+          entries.push({ title: it.title, link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: it.pubDate, needsPageFetch: true, aggregator: true, publisherName: it.sourceName });
+        }
+      } else {
+        for (const it of parseFeedItems(x, 30)) {
+          if (seenLinks.has(it.link)) continue;
+          seenLinks.add(it.link);
+          const d = it.pubDate ? new Date(it.pubDate) : null;
+          entries.push({ title: it.title, link: it.link, rawDesc: it.description?.slice(0, 6000) ?? null, pubDate: d && !Number.isNaN(d.getTime()) ? d.toISOString() : null, rssImage: it.image });
+        }
       }
     }
 
@@ -236,6 +321,19 @@ export async function discoverSource(
       }
     }
   }
+
+  // Janela de 30 dias (data do veiculo original) e diretriz de violencia (so no titulo, antes de gastar IA)
+  entries = entries.filter((e) => {
+    if (!isFresh(e.pubDate)) {
+      skipped++;
+      return false;
+    }
+    if (e.title && blockedByViolencePolicy({ title: e.title, text: e.rawDesc ?? '', mentionsNioaque: /nioaque/i.test(`${e.title} ${e.rawDesc ?? ''}`) })) {
+      skipped++;
+      return false;
+    }
+    return true;
+  });
 
   // Filtro de palavras-chave onde ja da para decidir (titulo/descricao do feed).
   // Itens so com link (scraper, sitemap, redirect do Google) filtram depois, com o corpo.
@@ -265,7 +363,7 @@ export async function discoverSource(
     skipped += before - entries.length;
   }
 
-  return { entries: entries.slice(0, MAX_NEW_PER_SOURCE), skipped };
+  return { entries: entries.slice(0, opts.backfill ? MAX_NEW_BACKFILL : MAX_NEW_PER_SOURCE), skipped };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -299,7 +397,7 @@ async function loadArticle(link: string, siteName: string, env: any): Promise<{ 
 }
 
 export async function processEntry(supabase: any, env: any, source: any, input: QueueEntry): Promise<ProcessOutcome> {
-  const entry: QueueEntry = { ...input };
+  const entry: QueueEntry = { ...input, link: unwrapAggregatorUrl(input.link) };
   const matches = keywordMatcher(source);
 
   // Revalida: outra execucao pode ter inserido esta materia
@@ -349,6 +447,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     }
   }
 
+  if (!isFresh(pubDate)) return { status: 'skipped', reason: 'publicada ha mais de 30 dias' };
+
   // Titulo: o do portal real e' mais preciso que o do agregador
   const feedTitle = entry.title ?? '';
   const title = ex.title.length >= 10 && (!feedTitle || entry.needsResolution || entry.needsPageFetch) ? ex.title : feedTitle || ex.title;
@@ -358,6 +458,10 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   if (!matches(title) && !(rawDesc && matches(rawDesc)) && !matches(ex.text) && !matches(entry.link)) {
     return { status: 'skipped', reason: 'fora das palavras-chave da fonte' };
   }
+  const nioaqueInText = /nioaque/i.test(`${title} ${ex.text}`);
+  const blocked = blockedByViolencePolicy({ title, text: ex.text, mentionsNioaque: nioaqueInText });
+  if (blocked) return { status: 'skipped', reason: blocked };
+
   const { data: slugDup } = await supabase.from('articles').select('id').eq('slug', slug).limit(1);
   if (slugDup?.length) return { status: 'skipped', reason: 'titulo ja publicado' };
 
@@ -372,9 +476,11 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   const scrapedText = ex.text;
 
   // Credito: agregadores (Google/Bing News) nao sao o veiculo; usa o portal real
-  const isAggregator = Boolean(entry.needsResolution || entry.publisherName);
-  const publisher: string =
-    (isAggregator ? entry.publisherName || ex.siteName || hostOf(link) : null) ?? source.name ?? 'portal de origem';
+  // O nome da fonte cadastrada (ex.: "Radar Nioaque Direto") e' so' o nome da busca: o credito e' o veiculo real.
+  const isAggregator = Boolean(entry.aggregator || entry.needsResolution || entry.publisherName || /bing\.com|news\.google\./i.test(source.rss_url));
+  const publisher: string = isAggregator
+    ? entry.publisherName || (ex.siteName && !/bing|google/i.test(ex.siteName) ? ex.siteName : null) || publisherFromHost(link) || hostOf(link) || 'portal de origem'
+    : source.name ?? 'portal de origem';
 
   // Classificacao geografica
   const fullText = `${title} ${rawDesc ?? ''} ${scrapedText.slice(0, 3000)}`;
@@ -421,6 +527,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   let aiCategory: string | null = null;
   let aiScope: string | null = null;
   let aiTags: string[] = [];
+  let aiViolence: boolean | null = null;
+  let aiImportance: number | null = null;
   const warnings: string[] = feedOnly ? ['portal bloqueou a leitura: texto vindo so do feed (curto)'] : [];
 
   if (ownership === 'private') {
@@ -434,6 +542,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
       aiCategory = rw.suggested_category;
       aiScope = rw.suggested_scope;
       aiTags = rw.tags;
+      aiViolence = rw.violence;
+      aiImportance = rw.importance;
       warnings.push(...rw.warnings);
       const clean = sanitizeArticleHtml(rw.content_html);
       bodyText = clean.text;
@@ -462,6 +572,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
         aiCategory = rw.suggested_category;
         aiScope = rw.suggested_scope;
         aiTags = rw.tags;
+        aiViolence = rw.violence;
+        aiImportance = rw.importance;
       } catch (aiErr) {
         await noteSource(supabase, source.id, { last_message: `IA: ${String((aiErr as any)?.message ?? aiErr).slice(0, 380)}` });
       }
@@ -476,6 +588,14 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
       .filter((x) => x.length >= 40 && x.length <= 220);
     const extra = sentences.filter((x) => !summaryBullets.some((b) => b.slice(0, 40) === x.slice(0, 40)));
     summaryBullets = [...summaryBullets.filter((b) => b.length >= 20), ...extra].slice(0, 3);
+  }
+
+  // Segunda checagem com o julgamento da IA (violencia + importancia 1-5)
+  const blockedByAi = blockedByViolencePolicy({ title: finalTitle, text: bodyText, mentionsNioaque: nioaqueInText || localTags.includes('Nioaque'), aiViolence, aiImportance });
+  if (blockedByAi) return { status: 'skipped', reason: blockedByAi, title: finalTitle };
+  // Mesmo fato ja publicado (agora comparando com o titulo reescrito)
+  if (recent?.some((r: any) => titleSimilarity(finalTitle, String(r.title ?? '')) >= 0.45)) {
+    return { status: 'skipped', reason: 'mesmo fato ja publicado por outro veiculo', title: finalTitle };
   }
 
   const categoryLabel = normalizeCategory(aiCategory) || detectCategory(finalTitle, bodyText);
@@ -506,7 +626,9 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     bullets: summaryBullets,
   });
   const status = ownership === 'private' || feedOnly || warnings.length ? 'draft' : source.auto_publish && quality.ok ? 'published' : 'draft';
-  const publishedAt = status === 'published' ? (pubDate ? new Date(pubDate).toISOString() : now) : null;
+  // Data do veiculo original (nunca a da extracao); rascunho tambem guarda, para sair com a data certa ao publicar
+  const origDate = pubDate && !Number.isNaN(new Date(pubDate).getTime()) && new Date(pubDate).getTime() <= Date.now() ? new Date(pubDate).toISOString() : null;
+  const publishedAt = origDate ?? (status === 'published' ? now : null);
 
   // Autor padrao (evita quebrar a FK quando o perfil nao existe)
   const { data: authorRow } = await supabase.from('profiles').select('id').eq('id', DEFAULT_AUTHOR_ID).maybeSingle();
@@ -594,15 +716,15 @@ export async function enqueueJobs(queue: any, jobs: NewsJob[], delayStep = 0, ba
 }
 
 /** Passo `source`: descobre e enfileira as materias novas. Devolve quantas. */
-export async function runSourceJob(supabase: any, queue: any, sourceId: string): Promise<{ queued: number; skipped: number }> {
+export async function runSourceJob(supabase: any, queue: any, sourceId: string, backfill = false): Promise<{ queued: number; skipped: number }> {
   const { data: source } = await supabase.from('news_sources').select('*').eq('id', sourceId).maybeSingle();
   if (!source || !source.is_active) return { queued: 0, skipped: 0 };
   try {
-    const { entries, skipped } = await discoverSource(supabase, source);
+    const { entries, skipped } = await discoverSource(supabase, source, { backfill });
     await enqueueJobs(
       queue,
       entries.map((entry) => ({ type: 'article', sourceId, entry }) as NewsJob),
-      6, // uma materia nova a cada 6 s: a IA gratuita nao aguenta rajada
+      backfill ? 5 : 6, // uma materia nova a cada ~6 s: a IA gratuita nao aguenta rajada
     );
     await noteSource(supabase, sourceId, {
       last_fetched_at: new Date().toISOString(),

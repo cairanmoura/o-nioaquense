@@ -272,7 +272,9 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
 
       // Noticias de agencia entram no feed de producao, com foto e link para a
       // materia original. Sem isso a home ficaria so com as artes locais.
-      const feedArticles = await mergeAgencyNews(articles);
+      // Agencias (Agencia Brasil, Agencia MS) entram pelo extrator, com texto completo e credito;
+      // nao mesclamos mais o RSS cru (vinha so com resumo e "acesse a integra").
+      const feedArticles = articles;
       const utility = pickCurrentUtility(utilities ?? [], today);
 
       return {

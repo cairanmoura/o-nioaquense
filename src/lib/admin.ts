@@ -538,7 +538,7 @@ export async function returnArticleToDraft(
   if (locals.supabase) {
     const { data: updated, error } = await locals.supabase
       .from('articles')
-      .update({ status: 'draft', published_at: null, updated_at: new Date().toISOString() })
+      .update({ status: 'draft', updated_at: new Date().toISOString() })
       .eq('id', id)
       .select('*')
       .maybeSingle();

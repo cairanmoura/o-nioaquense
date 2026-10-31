@@ -33,6 +33,10 @@ export interface Rewritten {
   suggested_scope: string | null;
   /** Tags livres: cidades, orgaos, pessoas, assuntos. */
   tags: string[];
+  /** Crime/morte/violencia como assunto central (julgamento da IA). */
+  violence: boolean | null;
+  /** Importancia 1-5 (julgamento da IA). */
+  importance: number | null;
   provider: string;
   words_src: number;
   words_out: number;
@@ -52,6 +56,11 @@ REGRAS DE CONTEÚDO
 - Estrutura: primeiro parágrafo responde quem, o quê, quando, onde e por quê; depois detalhes em ordem decrescente de importância; parágrafos de 2 a 4 frases; use <h2> só em matérias longas (mais de 300 palavras).
 - Cite a fonte de forma natural uma vez (ex.: "segundo o portal NOME DA FONTE").
 - Sem sensacionalismo, sem clickbait, sem opinião.
+- UM ASSUNTO SÓ: escreva apenas sobre o fato do título. O texto original pode trazer, por engano, trechos de outras notícias ("leia também", "outras notícias", chamadas, menus, rodapé): IGNORE-os por completo e nunca os resuma nem os cite.
+
+AGENDA / LISTA DE EVENTOS: quando a matéria listar 3 ou mais eventos (shows, cinema, teatro, feiras, cursos, jogos), escreva um parágrafo de abertura e depois UM parágrafo <p> por evento, neste formato exato (campos separados por " | "; use "-" para o que não houver):
+<p>[EVENTO] Atração ou nome do evento | Data (ex.: sáb., 1º/11) | Horário | Cidade | Local ou endereço | Valor ou observação (ex.: gratuito)</p>
+Eventos nunca ficam em texto corrido. Mantenha os eventos agrupados em sequência, ordenados por data.
 
 TÍTULO: de 55 a 95 caracteres, CONCRETO: quem + o quê + onde (e o número principal, se houver). Proibido título vago ou de curiosidade ("Entenda...", "Veja...", "Saiba...", "O que se sabe"). Exemplos:
   ruim: "MPF denuncia 11 por tráfico"  ->  bom: "MPF denuncia 11 investigados por tráfico de drogas na fronteira de MS com o Paraguai"
@@ -68,9 +77,12 @@ CLASSIFICAÇÃO (decida pelo ASSUNTO da matéria, nunca pelo jornal onde foi pub
   "mundo" = fato ocorrido fora do Brasil.
 - "suggested_category" (tema): EXATAMENTE uma destas: ${CATEGORY_LABELS.join(', ')}. "Política" para prefeitura, Câmara, governos e eleições; "Cidade" só para serviços e vida comunitária de Nioaque; "Geral" apenas se nenhuma servir.
 - "tags": de 3 a 8 etiquetas curtas (cidades, órgãos, pessoas e assuntos centrais citados), sem repetir o tema.
+- "violencia": true se o assunto central é crime, morte, agressão, assalto, tráfico, acidente com vítima ou outra violência; senão false.
+- "importancia": inteiro de 1 a 5 (1 = fato corriqueiro de bairro, 3 = relevante para a cidade, 4 = grande repercussão no estado, 5 = nacional ou de enorme impacto). Casos policiais comuns valem 1 ou 2; só dê 4 ou 5 a violência com muitas vítimas, autoridades envolvidas ou repercussão estadual/nacional.
+- Foco editorial do portal: política, economia, cultura, cidade, lazer, infraestrutura, obras e transparência (contas públicas, licitações, fiscalização). Use o tema "Transparência" quando a matéria tratar de fiscalização, auditoria, licitação, contratos, prestação de contas ou gasto público.
 
 Responda SOMENTE com um objeto JSON válido, sem markdown, com as chaves:
-"title", "subtitle", "summary_bullets" (array de 3), "content_html" (apenas <p> e <h2>), "suggested_scope", "suggested_category", "tags" (array).`;
+"title", "subtitle", "summary_bullets" (array de 3), "content_html" (apenas <p> e <h2>), "suggested_scope", "suggested_category", "tags" (array), "violencia" (boolean), "importancia" (inteiro 1-5).`;
 
 function parseJson(raw: string): any | null {
   const t = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -156,6 +168,8 @@ export async function rewriteArticle(
     suggested_category: normalizeCategory(data.suggested_category) ?? detectCategory(data.title, clean.text),
     suggested_scope: normalizeScope(data.suggested_scope),
     tags,
+    violence: typeof data.violencia === 'boolean' ? data.violencia : null,
+    importance: Number.isFinite(Number(data.importancia)) ? Math.min(5, Math.max(1, Math.round(Number(data.importancia)))) : null,
     provider: attempt.provider,
     words_src: wordsSrc,
     words_out: wordsOut,

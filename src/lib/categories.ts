@@ -35,6 +35,11 @@ export const CATEGORIES: Category[] = [
     keywords: ['policia', 'policial', 'preso', 'prisao', 'homicid', 'assassin', 'roubo', 'furto', 'trafico', 'droga', 'apreend', 'operacao', 'acusado', 'suspeito', 'delegacia', 'bombeiro', 'faccao', 'estupro', 'latrocin', 'feminicid'],
   },
   {
+    label: 'Transparência', slug: 'transparencia', description: 'Contas públicas, licitações, fiscalização e controle: para onde vai o dinheiro do cidadão.',
+    synonyms: ['fiscalizacao', 'controle', 'contas publicas', 'transparencia publica', 'licitacao', 'licitacoes'],
+    keywords: ['transparencia', 'tribunal de contas', 'tce-ms', 'tce ms', 'tcu', 'controladoria', 'cgu', 'licitac', 'dispensa de licitacao', 'pregao', 'contrato com a prefeitura', 'prestacao de contas', 'auditoria', 'improbidade', 'portal da transparencia', 'gastos publicos', 'orcamento', 'lei de acesso', 'fiscaliza', 'diario oficial', 'emenda parlamentar', 'verba', 'desvio de', 'superfaturamento', 'cpi'],
+  },
+  {
     label: 'Justiça', slug: 'justica', description: 'Decisões judiciais, Ministério Público e direitos.',
     synonyms: ['judiciario', 'direito', 'tribunal'],
     keywords: ['justica', 'tribunal', 'tjms', 'juiz', 'juiza', 'ministerio publico', 'mpms', 'denuncia', 'condenad', 'sentenca', 'liminar', 'processo judicial', 'defensoria', 'stj'],

@@ -40,6 +40,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           </svg>
           Extrair agora
         </button>
+        <button id="povoar-mes" type="button" class="rounded-[4px] border border-nioaque-green px-4 py-2.5 text-sm font-semibold text-nioaque-green-dark hover:bg-nioaque-green-50">Povoar último mês</button>
         <p id="msg-extracao" class="w-full text-xs font-medium leading-relaxed" aria-live="polite"></p>
       </header>
     </section>
@@ -343,9 +344,9 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     msg.style.color = bad ? '#B80000' : '#006B1F';
   };
 
-  btn?.addEventListener('click', async () => {
+  async function disparar(btn: HTMLButtonElement, backfill: boolean) {
     btn.disabled = true;
-    show('Enfileirando…');
+    show(backfill ? 'Enfileirando o povoamento do último mês…' : 'Enfileirando…');
 
     let userToken = '';
     try {
@@ -360,7 +361,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     }
 
     try {
-      const res = await fetch('/api/cron/extract-news', {
+      const res = await fetch('/api/cron/extract-news' + (backfill ? '?backfill=1' : ''), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...(userToken ? { 'x-user-token': userToken } : {}) },
@@ -390,6 +391,11 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       show('Erro de conexão.', true);
     }
     btn.disabled = false;
+  }
+  btn?.addEventListener('click', () => disparar(btn, false));
+  const btnMes = document.getElementById('povoar-mes') as HTMLButtonElement | null;
+  btnMes?.addEventListener('click', () => {
+    if (confirm('Povoar o site com as matérias dos últimos 30 dias de todas as fontes? Isso usa bastante a IA gratuita e pode levar de 10 a 30 minutos. As matérias entram com a data original do veículo.')) disparar(btnMes, true);
   });
 
   /* Formulário: adicionar nova fonte */

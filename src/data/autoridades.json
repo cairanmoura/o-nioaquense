@@ -1,0 +1,697 @@
+{
+ "atualizado_em": "2026-10-31",
+ "grupos": [
+  {
+   "id": "executivo",
+   "titulo": "Poder Executivo",
+   "itens": [
+    {
+     "id": "andre-guimaraes",
+     "nome": "André Bueno Guimarães",
+     "cargo": "Prefeito",
+     "partido": "PP",
+     "foto": "/autoridades/prefeito.jpg",
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "gabinete@nioaque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 377, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Atendimento das 07h às 13h",
+     "site": "https://www.nioaque.ms.gov.br",
+     "instagram": "https://www.instagram.com/prefeituranioaque/",
+     "facebook": "https://www.facebook.com/PrefeituraNioaque",
+     "observacao": "Foto: portal oficial da Prefeitura. Partido PP conforme candidatura 2024 (Itatiaia) e A Crítica.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/prefeito/13/1",
+      "https://www.nioaque.ms.gov.br/portal/secretarias/4/secretaria-de-governo"
+     ]
+    },
+    {
+     "id": "bruno-nogueira",
+     "nome": "Bruno Vieira Nogueira",
+     "cargo": "Vice-prefeito",
+     "partido": null,
+     "foto": "/autoridades/vice-prefeito.png",
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": null,
+     "endereco": "Avenida General Klinger, 377, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": "https://www.nioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Grafado 'Brunno Nogueira' no site da Câmara. Foto: portal oficial da Prefeitura. Partido não confirmado.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/prefeito/14/2",
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/"
+     ]
+    },
+    {
+     "id": "hermenegildo-santa-cruz-neto",
+     "nome": "Hermenegildo Santa Cruz Neto",
+     "cargo": "Secretário Municipal de Governo",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "governo@nioaque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 377, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "7h às 12h e 13h às 17h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/4/secretaria-de-governo"
+     ]
+    },
+    {
+     "id": "rafael-bueno-do-amaral",
+     "nome": "Rafael Bueno do Amaral",
+     "cargo": "Secretário Municipal de Finanças",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "financas@nioque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 377, Centro",
+     "horario": "7h às 13h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "E-mail exatamente como publicado no site (domínio grafado 'nioque', possível erro de digitação do portal; o telefone publicado é '32336-1011', aqui corrigido para o número geral da Prefeitura).",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/19/secretaria-de-financas"
+     ]
+    },
+    {
+     "id": "cristiane-regina-gomes-de-sousa",
+     "nome": "Cristiane Regina Gomes de Sousa",
+     "cargo": "Secretária Municipal de Saúde",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-2177"
+     ],
+     "email": "saude@nioaque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 170, Centro",
+     "horario": "7h às 13h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/6/secretaria-de-saude"
+     ]
+    },
+    {
+     "id": "maria-solange-de-franca-brito",
+     "nome": "Maria Solange de França Brito",
+     "cargo": "Secretária Municipal de Educação",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1183"
+     ],
+     "email": "educacao@nioaque.ms.gov.br",
+     "endereco": "Avenida Visconde de Taunay, 140, Centro",
+     "horario": "7h30 às 13h30",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/7/secretaria-de-educacao"
+     ]
+    },
+    {
+     "id": "tessalonica-fernandes-ribeiro",
+     "nome": "Tessalonica Fernandes Ribeiro",
+     "cargo": "Secretária Municipal de Assistência Social",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1804"
+     ],
+     "email": "assistenciasocial@nioaque.ms.gov.br",
+     "endereco": "Avenida XV de Novembro, 1035, Sala 02, Centro",
+     "horario": "7h às 13h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/20/secretaria-de-assistencia-social"
+     ]
+    },
+    {
+     "id": "dionas-martins-de-souza",
+     "nome": "Dionas Martins de Souza",
+     "cargo": "Secretário Municipal de Cultura, Esporte, Turismo e Lazer",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "secretariadeesportenioaque@gmail.com",
+     "endereco": "Avenida General Klinger, 377, Centro",
+     "horario": "7h às 13h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/8/secretaria-de-cultura-esporte-turismo-e-lazer"
+     ]
+    },
+    {
+     "id": "ademar-michalski",
+     "nome": "Ademar Michalski",
+     "cargo": "Secretário Municipal de Desenvolvimento Rural",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "desenvolvimento@nioaque.ms.gov.br",
+     "endereco": "Rua Guia Lopes, 10, Jardim Ouro Verde",
+     "horario": "7h às 11h e 13h às 17h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/10/secretaria-de-desenvolvimento-rural"
+     ]
+    },
+    {
+     "id": "cesar-augusto-de-castro-santos",
+     "nome": "César Augusto de Castro Santos",
+     "cargo": "Secretário Municipal de Meio Ambiente, Desenvolvimento, Infraestrutura, Turismo, Cultura e Cidade (SEMDITEC)",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011"
+     ],
+     "email": "obrasnioaque@gmail.com",
+     "endereco": "Rua Benjamin Constant, s/n, Centro",
+     "horario": "7h às 11h e 13h às 17h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/5/semditec"
+     ]
+    },
+    {
+     "id": "prefeitura",
+     "nome": "Prefeitura Municipal de Nioaque",
+     "cargo": "Sede do Poder Executivo",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1011",
+      "(67) 3236-1015"
+     ],
+     "email": "gabinete@nioaque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 377, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Das 07h às 13h",
+     "site": "https://www.nioaque.ms.gov.br",
+     "instagram": "https://www.instagram.com/prefeituranioaque/",
+     "facebook": "https://www.facebook.com/PrefeituraNioaque",
+     "observacao": null,
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legislativo",
+   "titulo": "Poder Legislativo",
+   "itens": [
+    {
+     "id": "camara",
+     "nome": "Câmara Municipal de Nioaque",
+     "cargo": "Sede do Poder Legislativo",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1255"
+     ],
+     "email": "cmnioaqueoficial@gmail.com",
+     "endereco": "Rua Coronel Camissão, 791, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Segunda a sexta, das 07h às 12h",
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": "https://www.facebook.com/share/1AaMuesgQb/?mibextid=wwXIfr",
+     "observacao": "Legislatura 2025-2028, 9 vereadores. Mesa Diretora do biênio 2025-2026 (termina em 31/12/2026). Telefones dos vereadores são os publicados no site oficial da Câmara.",
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/"
+     ]
+    },
+    {
+     "id": "vereador-reinaldo-andrea",
+     "nome": "Reinaldo Garcia Andréa (Nado Andréa)",
+     "cargo": "Presidente da Câmara",
+     "partido": "PP",
+     "foto": "/autoridades/vereador-reinaldo-andrea.jpg",
+     "telefones": [
+      "(67) 99986-8287"
+     ],
+     "email": null,
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/1/1/"
+     ]
+    },
+    {
+     "id": "vereador-sergio-marques",
+     "nome": "Sérgio Marques",
+     "cargo": "Vice-presidente da Câmara",
+     "partido": "PT",
+     "foto": "/autoridades/vereador-sergio-marques.jpg",
+     "telefones": [
+      "(67) 99138-0931"
+     ],
+     "email": "sergioterena407@gmail.com",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/2/1/"
+     ]
+    },
+    {
+     "id": "vereador-joao-carlos-corumba",
+     "nome": "João Carlos Vera Gonçalves (Corumbá)",
+     "cargo": "1º Secretário",
+     "partido": "PL",
+     "foto": "/autoridades/vereador-joao-carlos-corumba.jpg",
+     "telefones": [
+      "(67) 99937-2250"
+     ],
+     "email": "ver.joaocarlos@cmnioaque.ms.gov.br",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/3/1/"
+     ]
+    },
+    {
+     "id": "vereador-silas-ferreira",
+     "nome": "Silas Nunes Ferreira (Silas Ferreira)",
+     "cargo": "2º Secretário",
+     "partido": "PSDB",
+     "foto": "/autoridades/vereador-silas-ferreira.jpg",
+     "telefones": [
+      "(67) 99971-1291"
+     ],
+     "email": "versilas@cmnioaque.ms.gov.br",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/4/1/"
+     ]
+    },
+    {
+     "id": "vereador-jeuzimar-seco",
+     "nome": "Jeuzimar Mendes de Araújo (Seco do Esporte)",
+     "cargo": "Vereador",
+     "partido": "PSDB",
+     "foto": "/autoridades/vereador-jeuzimar-seco.jpg",
+     "telefones": [
+      "(67) 99621-7629"
+     ],
+     "email": "jeuzimararaujo2025@gmail.com",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Mais votado em 2024 (650 votos), segundo a Câmara.",
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/5/1/"
+     ]
+    },
+    {
+     "id": "vereador-jorge-uirapuru",
+     "nome": "Jorge Fernandes Lemes (Jorge do Uirapuru)",
+     "cargo": "Vereador",
+     "partido": "PP",
+     "foto": "/autoridades/vereador-jorge-uirapuru.jpg",
+     "telefones": [
+      "(67) 99653-3157"
+     ],
+     "email": "jorgedouirapuru@hotmail.com",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/6/1/"
+     ]
+    },
+    {
+     "id": "vereador-pablo-correa",
+     "nome": "Pablo Ruan Pache Corrêa (Pablo Corrêa)",
+     "cargo": "Vereador",
+     "partido": "PSDB",
+     "foto": "/autoridades/vereador-pablo-correa.jpg",
+     "telefones": [
+      "(67) 99602-0460"
+     ],
+     "email": "pabloruam@hotmail.com",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/7/1/"
+     ]
+    },
+    {
+     "id": "vereador-neguinho-santa-amelia",
+     "nome": "Paulo Roberto Meira Simão (Neguinho da Santa Amélia)",
+     "cargo": "Vereador",
+     "partido": "PV",
+     "foto": "/autoridades/vereador-neguinho-santa-amelia.jpg",
+     "telefones": [
+      "(67) 99989-6560"
+     ],
+     "email": "ver.paulo@cmnioaque.ms.gov.br",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/8/1/"
+     ]
+    },
+    {
+     "id": "vereador-rose-arruda",
+     "nome": "Rosemeire Meza Arruda (Rose Arruda)",
+     "cargo": "Vereadora",
+     "partido": "PP",
+     "foto": "/autoridades/vereador-rose-arruda.png",
+     "telefones": [
+      "(67) 99160-6767"
+     ],
+     "email": "ver.rose@cmnioaque.ms.gov.br",
+     "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
+     "horario": null,
+     "site": "https://www.cmnioaque.ms.gov.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
+      "https://www.cmnioaque.ms.gov.br/portal/vereadores/9/1/"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "judiciario",
+   "titulo": "Poder Judiciário",
+   "itens": [
+    {
+     "id": "juiz-flavio-renato",
+     "nome": "Flávio Renato Almeida Reyes",
+     "cargo": "Juiz de Direito titular da Vara Única da Comarca de Nioaque",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1200"
+     ],
+     "email": "nio-1v@tjms.jus.br",
+     "endereco": "Rua Coronel Juvêncio, 262, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Assumiu a partir de 18/05/2026 no lugar de Luciano Pedro Beladelli. Também atua como juiz eleitoral. Grafia 'Reyes' conforme TJMS (A Crítica também usa 'Reis').",
+     "fontes": [
+      "https://www.tjms.jus.br/comarcas",
+      "https://acritica.net/justica/juiz-luciano-beladelli-se-despede-da-comarca-de-nioaque/"
+     ]
+    },
+    {
+     "id": "forum-nioaque",
+     "nome": "Fórum / Vara Única da Comarca de Nioaque (TJMS)",
+     "cargo": "Órgão do Poder Judiciário",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1200"
+     ],
+     "email": "nio-1v@tjms.jus.br",
+     "endereco": "Rua Coronel Juvêncio, 262, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": "https://www.tjms.jus.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.tjms.jus.br/comarcas"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ministerio-publico",
+   "titulo": "Ministério Público",
+   "itens": [
+    {
+     "id": "promotora-mariana-sleiman-gomes",
+     "nome": "Mariana Sleiman Gomes",
+     "cargo": "Promotora de Justiça titular da 1ª Promotoria de Justiça de Nioaque",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 2020-9364"
+     ],
+     "email": null,
+     "endereco": "Rua Coronel Juvêncio, 262, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": "https://www.mpms.mp.br/promotorias/nioaque",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Atribuição: infância e juventude, meio ambiente, patrimônio público, saúde, consumidor, idoso, eleitoral, entre outras. Foto e e-mail não publicados.",
+     "fontes": [
+      "https://www.mpms.mp.br/promotorias/nioaque",
+      "https://www.mpms.mp.br/promotorias/nioaque/1a-promotoria-de-justica-de-nioaque"
+     ]
+    },
+    {
+     "id": "promotoria-nioaque",
+     "nome": "1ª Promotoria de Justiça de Nioaque (MPMS)",
+     "cargo": "Órgão do Ministério Público",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 2020-9364"
+     ],
+     "email": null,
+     "endereco": "Rua Coronel Juvêncio, 262, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": "https://www.mpms.mp.br",
+     "instagram": null,
+     "facebook": null,
+     "observacao": null,
+     "fontes": [
+      "https://www.mpms.mp.br/promotorias/nioaque/1a-promotoria-de-justica-de-nioaque"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "advocacia",
+   "titulo": "Advocacia",
+   "itens": []
+  },
+  {
+   "id": "saude",
+   "titulo": "Saúde",
+   "itens": [
+    {
+     "id": "sec-saude",
+     "nome": "Secretaria Municipal de Saúde",
+     "cargo": "Secretaria",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-2177"
+     ],
+     "email": "saude@nioaque.ms.gov.br",
+     "endereco": "Avenida General Klinger, 170, Centro",
+     "horario": "7h às 13h",
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Secretária: Cristiane Regina Gomes de Sousa",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/secretarias/6/secretaria-de-saude"
+     ]
+    },
+    {
+     "id": "esf-urbano-1",
+     "nome": "ESF Urbano I (Unidade de Saúde da Família de Nioaque Urbano 1)",
+     "cargo": "Unidade de Saúde da Família (ESF)",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": "esfurbano1@nioaque.ms.gov.br",
+     "endereco": "Rua Manoel Ozório Cruz, 335, São Miguel, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Telefone e horário não publicados; contato pela Secretaria de Saúde: (67) 3236-2177.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/servicos/1032/unidades-de-saude/"
+     ]
+    },
+    {
+     "id": "esf-urbano-2",
+     "nome": "ESF Urbano II",
+     "cargo": "Unidade de Saúde da Família (ESF)",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": "esfurbano2@nioaque.ms.gov.br",
+     "endereco": "Rua Dom Pedro II, 110, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Telefone e horário não publicados; contato pela Secretaria de Saúde: (67) 3236-2177.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/servicos/1032/unidades-de-saude/"
+     ]
+    },
+    {
+     "id": "esf-conceicao",
+     "nome": "ESF Conceição (Colônia Conceição)",
+     "cargo": "Unidade de Saúde da Família (ESF)",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": "esfconceicao@nioaque.ms.gov.br",
+     "endereco": "Colônia Conceição, s/n, zona rural, Nioaque-MS",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Telefone e horário não publicados; contato pela Secretaria de Saúde: (67) 3236-2177.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/servicos/1032/unidades-de-saude/"
+     ]
+    },
+    {
+     "id": "esf-uirapuru",
+     "nome": "ESF Uirapuru",
+     "cargo": "Unidade de Saúde da Família (ESF)",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": "esfuirapuru@nioaque.ms.gov.br",
+     "endereco": "Assentamento Uirapuru, s/n, zona rural, Nioaque-MS",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Telefone e horário não publicados; contato pela Secretaria de Saúde: (67) 3236-2177.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/servicos/1032/unidades-de-saude/"
+     ]
+    },
+    {
+     "id": "esf-palmeira",
+     "nome": "ESF Palmeira",
+     "cargo": "Unidade de Saúde da Família (ESF)",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": "esfpalmeira@nioaque.ms.gov.br",
+     "endereco": "Assentamento Palmeira, s/n, zona rural, Nioaque-MS",
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Telefone e horário não publicados; contato pela Secretaria de Saúde: (67) 3236-2177.",
+     "fontes": [
+      "https://www.nioaque.ms.gov.br/portal/servicos/1032/unidades-de-saude/"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "seguranca",
+   "titulo": "Segurança e proteção social",
+   "itens": [
+    {
+     "id": "creas-nioaque",
+     "nome": "CREAS de Nioaque",
+     "cargo": "Centro de Referência Especializado de Assistência Social",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "email": null,
+     "endereco": null,
+     "horario": null,
+     "site": null,
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Existência confirmada em reportagem (Campo Grande News, mar/2026); endereço e telefone não localizados. Vinculado à Secretaria de Assistência Social: (67) 3236-1804.",
+     "fontes": [
+      "https://www.campograndenews.com.br/cidades/interior/promotoria-cobra-prefeitura-por-falhas-em-atendimento-a-adolescentes-infratores"
+     ]
+    }
+   ]
+  }
+ ],
+ "nao_encontrado": [
+  "Partido do prefeito confirmado só pela candidatura 2024 (PP); partido e e-mail do vice-prefeito não encontrados; sem fotos de secretários (portal não publica)",
+  "Hospital Municipal de Nioaque: nenhuma fonte encontrada (o portal da Prefeitura lista apenas a Secretaria de Saúde e 5 ESFs)",
+  "Telefone e horário de cada ESF; vigilância sanitária/epidemiológica, CAPS e farmácia básica: não localizados",
+  "Foto do juiz Flávio Renato Almeida Reyes e da promotora Mariana Sleiman Gomes: sem foto pública em fonte oficial; e-mail da promotora não publicado",
+  "Advocacia: nenhum advogado ou escritório sediado em Nioaque com contato público verificável foi encontrado (resultados eram páginas de captação de bancas de outras cidades); grupo deixado vazio; sugerida consulta ao cadastro da OAB-MS",
+  "Polícia Militar, Delegacia da Polícia Civil, Conselho Tutelar e CRAS: endereço/telefone não localizados em fonte confiável",
+  "Site da Câmara indica data de eleição da Mesa como 06/12/2025, inconsistente com a posse em 01/01/2025; a Mesa atual vale até 31/12/2026"
+ ]
+}

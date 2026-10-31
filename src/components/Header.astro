@@ -17,6 +17,7 @@ import { CATEGORIES } from '../lib/categories';
 const principal = [
   { href: '/', label: 'Início' },
   { href: '/materias', label: 'Matérias' },
+  { href: '/colunas', label: 'Colunas' },
   { href: '/utilidade', label: 'Utilidade Pública' },
   { href: '/anuncie', label: 'Anuncie' },
 ];
@@ -56,7 +57,7 @@ const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink
         <LogoNioaquense class="h-7 w-auto max-w-[120px] sm:h-10 sm:max-w-none" />
       </a>
 
-      <nav aria-label="Principal" class="hidden min-w-0 lg:block">
+      <nav aria-label="Principal" class="hidden min-w-0 xl:block">
         <ul class="flex items-center gap-0.5">
           {
             principal.map((item) => {
@@ -129,14 +130,14 @@ const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink
           hidden
           class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] w-[min(calc(100vw-2rem),30rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-xl"
         >
-          <div class="lg:hidden">
+          <div class="xl:hidden">
             <p class={heading}>Navegar</p>
             <ul class="mt-1.5 grid grid-cols-2 gap-x-2">
               {principal.map((i) => (<li><a href={i.href} class={itemLink}>{i.label}</a></li>))}
             </ul>
           </div>
 
-          <div class="grid grid-cols-2 gap-x-4 gap-y-3 lg:mt-0 mt-3">
+          <div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-3 xl:mt-0">
             <div>
               <p class={heading}>Por local</p>
               <ul class="mt-1.5">

@@ -147,8 +147,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // Producao: so enfileira. Quem trabalha e' o consumidor da fila (src/worker.ts),
   // uma materia por invocacao, sem teto de 5 por rodada.
   if (env.NEWS_QUEUE && !import.meta.env.DEV) {
-    await env.NEWS_QUEUE.send({ type: 'sweep' } satisfies NewsJob);
-    return json({ ok: true, queued: true });
+    const backfill = new URL(request.url).searchParams.get('backfill') === '1';
+    await env.NEWS_QUEUE.send({ type: 'sweep', backfill } satisfies NewsJob);
+    return json({ ok: true, queued: true, backfill });
   }
 
   // Dev local (sem consumidor de fila): executa inline, poucas materias por fonte

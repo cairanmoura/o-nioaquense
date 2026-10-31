@@ -78,11 +78,21 @@ export function isBotWall(title: string, text: string): boolean {
 export async function fetchViaJina(url: string): Promise<ExtractedArticle | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
-      headers: { Accept: 'application/json', 'X-Return-Format': 'markdown' },
+      headers: {
+        Accept: 'application/json',
+        'X-Return-Format': 'markdown',
+        // So o corpo da materia: sem menu, relacionadas, mais lidas nem comentarios
+        // (sem isso o texto vinha misturado com "outras noticias")
+        'X-Target-Selector': 'article, [itemprop=articleBody], .entry-content, .post-content, .materia, .noticia-corpo, main',
+        'X-Remove-Selector': 'aside, nav, footer, header, form, .related, .relacionadas, [class*=relacionad], [class*=related], [class*=mais-lidas], [class*=leia-tambem], [class*=share], [class*=compartilh], .comments, [class*=newsletter], [class*=banner], [class*=publicidade]',
+      },
     });
     if (!res.ok) return null;
     const data: any = (await res.json())?.data;
-    const md = String(data?.content ?? '');
+    let md = String(data?.content ?? '');
+    // Rede de seguranca: corta no primeiro marcador de "outras noticias" (depois dos primeiros 400 caracteres)
+    const cut = md.search(/\n[#*\s]*(leia (tamb[eé]m|mais)|veja (tamb[eé]m|mais)|not[ií]cias relacionadas|mat[eé]rias relacionadas|mais lidas|[uú]ltimas not[ií]cias|outras not[ií]cias|continue lendo|voc[eê] (pode|vai) (gostar|se interessar))/i);
+    if (cut > 400) md = md.slice(0, cut);
     if (md.length < 300 || isBotWall(String(data?.title ?? ''), md)) return null;
 
     const blocks = md
