@@ -30,12 +30,11 @@ create index if not exists idx_articles_local_tags
 comment on column public.articles.local_tags is
   'Cidades e locais detectados no titulo/conteudo da materia (ex.: Niooque, Jardim, BR-060, Rota Bioceania).';
 
--- Indice parcial para o novo escopo. Compara como TEXTO (scope::text) porque
--- o Postgres nao permite usar um valor de enum recem-criado na mesma
--- transacao (erro 55P04) — o cast para text evita o problema.
-create index if not exists idx_articles_scope_regiao
-  on public.articles (scope)
-  where scope::text = 'regiao';
+-- Indice simples em scope (sem predicado: o cast scope::text nao e' IMMUTABLE
+-- e o Postgres recusa funcoes em predicado de indice, erro 42P17).
+create index if not exists idx_articles_scope
+  on public.articles (scope);
+
 -- =============================================================================
 -- 008_source_type_scraper.sql
 -- Suporte a web scraping (raspagem de HTML) para portais sem RSS funcional
@@ -121,6 +120,7 @@ on conflict (rss_url) do update set
   keywords_filter = excluded.keywords_filter,
   default_category = excluded.default_category,
   updated_at = now();
+
 -- =============================================================================
 -- 009_google_news_sources.sql
 -- Fontes via Google News RSS (forma estavel de acompanhar portais sem RSS)
