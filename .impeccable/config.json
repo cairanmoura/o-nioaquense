@@ -5,5 +5,17 @@
       "maxFindings": 5,
       "maxChars": 8000
     }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "createdAt": "2026-10-31T03:23:07.362Z",
+        "reason": "AGENTS.md do projeto exige Plus Jakarta Sans na interface; o usuario pediu essa fonte nos titulos (nao foi 'user confirmed' para este alerta especifico)"
+      }
+    ]
   }
 }
