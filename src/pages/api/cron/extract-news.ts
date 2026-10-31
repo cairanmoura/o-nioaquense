@@ -312,10 +312,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
         const isGoogleNews = isGoogleNewsFeed(source.rss_url);
         const isBingNews = isBingNewsFeed(source.rss_url);
         let xml = '';
+        let feedNote = '';
         if (isGoogleNews) {
           // Google News: fetch direto com cascata de proxies (Workers da
           // Cloudflare podem ser bloqueados com 503 pelo Google).
           xml = await fetchGoogleNewsFeed(source.rss_url, 20);
+          if (!xml) feedNote = 'Google News recusou o Worker e todos os proxies';
         } else {
           // RSS classico e Bing News: fetch direto (Bing aceita datacenter)
           try {
@@ -326,8 +328,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
               },
             });
             if (res.ok) xml = await res.text();
-          } catch {
-            // falha de rede — tenta o fallback de sitemap abaixo
+            else feedNote = `HTTP ${res.status}`;
+          } catch (e: any) {
+            feedNote = String(e?.message ?? e).slice(0, 120);
           }
         }
 
@@ -397,7 +400,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
           if (entries.length === 0) {
             throw new Error(
-              xml ? 'Feed sem itens e sitemap sem URLs de materias' : `HTTP do feed falhou e sitemap sem materias`,
+              xml ? 'Feed sem itens e sitemap sem URLs de materias' : `Feed indisponivel (${feedNote || 'sem resposta'}) e sitemap sem materias`,
             );
           }
         }

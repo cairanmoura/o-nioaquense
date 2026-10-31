@@ -453,13 +453,20 @@ export async function saveArticle(
       updated_at: payload.updated_at,
     };
 
-    const result = existing
-      ? await supabase.from('articles').update(row).eq('id', payload.id).select('*').maybeSingle()
-      : await supabase
-          .from('articles')
-          .insert({ ...row, author_id: payload.author_id, created_at: payload.created_at })
-          .select('*')
-          .maybeSingle();
+    // Resiliente a migracoes pendentes: se o banco ainda nao tem uma coluna,
+    // tira do payload e tenta de novo (ate 4 vezes).
+    const toSave: Record<string, unknown> = existing
+      ? { ...row }
+      : { ...row, author_id: payload.author_id, created_at: payload.created_at };
+    let result: any;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      result = existing
+        ? await supabase.from('articles').update(toSave).eq('id', payload.id).select('*').maybeSingle()
+        : await supabase.from('articles').insert(toSave).select('*').maybeSingle();
+      const missing = result.error?.message?.match(/Could not find the '([^']+)' column/)?.[1];
+      if (!missing) break;
+      delete toSave[missing];
+    }
 
     if (result.error) throw new Error(result.error.message);
 
