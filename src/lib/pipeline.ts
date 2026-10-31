@@ -535,6 +535,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
 
   const ownership: 'public' | 'private' = source.ownership === 'public' ? 'public' : 'private';
   const sourceText = scrapedText.length >= 200 ? scrapedText : htmlToText(rawDesc ?? '');
+  // Local provisorio (so o texto) para escolher a fila de modelos: Nioaque/Regiao usam os modelos de elite
+  const prelimScope = classifyScope({ title, text: scrapedText, localTags, fallback: 'ms' });
   let finalTitle = title;
   let subtitle: string | null = null;
   let summaryBullets: string[] = [];
@@ -551,7 +553,7 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   if (ownership === 'private') {
     // Portal privado: reescrita TOTAL obrigatoria (nunca republica o texto original)
     try {
-      const rw = await rewriteArticle({ text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction }, env);
+      const rw = await rewriteArticle({ text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction, scope: prelimScope }, env);
       finalTitle = rw.title;
       subtitle = rw.subtitle;
       summaryBullets = rw.summary_bullets;
@@ -585,7 +587,7 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     }
     if (source.ai_rewrite) {
       try {
-        const rw = await rewriteArticle({ text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction }, env);
+        const rw = await rewriteArticle({ text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction, scope: prelimScope }, env);
         summaryBullets = rw.summary_bullets;
         aiCategory = rw.suggested_category;
         aiScope = rw.suggested_scope;

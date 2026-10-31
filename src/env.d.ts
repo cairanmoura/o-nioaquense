@@ -28,6 +28,13 @@ interface Env {
   PUBLIC_SUPABASE_URL?: string;
   PUBLIC_SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
+  GEMINI_API_KEY?: string;
+  NVIDIA_API_KEY?: string;
+  GROQ_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+  MISTRAL_API_KEY?: string;
+  COHERE_API_KEY?: string;
+  APIFY_TOKEN?: string;
   [key: string]: unknown;
 }
 

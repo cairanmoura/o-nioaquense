@@ -17,7 +17,7 @@
  *     fonte onde ela foi publicada.
  */
 
-import { runAI } from './ai';
+import { measureCleanContent, runRouted } from './ai-router';
 import { CATEGORY_LABELS, normalizeCategory, detectCategory } from './categories';
 import { normalizeScope } from './geo';
 import { sanitizeArticleHtml } from './clean-content';
@@ -100,25 +100,43 @@ function parseJson(raw: string): any | null {
 }
 
 /** Uma chamada completa (Gemini, depois Workers AI) que devolve o JSON bruto. */
-async function callOnce(prompt: string, env: unknown, diag: string[]): Promise<{ data: any; provider: string } | null> {
-  for (const only of ['gemini', 'cloudflare'] as const) {
-    try {
-      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 8192 : 4096, diag });
-      const parsed = parseJson(res.text);
-      if (parsed && typeof parsed.title === 'string') return { data: parsed, provider: res.provider };
-      diag.push(`${only}: resposta sem JSON valido (${res.text.slice(0, 80).replace(/\s+/g, ' ')}…)`);
-    } catch {
-      // motivo ja registrado em diag
-    }
-  }
+/** Validacao de cada resposta: se reprovar, o roteador passa ao proximo modelo da fila. */
+function validateRewrite(d: any): string | null {
+  const title = typeof d?.title === 'string' ? d.title.trim() : '';
+  if (title.length < 15) return 'titulo ausente/curto';
+  if (/t[ií]tulo reescrito\s*:/i.test(title)) return 'titulo com "Titulo reescrito:"';
+  if (/(\d{1,2}\/\d{1,2}\/\d{2,4}.*){3,}/.test(title)) return 'titulo com datas repetidas';
+  const bullets = d.summary_bullets ?? d.bullets;
+  if (!Array.isArray(bullets) || bullets.filter((b: unknown) => typeof b === 'string' && b.trim().length >= 10).length < 3) return 'menos de 3 bullets';
+  const html = String(d.content_html ?? d.content ?? '');
+  if (!/<p[\s>]/i.test(html)) return 'conteudo sem <p>';
   return null;
 }
 
+async function callOnce(
+  prompt: string,
+  env: unknown,
+  diag: string[],
+  route: { scope?: string | null; charCount: number; maxTokens: number },
+): Promise<{ data: any; provider: string } | null> {
+  try {
+    const r = await runRouted({ env, system: SYSTEM, prompt, scope: route.scope, charCount: route.charCount, maxTokens: route.maxTokens, validate: validateRewrite, diag });
+    const d = r.data;
+    if (!d.content_html && d.content) d.content_html = d.content;
+    if (!d.summary_bullets && d.bullets) d.summary_bullets = d.bullets;
+    return { data: d, provider: r.provider };
+  } catch {
+    return null; // motivos ja estao em diag
+  }
+}
+
 export async function rewriteArticle(
-  input: { text: string; sourceName: string; sourceUrl: string; extraInstruction?: string },
+  input: { text: string; sourceName: string; sourceUrl: string; extraInstruction?: string; scope?: string | null },
   env: unknown,
 ): Promise<Rewritten> {
-  const source = input.text.slice(0, 16000);
+  const measured = measureCleanContent(input.text);
+  const source = measured.cleanText;
+  const route = { scope: input.scope, charCount: measured.charCount, maxTokens: measured.maxOutputTokens };
   const wordsSrc = wordCount(source);
   const lo = Math.round(wordsSrc * 0.85);
   const hi = Math.round(wordsSrc * 1.15);
@@ -126,7 +144,7 @@ export async function rewriteArticle(
   const base = `Fonte: ${input.sourceName} (${input.sourceUrl})${input.extraInstruction ? `\n${input.extraInstruction}` : ''}\n\nO texto original tem ${wordsSrc} palavras. Escreva a matéria com ${lo} a ${hi} palavras.\n\nTexto original:\n${source}`;
 
   const diag: string[] = [];
-  let attempt = await callOnce(base, env, diag);
+  let attempt = await callOnce(base, env, diag, route);
   if (!attempt) throw new Error('A IA não devolveu JSON válido. Detalhes: ' + (diag.join(' | ') || 'sem detalhes'));
 
   let clean = sanitizeArticleHtml(String(attempt.data.content_html ?? ''));
@@ -135,7 +153,7 @@ export async function rewriteArticle(
   // Curta demais: refaz uma vez dizendo exatamente o que faltou
   if (wordsSrc >= 120 && wordsOut < wordsSrc * 0.75) {
     const retryPrompt = `${base}\n\nATENÇÃO: sua versão anterior ficou curta (${wordsOut} de ${wordsSrc} palavras) e perdeu informações. Reescreva COMPLETA, cobrindo todos os parágrafos do original, com ${lo} a ${hi} palavras.`;
-    const second = await callOnce(retryPrompt, env, diag);
+    const second = await callOnce(retryPrompt, env, diag, route);
     if (second) {
       const clean2 = sanitizeArticleHtml(String(second.data.content_html ?? ''));
       if (wordCount(clean2.text) > wordsOut) {

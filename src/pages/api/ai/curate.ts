@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         : undefined;
 
     const rewritten = await rewriteArticle(
-      { text: article.text, sourceName, sourceUrl: url, extraInstruction: nioaqueHint },
+      { text: article.text, sourceName, sourceUrl: url, extraInstruction: nioaqueHint, scope: classifyScope({ title: article.title, text: article.text, localTags: tags, fallback: 'ms' }) },
       env,
     );
 
