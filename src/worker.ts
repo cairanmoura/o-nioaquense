@@ -82,5 +82,5 @@ export function createExports(manifest: any) {
     }
   };
 
-  return { default: { fetch }, scheduled, queue };
+  return { default: { fetch, scheduled, queue }, scheduled, queue };
 }
