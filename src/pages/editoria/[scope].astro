@@ -3,6 +3,7 @@ import ArticleCard from '../../components/ArticleCard.astro';
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getHomeFeed, getRegiaoArticles } from '../../lib/content';
 import { pickLead } from '../../lib/cover';
+import { CATEGORIES, norm } from '../../lib/categories';
 import { SCOPE_BADGE_CLASS, SCOPE_LABEL } from '../../lib/types';
 import type { ArticleScope } from '../../lib/types';
 
@@ -53,16 +54,19 @@ const EDITORIAS: Record<string, { label: string; description: string; color: str
 };
 
 /** Seções temáticas do menu "Seções": filtram pela editoria (category_label). */
+/* Editorias tematicas: uma pagina para cada categoria oficial (lib/categories) +
+ * os atalhos antigos do menu (politica-poder, agro-campo, policia-justica). */
 const THEMES: Record<string, { label: string; match: string[]; description: string }> = {
-  'politica-poder': { label: 'Política & Poder', match: ['politica', 'camara', 'prefeitura'], description: 'Prefeitura, Câmara, Governo e decisões que afetam a cidade.' },
-  'agro-campo': { label: 'Agro & Campo', match: ['agro', 'agricultura'], description: 'Pecuária, lavoura, preços e a vida no campo.' },
+  ...Object.fromEntries(
+    CATEGORIES.filter((c) => !['geral'].includes(c.slug)).map((c) => [
+      c.slug,
+      { label: c.label, match: [norm(c.label), ...c.synonyms.map((x) => norm(x))].map((x) => x), description: c.description },
+    ]),
+  ),
+  'politica-poder': { label: 'Política & Poder', match: ['politica', 'camara', 'prefeitura', 'governo'], description: 'Prefeitura, Câmara, Governo e decisões que afetam a cidade.' },
+  'agro-campo': { label: 'Agro & Campo', match: ['agro', 'agricultura', 'pecuaria'], description: 'Pecuária, lavoura, preços e a vida no campo.' },
   'policia-justica': { label: 'Polícia & Justiça', match: ['policia', 'justica', 'seguranca'], description: 'Segurança pública, ocorrências e decisões da Justiça.' },
-  saude: { label: 'Saúde', match: ['saude'], description: 'Postos de saúde, campanhas, hospitais e prevenção.' },
-  educacao: { label: 'Educação', match: ['educacao'], description: 'Escolas, concursos, universidades e ensino.' },
-  esporte: { label: 'Esporte', match: ['esporte'], description: 'Times, campeonatos e atletas da região.' },
-  cultura: { label: 'Cultura', match: ['cultura'], description: 'Eventos, artistas e tradições locais.' },
 };
-const norm = (t: string | null) => (t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const theme = THEMES[scope];
 const editoria = theme
   ? { label: theme.label, description: theme.description, color: 'bg-nioaque-green' }
@@ -78,7 +82,7 @@ if (scope === 'radar_oficial') {
 
 const feed = await getHomeFeed(Astro.locals);
 const articles = theme
-  ? feed.articles.filter((a) => theme.match.some((m) => norm(a.category_label).includes(m)))
+  ? feed.articles.filter((a) => theme.match.some((m) => norm(a.category_label) === m))
   : scope === 'regiao'
     ? await getRegiaoArticles(Astro.locals)
     : (feed.byScope[scope as ArticleScope] ?? []);

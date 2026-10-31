@@ -3,16 +3,52 @@
  * -----------------------------------------------------------------------------
  * Arquitetura dupla à prova de falhas para geração de texto com IA:
  *
- *   a) Prioridade: Cloudflare Workers AI (@cf/meta/llama-3.1-8b-instruct)
+ *   a) Cloudflare Workers AI (modelos em CF_MODELS)
  *      via env.AI.run(...) - funciona em dev e produção sem chave externa.
- *   b) Fallback: Google Gemini (gemini-2.5-flash) via GEMINI_API_KEY.
+ *   b) Google Gemini (modelo flash mais novo, descoberto via ListModels).
  *
  * Nunca estoura erro 404 cru na tela: qualquer falha retorna uma mensagem
  * amigável em português.
  */
 
-const CF_MODELS = ['@cf/meta/llama-3.1-8b-instruct', '@cf/meta/llama-3.1-8b-instruct-fast', '@cf/meta/llama-3.2-3b-instruct'];
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+/* Modelos mudam/saem do ar: o llama-3.1-8b-instruct foi desligado em 30/05/2026.
+ * Ordem de tentativa; cada falha vira uma linha de diagnostico. */
+const CF_MODELS = [
+  '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+  '@cf/meta/llama-3.1-8b-instruct-fast',
+  '@cf/google/gemma-3-12b-it',
+];
+/* Se a lista dinamica falhar, tenta estes. */
+const GEMINI_FALLBACK_MODELS = ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+
+/** Descobre os modelos Gemini "flash" ativos (1 chamada, guardada na instancia). */
+let geminiModelCache: { at: number; list: string[] } | null = null;
+async function listGeminiModels(apiKey: string, o: RunAIOptions): Promise<string[]> {
+  if (geminiModelCache && Date.now() - geminiModelCache.at < 6 * 3600_000) return geminiModelCache.list;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`);
+    if (!res.ok) {
+      o.diag?.push(`gemini listModels: HTTP ${res.status}`);
+      return GEMINI_FALLBACK_MODELS;
+    }
+    const data: any = await res.json();
+    const names: string[] = (data?.models ?? [])
+      .filter((m: any) => (m.supportedGenerationMethods ?? []).includes('generateContent'))
+      .map((m: any) => String(m.name).replace(/^models\//, ''))
+      .filter((n: string) => /flash/.test(n) && !/image|tts|live|audio|embed|thinking|robotics|computer|lite/.test(n));
+    const score = (n: string) => {
+      const v = parseFloat(n.match(/gemini-(\d+(?:\.\d+)?)/)?.[1] ?? '0');
+      const stable = /preview|exp/.test(n) ? 0 : 1;
+      return stable * 100 + v;
+    };
+    const list = [...new Set(names)].sort((a, b) => score(b) - score(a)).slice(0, 3);
+    if (list.length === 0) return GEMINI_FALLBACK_MODELS;
+    geminiModelCache = { at: Date.now(), list };
+    return list;
+  } catch {
+    return GEMINI_FALLBACK_MODELS;
+  }
+}
 
 export interface AIResult {
   text: string;
@@ -68,7 +104,8 @@ async function viaGemini(prompt: string, env: unknown, o: RunAIOptions): Promise
     o.diag?.push('gemini: GEMINI_API_KEY ausente');
     return null;
   }
-  for (const model of GEMINI_MODELS) {
+  const models = await listGeminiModels(apiKey, o);
+  for (const model of models) {
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,

@@ -1,3 +1,4 @@
+import { normalizeCategory } from '../../../lib/categories';
 import type { APIRoute } from 'astro';
 
 import { getServiceRoleKey, getSupabaseCredentials, createSupabaseServerClient } from '../../../lib/supabase/server';
@@ -219,19 +220,28 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // proximas rodadas.
   const MAX_TOTAL_INSERTS = 5;
   let globalInserted = 0;
+  // Conta cada fetch desta execucao: ao chegar perto de 50 (limite do plano free)
+  // as fontes restantes ficam para a proxima rodada, em vez de falhar no meio.
+  let subrequests = 0;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ((...args: Parameters<typeof fetch>) => {
+    subrequests++;
+    return realFetch(...args);
+  }) as typeof fetch;
+  const SUBREQUEST_LIMIT = 38;
   // Disjuntor da IA: se a reescrita falhar uma vez, os demais itens de portais
   // privados nesta execucao sao adiados (sem gastar subrequests a toa).
   let aiDown = false;
   let aiLastError: string | null = null;
 
   for (const source of sources ?? []) {
-    if (globalInserted >= MAX_TOTAL_INSERTS) {
+    if (globalInserted >= MAX_TOTAL_INSERTS || subrequests >= SUBREQUEST_LIMIT) {
       results.push({
         source: source.name,
         inserted: 0,
         skipped: 0,
         rewritten: 0,
-        error: 'Adiada: orcamento de inserts da execucao atingido',
+        error: 'Adiada para a proxima rodada (limite de requisicoes do plano gratis)',
       });
       continue;
     }
@@ -503,7 +513,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           MAX_NEW_PER_SOURCE - inserted,
           MAX_TOTAL_INSERTS - globalInserted,
         );
-        if (budgetLeft <= 0) {
+        if (budgetLeft <= 0 || subrequests >= 44) {
           // Itens novos excederam o orcamento; os restantes ficam para a
           // proxima execucao (nao sao "skipped" — sao adiados).
           break;
@@ -661,7 +671,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             bodyText = d;
             bodyParagraphs = 1;
           }
-          if (source.ai_rewrite) {
+          if (source.ai_rewrite && !aiDown) {
             try {
               const rw = await rewriteArticle(
                 { text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
@@ -671,6 +681,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
               aiCategory = rw.suggested_category;
             } catch (aiErr) {
               console.warn(`IA falhou para "${title}":`, aiErr);
+              aiDown = true;
+              aiLastError = String((aiErr as any)?.message ?? aiErr).slice(0, 400);
             }
           }
         }
@@ -685,7 +697,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           summaryBullets = [...summaryBullets.filter((b) => b.length >= 20), ...extra].slice(0, 3);
         }
 
-        const categoryLabel = aiCategory || detectCategory(finalTitle);
+        const categoryLabel = normalizeCategory(aiCategory) || detectCategory(finalTitle, bodyText);
 
         // Capa espelhada no nosso Storage (evita hotlink/mixed content); falhou -> mantem a original
         if (coverImage && isPhotoCover(coverImage) && /^https?:\/\//i.test(coverImage)) {
@@ -802,8 +814,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     { inserted: 0, skipped: 0, rewritten: 0 },
   );
 
-  await refreshDollarQuote(supabase);
-  await refreshAgroQuotes(supabase);
+  if (subrequests < 42) {
+    await refreshDollarQuote(supabase);
+    await refreshAgroQuotes(supabase);
+  }
+  globalThis.fetch = realFetch;
 
   return new Response(JSON.stringify({ ok: true, ...totals, results }), {
     status: 200,

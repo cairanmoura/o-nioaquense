@@ -1,3 +1,4 @@
+import { CATEGORY_LABELS } from './categories';
 /**
  * admin.ts
  * -----------------------------------------------------------------------------
@@ -41,33 +42,7 @@ export const SCOPE_OPTIONS: { value: ArticleScope; label: string }[] = [
   { value: 'radar_oficial', label: 'Radar Oficial' },
 ];
 
-export const CATEGORY_OPTIONS = [
-  'Cidade',
-  'Educação',
-  'Saúde',
-  'Meio Ambiente',
-  'Infraestrutura',
-  'Cultura',
-  'Economia',
-  'Estado',
-  'Turismo',
-  'Prefeitura',
-  'Câmara',
-  'Concursos',
-  'Diário Oficial',
-  'Brasil',
-  'Esportes',
-  'Segurança',
-  'Polícia',
-  'Justiça',
-  'Transporte',
-  'Habitação',
-  'Meio Ambiente',
-  'Agricultura',
-  'Emprego',
-  'Assistência Social',
-  'Religião',
-];
+export const CATEGORY_OPTIONS = CATEGORY_LABELS;
 
 /* -------------------------------------------------------------------------- */
 /* Leitura                                                                    */

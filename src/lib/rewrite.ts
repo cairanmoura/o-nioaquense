@@ -6,6 +6,7 @@
  */
 
 import { runAI } from './ai';
+import { CATEGORY_LABELS, normalizeCategory, detectCategory } from './categories';
 import { sanitizeArticleHtml } from './clean-content';
 
 export interface Rewritten {
@@ -24,7 +25,7 @@ Responda SOMENTE com um objeto JSON válido, sem markdown, com as chaves:
 "subtitle" (linha fina complementar, até 160 caracteres),
 "summary_bullets" (array com EXATAMENTE 3 tópicos curtos, até 15 palavras cada),
 "content_html" (corpo em HTML apenas com <p> e <h2>; parágrafos claros, intertítulos quando útil; cite a fonte de forma natural, por exemplo "Segundo informações apuradas pelo portal NOME DA FONTE, ..."),
-"suggested_category" (uma entre: Política, Saúde, Educação, Agro, Polícia, Esporte, Cultura, Economia, Cidade, Geral).`;
+"suggested_category" (escolha EXATAMENTE uma destas: ${CATEGORY_LABELS.join(", ")}; "Política" para prefeitura, Câmara, governos e eleições; "Cidade" só para serviços e vida comunitária de Nioaque; "Geral" apenas se nenhuma servir).`;
 
 function parseJson(raw: string): any | null {
   const t = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -52,7 +53,7 @@ export async function rewriteArticle(
   // Gemini primeiro; se nao vier JSON valido, tenta o Workers AI
   for (const only of ['gemini', 'cloudflare'] as const) {
     try {
-      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 4096 : 2500, diag });
+      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 8192 : 3500, diag });
       const parsed = parseJson(res.text);
       if (parsed && typeof parsed.title === 'string') {
         data = parsed;
@@ -77,7 +78,7 @@ export async function rewriteArticle(
     subtitle: data.subtitle ? String(data.subtitle).trim().slice(0, 240) : null,
     summary_bullets: bullets,
     content_html: clean.html,
-    suggested_category: data.suggested_category ? String(data.suggested_category).trim() : null,
+    suggested_category: normalizeCategory(data.suggested_category) ?? detectCategory(data.title, clean.text),
     provider,
   };
 }

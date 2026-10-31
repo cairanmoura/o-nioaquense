@@ -637,29 +637,7 @@ export function routeScope(
   return defaultFallback;
 }
 
-/**
- * Detecta a editoria tematica com base em palavras-chave do titulo.
- */
-export function detectCategory(title: string): string {
-  const t = title.toLowerCase();
-
-  const themes: Array<{ keywords: string[]; label: string }> = [
-    { keywords: ['policial', 'polícia', 'homicidio', 'assassinato', 'prisao', 'prisão', 'fuzil', 'revolver', 'droga', 'trafico', 'tráfico', 'roubo', 'frota', 'facao', 'facção'], label: 'Polícia' },
-    { keywords: ['agro', 'agricultura', 'lavoura', 'fazenda', 'produtor rural', 'plantio', 'colheita', 'boi', 'gado', 'soja', 'milho', 'pecuaria'], label: 'Agro' },
-    { keywords: ['prefeitura', 'camara', 'câmara', 'vereador', 'prefeito', 'projeto de lei', 'sessao', 'sessão', 'legislativo', 'executivo', 'edital', 'concurso publico'], label: 'Política' },
-    { keywords: ['saude', 'saúde', 'hospital', 'ubs', 'vacina', 'vacinacao', 'vacinação', 'medico', 'médico', 'enfermagem', 'epidemia', 'dengue'], label: 'Saúde' },
-    { keywords: ['futebol', 'time', 'campeonato', 'esporte', 'atleta', 'jogo', 'partida', 'torcida', 'estadio'], label: 'Esporte' },
-    { keywords: ['cultura', 'festival', 'show', 'musica', 'música', 'teatro', 'exposicao', 'exposição', 'artista', 'livro'], label: 'Cultura' },
-  ];
-
-  for (const theme of themes) {
-    if (theme.keywords.some((k) => t.includes(k.toLowerCase()))) {
-      return theme.label;
-    }
-  }
-
-  return 'Geral';
-}
+export { detectCategory } from './categories';
 
 /* -------------------------------------------------------------------------- */
 /* Extracao de conteudo completo da materia original                          */
