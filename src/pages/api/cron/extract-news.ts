@@ -197,6 +197,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     rewritten: number;
     error?: string;
     insert_errors?: string[];
+    ai_error?: string;
+    held_for_review?: string[];
+    held?: number;
   }[] = [];
 
   const DEFAULT_AUTHOR_ID = '10000000-0000-4000-8000-000000000001';
@@ -219,6 +222,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // Disjuntor da IA: se a reescrita falhar uma vez, os demais itens de portais
   // privados nesta execucao sao adiados (sem gastar subrequests a toa).
   let aiDown = false;
+  let aiLastError: string | null = null;
 
   for (const source of sources ?? []) {
     if (globalInserted >= MAX_TOTAL_INSERTS) {
@@ -627,6 +631,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             // Sem IA nao ha texto proprio: adia o item para a proxima rodada
             console.warn(`Reescrita falhou para "${title}":`, aiErr);
             aiDown = true;
+            aiLastError = String((aiErr as any)?.message ?? aiErr).slice(0, 400);
             skipped++;
             continue;
           }
@@ -762,6 +767,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         skipped,
         rewritten,
         ...(insertErrors.length ? { insert_errors: insertErrors.slice(0, 3) } : {}),
+        ...(aiLastError && source.ownership !== 'public' ? { ai_error: aiLastError } : {}),
         ...(heldForReview.length ? { held_for_review: heldForReview.slice(0, 5), held: heldForReview.length } : {}),
       });
     } catch (err: any) {

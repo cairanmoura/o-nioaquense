@@ -46,9 +46,25 @@ export async function rewriteArticle(
   env: unknown,
 ): Promise<Rewritten> {
   const prompt = `Fonte: ${input.sourceName} (${input.sourceUrl})${input.extraInstruction ? `\n${input.extraInstruction}` : ''}\n\nTexto original:\n${input.text.slice(0, 7000)}`;
-  const res = await runAI(prompt, env, { prefer: 'gemini', json: true, system: SYSTEM, maxTokens: 2500 });
-  const data = parseJson(res.text);
-  if (!data || typeof data.title !== 'string') throw new Error('A IA não devolveu JSON válido.');
+  const diag: string[] = [];
+  let data: any = null;
+  let provider = '';
+  // Gemini primeiro; se nao vier JSON valido, tenta o Workers AI
+  for (const only of ['gemini', 'cloudflare'] as const) {
+    try {
+      const res = await runAI(prompt, env, { only, json: true, system: SYSTEM, maxTokens: only === 'gemini' ? 4096 : 2500, diag });
+      const parsed = parseJson(res.text);
+      if (parsed && typeof parsed.title === 'string') {
+        data = parsed;
+        provider = res.provider;
+        break;
+      }
+      diag.push(`${only}: resposta sem JSON valido (${res.text.slice(0, 80).replace(/s+/g, ' ')}…)`);
+    } catch {
+      // motivo ja registrado em diag
+    }
+  }
+  if (!data) throw new Error('A IA não devolveu JSON válido. Detalhes: ' + (diag.join(' | ') || 'sem detalhes'));
 
   const clean = sanitizeArticleHtml(String(data.content_html ?? ''));
   const bullets = Array.isArray(data.summary_bullets)
@@ -62,6 +78,6 @@ export async function rewriteArticle(
     summary_bullets: bullets,
     content_html: clean.html,
     suggested_category: data.suggested_category ? String(data.suggested_category).trim() : null,
-    provider: res.provider,
+    provider,
   };
 }

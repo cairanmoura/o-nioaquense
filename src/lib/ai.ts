@@ -30,11 +30,18 @@ export interface RunAIOptions {
   json?: boolean;
   maxTokens?: number;
   system?: string;
+  /** Recebe o motivo de cada falha (provedor: erro), para diagnostico. */
+  diag?: string[];
+  /** Restringe a um unico provedor. */
+  only?: 'gemini' | 'cloudflare';
 }
 
 async function viaCloudflare(prompt: string, env: unknown, o: RunAIOptions): Promise<AIResult | null> {
   const ai = (env as any)?.AI;
-  if (!ai) return null;
+  if (!ai) {
+    o.diag?.push('cloudflare: binding AI ausente');
+    return null;
+  }
   for (const model of CF_MODELS) {
     try {
       const response = await ai.run(model, {
@@ -44,10 +51,12 @@ async function viaCloudflare(prompt: string, env: unknown, o: RunAIOptions): Pro
         ],
         max_tokens: o.maxTokens ?? 1000,
       });
-      const text = (response as any)?.response ?? '';
-      if (String(text).trim()) return { text: String(text), provider: 'cloudflare' };
-    } catch {
-      // 404/indisponivel: tenta o proximo modelo
+      const raw = (response as any)?.response ?? '';
+      const text = typeof raw === 'string' ? raw : JSON.stringify(raw);
+      if (text.trim()) return { text, provider: 'cloudflare' };
+      o.diag?.push(`cloudflare ${model}: resposta vazia`);
+    } catch (e: any) {
+      o.diag?.push(`cloudflare ${model}: ${String(e?.message ?? e).slice(0, 120)}`);
     }
   }
   return null;
@@ -55,7 +64,10 @@ async function viaCloudflare(prompt: string, env: unknown, o: RunAIOptions): Pro
 
 async function viaGemini(prompt: string, env: unknown, o: RunAIOptions): Promise<AIResult | null> {
   const apiKey = (env as any)?.GEMINI_API_KEY ?? (env as any)?.GOOGLE_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    o.diag?.push('gemini: GEMINI_API_KEY ausente');
+    return null;
+  }
   for (const model of GEMINI_MODELS) {
     try {
       const res = await fetch(
@@ -67,25 +79,31 @@ async function viaGemini(prompt: string, env: unknown, o: RunAIOptions): Promise
             ...(o.system ? { systemInstruction: { parts: [{ text: o.system }] } } : {}),
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
-              maxOutputTokens: o.maxTokens ?? 2048,
+              maxOutputTokens: o.maxTokens ?? 4096,
+              // Gemini 2.5: o 'pensamento' consome o limite de saida e trunca o JSON
+              ...(/2.5/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
               ...(o.json ? { responseMimeType: 'application/json' } : {}),
             },
           }),
         },
       );
-      if (!res.ok) continue; // 404/429: proximo modelo
+      if (!res.ok) {
+        o.diag?.push(`gemini ${model}: HTTP ${res.status}`);
+        continue; // 404/429: proximo modelo
+      }
       const data: any = await res.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
       if (String(text).trim()) return { text: String(text), provider: 'gemini' };
-    } catch {
-      // proximo modelo
+    } catch (e: any) {
+      o.diag?.push(`gemini ${model}: ${String(e?.message ?? e).slice(0, 120)}`);
     }
   }
   return null;
 }
 
 export async function runAI(prompt: string, env: unknown, opts: RunAIOptions = {}): Promise<AIResult> {
-  const order = opts.prefer === 'gemini' ? [viaGemini, viaCloudflare] : [viaCloudflare, viaGemini];
+  let order = opts.prefer === 'gemini' ? [viaGemini, viaCloudflare] : [viaCloudflare, viaGemini];
+  if (opts.only) order = [opts.only === 'gemini' ? viaGemini : viaCloudflare];
   for (const run of order) {
     const r = await run(prompt, env, opts);
     if (r) return r;

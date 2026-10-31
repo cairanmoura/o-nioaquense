@@ -289,17 +289,19 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       if (res.ok) {
         // Mostra erros por fonte (se houver)
         const comErro = (data.results ?? []).filter(
-          (r: any) => r.error || (r.insert_errors && r.insert_errors.length),
+          (r: any) => r.error || r.ai_error || (r.insert_errors && r.insert_errors.length),
         );
         if (msg) {
           let texto = 'Concluído! ' + (data.inserted ?? 0) + ' inserida(s), ' + (data.skipped ?? 0) + ' ignorada(s).';
+          const retidas = (data.results ?? []).reduce((n: number, r: any) => n + (r.held ?? 0), 0);
+          if (retidas) texto += ' ' + retidas + ' em rascunho para revisão.';
           if (comErro.length) {
-            texto += ' ⚠ ' + comErro.map((r: any) => r.source + ': ' + (r.error ?? r.insert_errors.join('; '))).join(' | ');
+            texto += ' ⚠ ' + comErro.map((r: any) => r.source + ': ' + (r.error ?? r.ai_error ?? r.insert_errors.join('; '))).join(' | ');
           }
           msg.textContent = texto;
           msg.style.color = comErro.length ? '#E60000' : '#008026';
         }
-        setTimeout(() => window.location.reload(), comErro.length ? 6000 : 1500);
+        setTimeout(() => window.location.reload(), comErro.length ? 30000 : 1500);
         if (comErro.length && btn) btn.disabled = false;
       } else {
         if (msg) {
