@@ -16,6 +16,12 @@ export function createExports(manifest: any) {
     const base =
       env?.WORKER_BASE_URL ??
       'https://o-nioaquense.cairan-dev.workers.dev';
+    // Cotacoes em invocacao propria (nao depende do fim da extracao de noticias)
+    ctx.waitUntil(
+      (globalThis as any).fetch(`${base}/api/cron/update-quotes`, {
+        headers: { 'x-cron-secret': env?.CRON_SECRET ?? '' },
+      }).catch(() => {}),
+    );
     ctx.waitUntil(
       (globalThis as any).fetch(`${base}/api/cron/extract-news`, {
         headers: { 'x-cron-secret': env?.CRON_SECRET ?? '' },

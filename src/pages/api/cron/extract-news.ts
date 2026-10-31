@@ -174,7 +174,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     .from('news_sources')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: true });
+    // Rodizio justo: a fonte atendida ha mais tempo (ou nunca) vai primeiro
+    .order('last_fetched_at', { ascending: true, nullsFirst: true });
 
   if (srcErr) {
     return new Response(JSON.stringify({ error: srcErr.message }), {
@@ -647,6 +648,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
           bodyParagraphs = 1;
         }
 
+        // Sem IA (ou IA falhou): monta o "Direto ao Ponto" com as primeiras frases do corpo
+        if (summaryBullets.length < 3) {
+          const sentences = bodyText
+            .split(/(?<=[.!?])\s+/)
+            .map((x) => x.trim())
+            .filter((x) => x.length >= 40 && x.length <= 220);
+          const extra = sentences.filter((x) => !summaryBullets.some((b) => b.slice(0, 40) === x.slice(0, 40)));
+          summaryBullets = [...summaryBullets.filter((b) => b.length >= 20), ...extra].slice(0, 3);
+        }
+
         content += `<p><br/></p><p>Fonte: <a href="${link}" target="_blank" rel="noopener noreferrer">${source.name}</a>.</p>`;
 
         // --- Status: publicado direto ou rascunho ---
@@ -736,6 +747,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     } catch (err: any) {
       results.push({ source: source.name, inserted: 0, skipped: 0, rewritten: 0, error: err?.message });
+      // Marca a tentativa: fonte com erro nao pode ficar para sempre na frente da fila
+      await supabase.from('news_sources').update({ last_fetched_at: new Date().toISOString() }).eq('id', source.id);
     }
   }
 

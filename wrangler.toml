@@ -40,7 +40,7 @@ invocation_logs = true
 
 # Cron: extrator de noticias (Fase 2) - a cada hora
 [triggers]
-crons = ["0 * * * *"]
+crons = ["*/20 * * * *"]
 
 # -----------------------------------------------------------------------------
 #  Variaveis publicas (nao secretas) - espelham o .env
