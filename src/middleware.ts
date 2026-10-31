@@ -18,6 +18,9 @@ import { createSupabaseServerClient } from './lib/supabase/server';
  * Se as chaves do Supabase ainda nao estiverem configuradas, o cliente e'
  * `null` e o portal funciona 100% com os dados mock de `src/lib/mock-data.ts`.
  */
+/** Ultima renovacao em segundo plano por pagina (por isolate). */
+const refreshing = new Map<string, number>();
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const supabase = createSupabaseServerClient(context);
 
@@ -99,8 +102,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Quanto tempo a versao gravada ainda pode ser entregue.
   const maxStaleMs = (policy.sMaxAge + policy.staleWhileRevalidate) * 1000;
 
+  // Requisicao interna de renovacao: ignora o cache e grava a pagina nova.
+  const isRefresh = context.request.headers.get('x-edge-refresh') === '1';
+
   try {
-    const cached = await edgeCache.match(cacheKey);
+    const cached = isRefresh ? undefined : await edgeCache.match(cacheKey);
 
     if (cached) {
       // Carimbo gravado por nos no momento do `put`. Entradas antigas (sem o
@@ -114,6 +120,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
       // Sem essa checagem a borda serviria a mesma pagina para sempre.
       if (ageMs >= 0 && ageMs <= maxStaleMs) {
+        // Vencida mas ainda servivel: entrega a antiga na hora (o visitante nunca
+        // paga a renderizacao pesada) e renova em segundo plano, no maximo 1x/min por pagina.
+        if (ageMs > policy.sMaxAge * 1000) {
+          const last = refreshing.get(cacheKey) ?? 0;
+          const ctx = (context.locals as any).runtime?.ctx;
+          if (Date.now() - last > 60_000 && ctx?.waitUntil) {
+            refreshing.set(cacheKey, Date.now());
+            ctx.waitUntil(
+              fetch(context.request.url, { headers: { 'x-edge-refresh': '1' } }).catch(() => {}),
+            );
+          }
+        }
         return applyCacheHeaders(cached, policy);
       }
     }

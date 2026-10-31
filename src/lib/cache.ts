@@ -25,11 +25,11 @@ export interface CachePolicy {
 
 export const CACHE_POLICIES = {
   /** Home: muda o dia todo, mas precisa reflecting noticia nova rapido. */
-  home: { sMaxAge: 60, staleWhileRevalidate: 300 },
+  home: { sMaxAge: 180, staleWhileRevalidate: 7200 },
   /** Materia: uma vez publicada, muda pouco. */
-  article: { sMaxAge: 300, staleWhileRevalidate: 3600 },
+  article: { sMaxAge: 600, staleWhileRevalidate: 7200 },
   /** Editorias, busca, paginas institucionais. */
-  page: { sMaxAge: 120, staleWhileRevalidate: 600 },
+  page: { sMaxAge: 300, staleWhileRevalidate: 7200 },
   /** Sitemap e robots: atualizados com pouca frequencia. */
   seo: { sMaxAge: 900, staleWhileRevalidate: 3600 },
   /** Painel e APIs: nada de cache. */
