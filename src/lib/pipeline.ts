@@ -69,7 +69,8 @@ export type NewsJob =
   | { type: 'sweep'; backfill?: boolean }
   | { type: 'source'; sourceId: string; backfill?: boolean }
   | { type: 'article'; sourceId: string; entry: QueueEntry }
-  | { type: 'quotes' };
+  | { type: 'quotes' }
+  | { type: 'xposts' };
 
 export interface ProcessOutcome {
   /** retry = falha temporaria (IA fora do ar etc.): a fila tenta de novo mais tarde. */

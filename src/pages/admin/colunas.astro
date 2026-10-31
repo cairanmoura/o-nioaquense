@@ -12,7 +12,16 @@ const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-
 <AdminLayout title="Colunas do X" subtitle="Cada post de um colunista vira uma coluna no portal">
   <div class="mx-auto max-w-4xl space-y-6">
     <section class="rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="text-sm font-extrabold text-ink">Adicionar posts</h2>
+      <h2 class="text-sm font-extrabold text-ink">Sincronização automática</h2>
+      <p class="mt-1 text-xs text-ink-muted">A cada 20 minutos o portal busca os posts novos dos colunistas pela API oficial do X (precisa do segredo <code>X_BEARER_TOKEN</code>). Respostas e retweets ficam de fora.</p>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <button id="sync-x" type="button" class="rounded-[4px] bg-ink px-4 py-2.5 text-sm font-semibold text-white">Buscar posts agora</button>
+        <span id="sync-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-extrabold text-ink">Adicionar posts manualmente</h2>
       <p class="mt-1 text-xs text-ink-muted">Cole um ou mais links de posts do X (um por linha). O texto, a data e a foto vêm do próprio X.</p>
       <textarea id="urls" rows="4" class={inp} placeholder="https://x.com/SamPancher/status/123…"></textarea>
       <div class="mt-3 flex flex-wrap items-center gap-3">
@@ -89,6 +98,16 @@ const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-
     const bad = data.results.filter((r: any) => !r.ok);
     msg.textContent = `${data.results.length - bad.length} publicada(s).` + (bad.length ? ' Problemas: ' + bad.map((b: any) => b.message).join('; ') : '');
     if (!bad.length) ($('urls') as HTMLTextAreaElement).value = '';
+    load();
+  });
+
+  $('sync-x').addEventListener('click', async () => {
+    const msg = $('sync-msg');
+    msg.textContent = 'Buscando no X…';
+    const res = await call('POST', { action: 'sync_x' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) msg.textContent = data.error ?? 'Erro';
+    else msg.textContent = `${data.inserted} post(s) novo(s).` + (data.errors?.length ? ' Problemas: ' + data.errors.join(' | ') : '');
     load();
   });
 

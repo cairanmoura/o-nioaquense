@@ -1,6 +1,7 @@
 import { App } from 'astro/app';
 // @ts-ignore
 import { handle } from '../node_modules/@astrojs/cloudflare/dist/utils/handler.js';
+import { syncXColumnists } from './lib/xsync';
 import {
   enqueueJobs,
   makeServiceClient,
@@ -51,6 +52,7 @@ export function createExports(manifest: any) {
           const sources = await sweepSources(supabase);
           const jobs: NewsJob[] = sources.map((s) => ({ type: 'source', sourceId: s.id, backfill: job.backfill }));
           jobs.push({ type: 'quotes' });
+          if (env.X_BEARER_TOKEN) jobs.push({ type: 'xposts' });
           // fontes escalonadas de 8 em 8 s: nao disparam todas juntas
           await enqueueJobs(env.NEWS_QUEUE, jobs, 8);
           console.log(`sweep: ${sources.length} fonte(s) enfileirada(s)`);
@@ -69,6 +71,10 @@ export function createExports(manifest: any) {
           console.log(`article [${out.status}] ${out.title ?? job.entry.link} ${out.reason ?? ''}`);
           if (out.status === 'retry') msg.retry({ delaySeconds: 60 * Math.max(1, msg.attempts ?? 1) });
           else msg.ack();
+        } else if (job.type === 'xposts') {
+          const r = await syncXColumnists(supabase, env.X_BEARER_TOKEN);
+          console.log(`xposts: ${r.inserted} novo(s)`, r.errors.join(' | '));
+          msg.ack();
         } else if (job.type === 'quotes') {
           await refreshQuotes(supabase);
           msg.ack();

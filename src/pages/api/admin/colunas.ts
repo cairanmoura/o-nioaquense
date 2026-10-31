@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { jsonOk, readPayload, requireSession, toErrorResponse } from '../../../lib/api';
 import { isAdmin } from '../../../lib/auth';
 import { fetchTweet, fetchXProfile, parseTweetUrl } from '../../../lib/colunas';
+import { syncXColumnists } from '../../../lib/xsync';
 import { getServiceRoleKey, getSupabaseCredentials } from '../../../lib/supabase/server';
 
 function client(locals: App.Locals) {
@@ -52,6 +53,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
       if (error) throw new Error(error.message);
       return jsonOk({ ok: true });
+    }
+
+    if (action === 'sync_x') {
+      const token = (locals as any)?.runtime?.env?.X_BEARER_TOKEN as string | undefined;
+      if (!token) throw new Error('Falta o segredo X_BEARER_TOKEN no Cloudflare (npx wrangler secret put X_BEARER_TOKEN).');
+      const r = await syncXColumnists(sb, token);
+      return jsonOk({ ok: r.errors.length === 0, inserted: r.inserted, errors: r.errors });
     }
 
     if (action === 'refresh_profiles') {
