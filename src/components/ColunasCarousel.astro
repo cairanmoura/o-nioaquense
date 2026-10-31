@@ -2,27 +2,27 @@
 import ColunaCard from './ColunaCard.astro';
 import type { XPost } from '../lib/colunas';
 
-/** Carrossel de colunas (posts do X) para a home: rolagem horizontal com snap. */
+/** Carrossel escuro (aparência do embed do X) que gira sozinho; pausa ao passar o mouse/tocar. */
 interface Props {
   posts: XPost[];
 }
 const { posts } = Astro.props;
 ---
 
-<section aria-labelledby="sec-colunas">
-  <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
-    <h2 id="sec-colunas" class="font-editorial text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Colunas</h2>
-    <p class="hidden text-xs font-medium text-ink-muted sm:block">Política e economia, direto do X</p>
+<section aria-labelledby="sec-colunas" id="colunas-home">
+  <div class="flex items-baseline gap-3 border-b border-[#2f3336] pb-3">
+    <h2 id="sec-colunas" class="font-editorial text-2xl font-semibold tracking-tight text-[#e7e9ea] sm:text-3xl">Colunas</h2>
+    <p class="hidden text-xs font-medium text-[#71767b] sm:block">Política e economia, direto do X</p>
     <div class="ml-auto flex items-center gap-2">
-      <button type="button" data-car="prev" class="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-ink hover:border-nioaque-green sm:flex" aria-label="Colunas anteriores">←</button>
-      <button type="button" data-car="next" class="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-ink hover:border-nioaque-green sm:flex" aria-label="Próximas colunas">→</button>
-      <a href="/colunas" class="text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark">Ver todas</a>
+      <button type="button" data-car="prev" class="hidden h-8 w-8 items-center justify-center rounded-full border border-[#2f3336] text-[#e7e9ea] hover:bg-[#16181c] sm:flex" aria-label="Colunas anteriores">←</button>
+      <button type="button" data-car="next" class="hidden h-8 w-8 items-center justify-center rounded-full border border-[#2f3336] text-[#e7e9ea] hover:bg-[#16181c] sm:flex" aria-label="Próximas colunas">→</button>
+      <a href="/colunas" class="text-sm font-semibold text-[#1d9bf0] hover:underline">Ver todas</a>
     </div>
   </div>
   <ul id="colunas-track" class="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
     {posts.map((p) => (
       <li class="w-[82%] shrink-0 snap-start sm:w-[22rem]">
-        <ColunaCard post={p} clamp={6} />
+        <ColunaCard post={p} clamp={6} dark />
       </li>
     ))}
   </ul>
@@ -30,10 +30,28 @@ const { posts } = Astro.props;
 
 <script>
   const track = document.getElementById('colunas-track');
+  const step = () => {
+    const card = track?.querySelector('li');
+    return card ? card.getBoundingClientRect().width + 16 : 340;
+  };
+  const go = (dir: 1 | -1) => {
+    if (!track) return;
+    const max = track.scrollWidth - track.clientWidth - 4;
+    if (dir === 1 && track.scrollLeft >= max) track.scrollTo({ left: 0, behavior: 'smooth' });
+    else if (dir === -1 && track.scrollLeft <= 4) track.scrollTo({ left: max, behavior: 'smooth' });
+    else track.scrollBy({ left: dir * step(), behavior: 'smooth' });
+  };
   document.querySelectorAll<HTMLButtonElement>('button[data-car]').forEach((b) =>
-    b.addEventListener('click', () => {
-      if (!track) return;
-      track.scrollBy({ left: (b.dataset.car === 'next' ? 1 : -1) * Math.min(track.clientWidth * 0.9, 740), behavior: 'smooth' });
-    }),
+    b.addEventListener('click', () => go(b.dataset.car === 'next' ? 1 : -1)),
   );
+  // Giro automatico (respeita "reduzir movimento"; pausa em hover/toque/foco)
+  let paused = false;
+  const sec = document.getElementById('colunas-home');
+  ['mouseenter', 'touchstart', 'focusin'].forEach((e) => sec?.addEventListener(e, () => (paused = true), { passive: true }));
+  ['mouseleave', 'touchend', 'focusout'].forEach((e) => sec?.addEventListener(e, () => (paused = false), { passive: true }));
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setInterval(() => {
+      if (!paused && !document.hidden) go(1);
+    }, 4500);
+  }
 </script>

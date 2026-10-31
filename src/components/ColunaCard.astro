@@ -10,24 +10,26 @@ interface Props {
   post: XPost;
   class?: string;
   clamp?: number;
+  /** Tema escuro (aparência do embed do X, modo preto). */
+  dark?: boolean;
 }
-const { post, class: className = '', clamp = 6 } = Astro.props;
+const { post, class: className = '', clamp = 6, dark = false } = Astro.props;
 const c = post.columnist!;
 const clampClass = clamp <= 4 ? 'line-clamp-4' : clamp <= 6 ? 'line-clamp-6' : 'line-clamp-[9]';
 ---
 
 <a
   href={`/coluna/${post.id}`}
-  class:list={['group flex h-full flex-col gap-3 rounded-[10px] border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md', className]}
+  class:list={['group flex h-full flex-col gap-3 rounded-[10px] border p-4 transition-colors', dark ? 'border-[#2f3336] bg-black hover:bg-[#080808]' : 'border-slate-200 bg-white shadow-sm hover:shadow-md', className]}
 >
   <span class="flex items-center gap-3">
     <img src={avatarOf(c)} alt="" width="44" height="44" loading="lazy" referrerpolicy="no-referrer" class="h-11 w-11 shrink-0 rounded-full bg-slate-100 object-cover" />
     <span class="min-w-0 leading-tight">
-      <span class="block truncate font-sans text-sm font-extrabold text-ink">{c.name}</span>
-      <span class="block truncate font-sans text-xs text-ink-muted">@{c.handle} · {formatRelative(post.posted_at)}</span>
+      <span class:list={['block truncate font-sans text-sm font-extrabold', dark ? 'text-[#e7e9ea]' : 'text-ink']}>{c.name}</span>
+      <span class:list={['block truncate font-sans text-xs', dark ? 'text-[#71767b]' : 'text-ink-muted']}>@{c.handle} · {formatRelative(post.posted_at)}</span>
     </span>
-    <svg class="ml-auto h-4 w-4 shrink-0 text-ink" viewBox="0 0 24 24" fill="currentColor" aria-label="X"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    <svg class:list={['ml-auto h-4 w-4 shrink-0', dark ? 'text-[#e7e9ea]' : 'text-ink']} viewBox="0 0 24 24" fill="currentColor" aria-label="X"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
   </span>
-  <span class:list={['whitespace-pre-line break-words font-sans text-[0.9375rem] leading-relaxed text-ink', clampClass]}>{post.text}</span>
+  <span class:list={['whitespace-pre-line break-words font-sans text-[0.9375rem] leading-relaxed', dark ? 'text-[#e7e9ea]' : 'text-ink', clampClass]}>{post.text}</span>
   {post.media_url && <img src={post.media_url} alt="" loading="lazy" referrerpolicy="no-referrer" class="mt-auto aspect-[16/9] w-full rounded-[8px] object-cover" />}
 </a>
