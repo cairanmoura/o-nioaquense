@@ -1,7 +1,8 @@
 ---
 import ArticleCard from '../../components/ArticleCard.astro';
 import MainLayout from '../../layouts/MainLayout.astro';
-import { getHomeFeed } from '../../lib/content';
+import { getHomeFeed, getRegiaoArticles } from '../../lib/content';
+import { pickLead } from '../../lib/cover';
 import { SCOPE_BADGE_CLASS, SCOPE_LABEL } from '../../lib/types';
 import type { ArticleScope } from '../../lib/types';
 
@@ -33,6 +34,11 @@ const EDITORIAS: Record<string, { label: string; description: string; color: str
       'O pais em titulos que interessam quem vive no interior: politica, economia, clima e direitos.',
     color: 'bg-ink',
   },
+  regiao: {
+    label: 'Região',
+    description: 'Jardim, Bonito, Anastácio, Aquidauana, Sidrolândia e a BR-060: o que acontece ao redor de Nioaque.',
+    color: 'bg-nioaque-green',
+  },
   coluna: {
     label: 'Colunas',
     description:
@@ -46,7 +52,21 @@ const EDITORIAS: Record<string, { label: string; description: string; color: str
   },
 };
 
-const editoria = EDITORIAS[scope];
+/** Seções temáticas do menu "Seções": filtram pela editoria (category_label). */
+const THEMES: Record<string, { label: string; match: string[]; description: string }> = {
+  'politica-poder': { label: 'Política & Poder', match: ['politica', 'camara', 'prefeitura'], description: 'Prefeitura, Câmara, Governo e decisões que afetam a cidade.' },
+  'agro-campo': { label: 'Agro & Campo', match: ['agro', 'agricultura'], description: 'Pecuária, lavoura, preços e a vida no campo.' },
+  'policia-justica': { label: 'Polícia & Justiça', match: ['policia', 'justica', 'seguranca'], description: 'Segurança pública, ocorrências e decisões da Justiça.' },
+  saude: { label: 'Saúde', match: ['saude'], description: 'Postos de saúde, campanhas, hospitais e prevenção.' },
+  educacao: { label: 'Educação', match: ['educacao'], description: 'Escolas, concursos, universidades e ensino.' },
+  esporte: { label: 'Esporte', match: ['esporte'], description: 'Times, campeonatos e atletas da região.' },
+  cultura: { label: 'Cultura', match: ['cultura'], description: 'Eventos, artistas e tradições locais.' },
+};
+const norm = (t: string | null) => (t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const theme = THEMES[scope];
+const editoria = theme
+  ? { label: theme.label, description: theme.description, color: 'bg-nioaque-green' }
+  : EDITORIAS[scope];
 
 if (!editoria) {
   return Astro.redirect('/');
@@ -57,17 +77,21 @@ if (scope === 'radar_oficial') {
 }
 
 const feed = await getHomeFeed(Astro.locals);
-const articles = feed.byScope[scope as ArticleScope] ?? [];
+const articles = theme
+  ? feed.articles.filter((a) => theme.match.some((m) => norm(a.category_label).includes(m)))
+  : scope === 'regiao'
+    ? await getRegiaoArticles(Astro.locals)
+    : (feed.byScope[scope as ArticleScope] ?? []);
 const profilesById = new Map(feed.profiles.map((profile) => [profile.id, profile]));
 
-const featured = articles.find((article) => article.is_featured) ?? articles[0];
+const featured = pickLead(articles) ?? articles[0];
 const rest = articles.filter((article) => article.id !== featured?.id);
 ---
 
 <MainLayout title={editoria.label} description={editoria.description}>
   <div class="container-editorial py-8 sm:py-10">
     <header class="border-b-2 border-nioaque-green pb-5">
-      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+      <p class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red-dark">
         Editoria
       </p>
       <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">{editoria.label}</h1>
@@ -151,7 +175,7 @@ const rest = articles.filter((article) => article.id !== featured?.id);
     <p class="mt-12">
       <a
         href="/"
-        class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+        class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red-dark"
       >
         <span aria-hidden="true">←</span>
         Voltar para a capa

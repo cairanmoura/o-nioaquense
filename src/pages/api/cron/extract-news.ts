@@ -254,6 +254,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
         scrapedHtml?: string;
         /** Imagem declarada no proprio feed RSS. */
         rssImage?: string | null;
+        /** Veiculo real (Google/Bing News declaram o portal de origem). */
+        publisherName?: string | null;
         /** true quando o link e' um redirect do Google News (resolver antes de usar). */
         needsResolution?: boolean;
         /** true quando o link ja e' a URL real, mas a pagina precisa ser baixada
@@ -344,6 +346,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               pubDate: item.pubDate,
               needsResolution: true,
               sourceUrlHint: item.sourceUrl,
+              publisherName: item.sourceName,
             });
           }
         } else if (isBingNews && xml) {
@@ -356,6 +359,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               rawDesc: item.description ?? null,
               pubDate: item.pubDate,
               needsPageFetch: true,
+              publisherName: item.sourceName,
             });
           }
         } else if (xml && /<(item|entry)\b/i.test(xml)) {
@@ -544,6 +548,13 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
         const { title, link, rawDesc, pubDate, scrapedText } = c;
 
+        // Credito correto: agregadores (Google/Bing News) nao sao o veiculo; usa o portal real
+        const isAggregator = Boolean(entry.needsResolution || entry.needsPageFetch);
+        const publisher: string =
+          (isAggregator ? (entry.publisherName || ex?.siteName || (() => { try { return new URL(link).hostname.replace(/^www\./, ''); } catch { return null; } })()) : null) ??
+          source.name ??
+          'portal de origem';
+
         // Filtro de palavras-chave pos-download (itens do Google/Bing News:
         // o corpo so' existe depois de baixar a pagina)
         if (entry.needsResolution || entry.needsPageFetch) {
@@ -618,7 +629,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           // Portal privado: reescrita TOTAL obrigatoria (nunca republica o texto original)
           try {
             const rw = await rewriteArticle(
-              { text: sourceText, sourceName: source.name ?? 'portal de origem', sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
+              { text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
               env,
             );
             finalTitle = rw.title;
@@ -653,7 +664,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           if (source.ai_rewrite) {
             try {
               const rw = await rewriteArticle(
-                { text: sourceText, sourceName: source.name ?? 'fonte', sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
+                { text: sourceText, sourceName: publisher, sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
                 env,
               );
               summaryBullets = rw.summary_bullets;
@@ -682,7 +693,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           if (stored) coverImage = stored;
         }
 
-        content += `<p><br/></p><p>Fonte: <a href="${link}" target="_blank" rel="noopener noreferrer">${source.name}</a>.</p>`;
+        content += `<p><br/></p><p>Fonte: <a href="${link}" target="_blank" rel="noopener noreferrer">${publisher}</a>.</p>`;
 
         // --- Status: publicado direto ou rascunho ---
         const now = new Date().toISOString();
@@ -720,7 +731,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
           status,
           views_count: 0,
           published_at: publishedAt,
-          source_name: source.name,
+          source_name: publisher,
+          author_name: 'Redação',
           source_url: link,
           created_at: now,
           updated_at: now,

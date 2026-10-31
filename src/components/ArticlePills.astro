@@ -52,20 +52,11 @@ function hash(value: string): number {
 }
 
 /* Somente cores da identidade Nioaque (verde, vermelho, preto editorial). */
+/* Texto SEMPRE escuro/colorido sobre o fundo claro da pagina (nunca branco: sumia). */
 const BRAND_TONES = [
-  { bg: 'bg-nioaque-green text-white', dot: 'bg-nioaque-green', text: 'text-white' },
-  { bg: 'bg-nioaque-red text-white', dot: 'bg-nioaque-red', text: 'text-white' },
-  { bg: 'bg-ink text-white', dot: 'bg-ink', text: 'text-white' },
-  {
-    bg: 'bg-nioaque-green-50 ring-1 ring-inset ring-nioaque-green-100',
-    dot: 'bg-nioaque-green',
-    text: 'text-nioaque-green-dark',
-  },
-  {
-    bg: 'bg-nioaque-red-50 ring-1 ring-inset ring-red-100',
-    dot: 'bg-nioaque-red',
-    text: 'text-nioaque-red-dark',
-  },
+  { dot: 'bg-nioaque-green', text: 'text-nioaque-green-dark' },
+  { dot: 'bg-nioaque-red', text: 'text-nioaque-red-dark' },
+  { dot: 'bg-ink', text: 'text-ink' },
 ];
 
 const tone = BRAND_TONES[hash(normalized) % BRAND_TONES.length];
@@ -80,5 +71,5 @@ const tone = BRAND_TONES[hash(normalized) % BRAND_TONES.length];
   <span class:list={['h-1.5 w-1.5 shrink-0 rounded-[4px]', tone.dot]} aria-hidden="true" />
   <span class:list={['font-semibold', tone.text]}>{label}</span>
   {showEditor && <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>}
-  {article.is_breaking && <span class="font-bold text-nioaque-red">&middot; Última hora</span>}
+  {article.is_breaking && <span class="font-bold text-nioaque-red-dark">&middot; Última hora</span>}
 </div>

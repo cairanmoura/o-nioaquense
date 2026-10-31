@@ -1,82 +1,113 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { CATEGORY_OPTIONS } from '../../lib/admin';
 import { isAdmin } from '../../lib/auth';
 
 const session = Astro.locals.adminUser;
 if (!session) return Astro.redirect('/admin/login');
 if (!isAdmin(session)) return Astro.redirect('/admin');
+
+const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm';
+const lbl = 'block text-xs font-bold text-ink';
 ---
 
-<AdminLayout title="Curadoria" subtitle="Importador por link com fotos reais">
-  <div class="mx-auto max-w-5xl space-y-6">
-    <section class="rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
-      <header class="mb-4">
+<AdminLayout title="Importar por link" subtitle="Cole links, reescreva com IA e publique">
+  <div class="mx-auto max-w-4xl space-y-6">
+    <section class="rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <header class="mb-3">
         <h2 class="text-sm font-extrabold text-ink">Colar links de notícias</h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-          Um link por linha. Com um link, você vê o resultado e escolhe a foto de capa. Com vários,
-          o sistema processa um de cada vez, numa fila, e salva cada um como rascunho (capa já
-          escolhida automaticamente) para você revisar em <a href="/admin/rascunhos" class="font-semibold text-nioaque-green underline">Rascunhos</a>.
+          Um link por linha. <strong>Com 1 link</strong> você vê o resultado, ajusta título, categoria, tags e foto, e
+          publica na hora. <strong>Com vários</strong>, o sistema processa um de cada vez numa fila.
         </p>
       </header>
 
       <form id="curate" class="space-y-3">
-        <textarea
-          id="urls"
-          name="urls"
-          rows="5"
-          placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...\nhttps://midiamax.uol.com.br/...'}
-          class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm leading-relaxed"
-          required
-        ></textarea>
+        <textarea id="urls" rows="5" placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...'} class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm leading-relaxed" required></textarea>
+
+        <label id="batch-opt" class="hidden items-start gap-2 text-sm text-ink">
+          <input id="batch-publish" type="checkbox" class="mt-1 h-4 w-4" />
+          <span><strong>Publicar direto</strong> as matérias da fila que tiverem foto. As sem foto ficam em Rascunhos para você escolher a imagem.</span>
+        </label>
+
         <div class="flex flex-wrap items-center gap-3">
-          <button id="go" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">
-            Extrair e reescrever
-          </button>
-          <button id="stop" type="button" class="hidden rounded-[4px] border border-slate-300 px-4 py-3 text-sm font-semibold text-ink hover:border-nioaque-red hover:text-nioaque-red">
-            Parar fila
-          </button>
+          <button id="go" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Extrair e reescrever</button>
+          <button id="stop" type="button" class="hidden rounded-[4px] border border-slate-300 px-4 py-3 text-sm font-semibold text-ink hover:border-nioaque-red hover:text-nioaque-red-dark">Parar fila</button>
           <span id="count" class="text-xs text-ink-muted"></span>
         </div>
       </form>
       <p id="status" class="mt-3 hidden text-sm text-ink-muted" role="status" aria-live="polite"></p>
-
       <ul id="queue" class="mt-4 hidden divide-y divide-slate-200 rounded-[4px] border border-slate-200 text-sm"></ul>
     </section>
 
-    <section id="result" class="hidden space-y-5 rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
-      <div>
-        <p id="meta" class="text-[11px] font-bold uppercase tracking-wider text-nioaque-green"></p>
-        <h3 id="r-title" class="mt-1 text-2xl font-extrabold leading-tight text-ink"></h3>
-        <p id="r-sub" class="mt-1 text-base text-ink-soft"></p>
+    <section id="result" class="hidden space-y-5 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <p id="meta" class="text-[11px] font-bold uppercase tracking-wider text-nioaque-green"></p>
+
+      <div class="space-y-3">
+        <label class={lbl}>Título<input id="r-title" class={inp} maxlength="200" /></label>
+        <label class={lbl}>Subtítulo<input id="r-sub" class={inp} maxlength="240" /></label>
       </div>
+
       <ul id="r-bullets" class="space-y-1.5 border-l-4 border-nioaque-green bg-editorial p-4 text-sm"></ul>
       <div id="r-body" class="prose-editorial space-y-3 text-[15px] leading-relaxed text-ink"></div>
 
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class={lbl}>Seção
+          <select id="r-scope" class={inp}>
+            <option value="nioaque">Nioaque</option><option value="regiao">Região</option><option value="ms">Mato Grosso do Sul</option><option value="brasil">Brasil</option>
+          </select>
+        </label>
+        <label class={lbl}>Editoria / categoria
+          <input id="r-cat" class={inp} list="cats" />
+          <datalist id="cats">{CATEGORY_OPTIONS.map((c) => <option value={c} />)}</datalist>
+        </label>
+        <label class={lbl}>Tags (vírgula)<input id="r-tags" class={inp} placeholder="saúde, concurso" /></label>
+        <label class={lbl}>Autor exibido<input id="r-author" class={inp} value="Redação" list="authors" /><datalist id="authors"><option value="Redação" /><option value="Redação O Nioaquense" /></datalist></label>
+        <label class={lbl}>Fonte (veículo)<input id="r-srcname" class={inp} /></label>
+        <label class={lbl}>Capa do site
+          <select id="r-pin" class={inp}>
+            <option value="none">Automático</option>
+            <option value="featured">Destaque (12 h)</option>
+            <option value="breaking">Urgente (12 h)</option>
+          </select>
+        </label>
+      </div>
+
       <div>
-        <h4 class="mb-2 text-xs font-bold uppercase tracking-wider text-ink-muted">Fotos da matéria original (clique para escolher a capa)</h4>
+        <h4 class="mb-2 text-xs font-bold text-ink">Foto da capa <span class="font-normal text-ink-muted">(toque numa foto para escolher)</span></h4>
         <div id="photos" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
-        <p id="no-photos" class="hidden text-xs text-ink-muted">Nenhuma foto utilizável encontrada.</p>
+        <p id="no-photos" class="hidden text-xs text-nioaque-red-dark">Nenhuma foto encontrada. Adicione uma abaixo.</p>
+        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+          <label class="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-slate-300 px-4 py-2.5 text-sm font-semibold text-ink hover:border-nioaque-green">
+            Enviar foto do aparelho<input id="r-file" type="file" accept="image/*" class="sr-only" />
+          </label>
+          <input id="r-photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-slate-300 px-3 py-2 text-sm" />
+          <button id="r-photo-use" type="button" class="shrink-0 rounded-[4px] border border-slate-300 px-4 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
+        </div>
+        <label class={lbl}>Legenda / crédito<input id="r-caption" class={inp} /></label>
       </div>
 
       <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
-        <button id="save" type="button" class="rounded-[4px] bg-nioaque-red px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-red-dark">
-          Salvar como rascunho
-        </button>
-        <span id="save-msg" class="text-sm text-ink-muted" role="status" aria-live="polite"></span>
+        <button id="publish" type="button" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Publicar agora</button>
+        <button id="save" type="button" class="rounded-[4px] border border-slate-300 px-5 py-3 text-sm font-semibold text-ink hover:border-nioaque-green disabled:opacity-60">Salvar como rascunho</button>
+        <span id="save-msg" class="min-w-0 text-sm text-ink-muted" role="status" aria-live="polite"></span>
       </div>
     </section>
   </div>
 </AdminLayout>
 
 <script>
+  import { uploadPhotoFile, mirrorPhotoUrl, looksLikeUrl } from '../../lib/photo-client';
+
   type Photo = { original: string; preview: string; caption: string | null; stored?: string | null };
   let data: any = null;
   let chosen: Photo | null = null;
   let stopRequested = false;
 
-  const $ = (id: string) => document.getElementById(id)!;
-  const form = $('curate') as HTMLFormElement;
-  const box = $('urls') as HTMLTextAreaElement;
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
+  const form = $<HTMLFormElement>('curate');
+  const box = $<HTMLTextAreaElement>('urls');
+  const list = (v: string) => v.split(',').map((t) => t.trim()).filter(Boolean);
 
   const parseUrls = (): string[] => {
     const seen = new Set<string>();
@@ -89,6 +120,8 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
   box.addEventListener('input', () => {
     const n = parseUrls().length;
     $('count').textContent = n ? `${n} link${n > 1 ? 's' : ''}` : '';
+    $('batch-opt').classList.toggle('hidden', n < 2);
+    $('batch-opt').classList.toggle('flex', n >= 2);
   });
 
   async function curate(url: string): Promise<any> {
@@ -102,43 +135,49 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     return d;
   }
 
-  async function saveDraft(d: any, photo: Photo | null): Promise<void> {
+  /** Grava a materia (rascunho ou publicada). `f` traz os campos finais. */
+  async function saveArticle(f: any, photo: Photo | null, status: 'draft' | 'published'): Promise<void> {
     let coverUrl: string | null = null;
     if (photo) {
       coverUrl = photo.stored ?? null;
       if (!coverUrl) {
-        const m = await fetch('/api/admin/mirror-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: photo.original, ref: d.source.url }),
-        });
-        const mj = await m.json().catch(() => ({}));
-        coverUrl = mj.url ?? null;
+        try {
+          coverUrl = await mirrorPhotoUrl(photo.original, f.source.url);
+        } catch {
+          coverUrl = null;
+        }
       }
     }
-    const fonte = `<p>Fonte: <a href="${d.source.url}" target="_blank" rel="noopener noreferrer">${d.source.name}</a>.</p>`;
+    const fonte = `<p>Fonte: <a href="${f.source.url}" target="_blank" rel="noopener noreferrer">${f.source.name}</a>.</p>`;
+    const pin = f.pin ?? 'none';
     const res = await fetch('/api/admin/articles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: d.title,
-        subtitle: d.subtitle,
-        summary_bullets: d.summary_bullets,
-        content: d.content_html + fonte,
+        title: f.title,
+        subtitle: f.subtitle || null,
+        summary_bullets: f.summary_bullets,
+        content: f.content_html + fonte,
         cover_image_url: coverUrl,
         cover_image_caption: photo?.caption ?? null,
-        scope: d.scope,
-        category_label: d.suggested_category,
-        source_name: d.source.name,
-        source_url: d.source.url,
-        status: 'draft',
+        scope: f.scope,
+        category_label: f.category,
+        tags: f.tags ?? [],
+        local_tags: f.local_tags ?? [],
+        author_name: f.author ?? 'Redação',
+        source_name: f.source.name,
+        source_url: f.source.url,
+        is_featured: pin !== 'none',
+        is_breaking: pin === 'breaking',
+        featured_until: pin !== 'none' ? new Date(Date.now() + 12 * 3_600_000).toISOString() : null,
+        status,
       }),
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.error ?? 'Falha ao salvar.');
   }
 
-  /* ---------------- Modo unitario: previa + escolha da capa ---------------- */
+  /* ---------------- Modo unitario ---------------- */
 
   function renderPhotos() {
     const grid = $('photos');
@@ -146,6 +185,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     const photos: Photo[] = [];
     if (data.cover) photos.push(data.cover);
     for (const i of data.images) if (!photos.some((p) => p.original === i.original)) photos.push(i);
+    if (data.extra) for (const p of data.extra as Photo[]) photos.push(p);
     $('no-photos').classList.toggle('hidden', photos.length > 0);
     for (const p of photos) {
       const b = document.createElement('button');
@@ -162,6 +202,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       b.append(img, cap);
       b.addEventListener('click', () => {
         chosen = p;
+        $('r-caption').value = p.caption ?? '';
         grid.querySelectorAll('button').forEach((x) => {
           x.classList.remove('border-nioaque-green');
           x.classList.add('border-slate-200');
@@ -170,9 +211,41 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
         b.classList.add('border-nioaque-green');
       });
       grid.appendChild(b);
-      if (!chosen && data.cover && p.original === data.cover.original) b.click();
+      if (p === chosen || (!chosen && data.cover && p.original === data.cover.original)) b.click();
     }
   }
+
+  function addExtra(p: Photo) {
+    data.extra = [...(data.extra ?? []), p];
+    chosen = p;
+    renderPhotos();
+  }
+
+  $('r-file').addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    $('save-msg').textContent = 'Enviando foto…';
+    try {
+      const url = await uploadPhotoFile(file);
+      addExtra({ original: url, preview: url, caption: null, stored: url });
+      $('save-msg').textContent = 'Foto adicionada e selecionada.';
+    } catch (err: any) {
+      $('save-msg').textContent = err?.message ?? 'Falha ao enviar.';
+    }
+  });
+  $('r-photo-use').addEventListener('click', async () => {
+    const url = $('r-photo-url').value.trim();
+    if (!looksLikeUrl(url)) return void ($('save-msg').textContent = 'Cole um link que comece com http(s)://');
+    $('save-msg').textContent = 'Baixando foto…';
+    try {
+      const stored = await mirrorPhotoUrl(url, data?.source?.url);
+      addExtra({ original: stored, preview: stored, caption: null, stored });
+      $('r-photo-url').value = '';
+      $('save-msg').textContent = 'Foto adicionada e selecionada.';
+    } catch (err: any) {
+      $('save-msg').textContent = err?.message ?? 'Falha ao baixar.';
+    }
+  });
 
   async function runSingle(url: string) {
     const status = $('status');
@@ -180,9 +253,14 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     status.textContent = 'Extraindo e reescrevendo… (até 30 s)';
     try {
       data = await curate(url);
-      $('meta').textContent = `${data.source.name} · ${data.suggested_category} · extração ${data.extraction} · IA ${data.provider}`;
-      $('r-title').textContent = data.title;
-      $('r-sub').textContent = data.subtitle ?? '';
+      $('meta').textContent = `${data.source.name} · extração ${data.extraction} · IA ${data.provider}`;
+      $('r-title').value = data.title;
+      $('r-sub').value = data.subtitle ?? '';
+      $('r-scope').value = data.scope === 'ms' || data.scope === 'brasil' || data.scope === 'regiao' ? data.scope : 'nioaque';
+      $('r-cat').value = data.suggested_category ?? '';
+      $('r-tags').value = '';
+      $('r-srcname').value = data.source.name;
+      $('r-pin').value = 'none';
       $('r-bullets').innerHTML = '';
       for (const b of data.summary_bullets) {
         const li = document.createElement('li');
@@ -192,24 +270,47 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       $('r-body').innerHTML = data.content_html; // ja sanitizado no servidor (so <p>/<h2>)
       renderPhotos();
       $('result').classList.remove('hidden');
+      $('save-msg').textContent = '';
       status.classList.add('hidden');
     } catch (err: any) {
       status.textContent = err?.message ?? 'Erro ao processar.';
     }
   }
 
-  $('save').addEventListener('click', async () => {
+  async function finishSingle(kind: 'draft' | 'published') {
     const msg = $('save-msg');
-    msg.textContent = 'Salvando…';
+    const btns = [$('publish'), $('save')] as HTMLButtonElement[];
+    btns.forEach((b) => (b.disabled = true));
+    msg.textContent = kind === 'published' ? 'Publicando…' : 'Salvando…';
     try {
-      await saveDraft(data, chosen);
-      msg.textContent = 'Rascunho salvo. Veja em Rascunhos.';
+      if (chosen) chosen = { ...chosen, caption: $('r-caption').value.trim() || chosen.caption };
+      await saveArticle(
+        {
+          title: $('r-title').value.trim() || data.title,
+          subtitle: $('r-sub').value.trim(),
+          summary_bullets: data.summary_bullets,
+          content_html: data.content_html,
+          scope: $('r-scope').value,
+          category: $('r-cat').value.trim() || null,
+          tags: list($('r-tags').value),
+          local_tags: data.local_tags,
+          author: $('r-author').value.trim() || 'Redação',
+          source: { name: $('r-srcname').value.trim() || data.source.name, url: data.source.url },
+          pin: $('r-pin').value,
+        },
+        chosen,
+        kind,
+      );
+      msg.textContent = kind === 'published' ? 'Publicada ✔  Veja em Matérias.' : 'Rascunho salvo ✔  Veja em Matérias.';
     } catch (e: any) {
       msg.textContent = e?.message ?? 'Falha ao salvar.';
+      btns.forEach((b) => (b.disabled = false));
     }
-  });
+  }
+  $('publish').addEventListener('click', () => finishSingle('published'));
+  $('save').addEventListener('click', () => finishSingle('draft'));
 
-  /* ---------------- Modo lote: fila sequencial ---------------- */
+  /* ---------------- Modo lote ---------------- */
 
   type Row = { url: string; el: HTMLLIElement; label: HTMLElement; state: 'wait' | 'run' | 'ok' | 'err' };
 
@@ -217,16 +318,33 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     r.state = state;
     r.label.textContent = text;
     r.label.className =
-      state === 'ok' ? 'text-nioaque-green' : state === 'err' ? 'text-nioaque-red' : state === 'run' ? 'font-semibold text-ink' : 'text-ink-muted';
+      state === 'ok' ? 'text-nioaque-green-dark font-semibold' : state === 'err' ? 'text-nioaque-red-dark' : state === 'run' ? 'font-semibold text-ink' : 'text-ink-muted';
   }
 
-  async function processRow(r: Row) {
+  async function processRow(r: Row, publishDirect: boolean) {
     setRow(r, 'run', 'Processando…');
     try {
       const d = await curate(r.url);
       const photo: Photo | null = d.cover ?? d.images?.[0] ?? null;
-      await saveDraft(d, photo);
-      setRow(r, 'ok', `Rascunho salvo: ${String(d.title).slice(0, 70)}`);
+      const publish = publishDirect && !!photo;
+      await saveArticle(
+        {
+          title: d.title,
+          subtitle: d.subtitle,
+          summary_bullets: d.summary_bullets,
+          content_html: d.content_html,
+          scope: d.scope === 'ms' || d.scope === 'brasil' || d.scope === 'regiao' ? d.scope : 'nioaque',
+          category: d.suggested_category,
+          local_tags: d.local_tags,
+          author: 'Redação',
+          source: d.source,
+          pin: 'none',
+        },
+        photo,
+        publish ? 'published' : 'draft',
+      );
+      const t = String(d.title).slice(0, 60);
+      setRow(r, 'ok', publish ? `Publicada: ${t}` : publishDirect ? `Sem foto, ficou em rascunho: ${t}` : `Rascunho salvo: ${t}`);
     } catch (e: any) {
       setRow(r, 'err', e?.message ?? 'Erro');
       const retry = document.createElement('button');
@@ -235,16 +353,17 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       retry.className = 'ml-3 rounded-[4px] border border-slate-300 px-2 py-0.5 text-xs font-semibold text-ink hover:border-nioaque-green';
       retry.addEventListener('click', async () => {
         retry.remove();
-        await processRow(r);
+        await processRow(r, publishDirect);
       });
       r.el.appendChild(retry);
     }
   }
 
   async function runBatch(urls: string[]) {
-    const list = $('queue');
-    list.innerHTML = '';
-    list.classList.remove('hidden');
+    const publishDirect = $('batch-publish').checked;
+    const ul = $('queue');
+    ul.innerHTML = '';
+    ul.classList.remove('hidden');
     const rows: Row[] = urls.map((url) => {
       const el = document.createElement('li');
       el.className = 'flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2';
@@ -253,7 +372,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       u.textContent = url.replace(/^https?:\/\/(www\.)?/, '');
       const label = document.createElement('span');
       el.append(u, label);
-      list.appendChild(el);
+      ul.appendChild(el);
       const row: Row = { url, el, label, state: 'wait' };
       setRow(row, 'wait', 'Na fila');
       return row;
@@ -267,12 +386,12 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
         setRow(r, 'err', 'Cancelado');
         continue;
       }
-      await processRow(r);
+      await processRow(r, publishDirect);
       done++;
       $('status').textContent = `Fila: ${done} de ${rows.length} processado(s)…`;
     }
     const ok = rows.filter((r) => r.state === 'ok').length;
-    $('status').textContent = `Fila concluída: ${ok} rascunho(s) salvo(s), ${rows.length - ok} com erro/cancelado.`;
+    $('status').textContent = `Fila concluída: ${ok} salva(s), ${rows.length - ok} com erro/cancelada(s).`;
     $('stop').classList.add('hidden');
   }
 
@@ -284,17 +403,16 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const urls = parseUrls();
+    $('status').classList.remove('hidden');
     if (!urls.length) {
-      $('status').classList.remove('hidden');
       $('status').textContent = 'Cole ao menos um link começando com http(s)://';
       return;
     }
-    const btn = $('go') as HTMLButtonElement;
+    const btn = $<HTMLButtonElement>('go');
     btn.disabled = true;
     $('result').classList.add('hidden');
     $('queue').classList.add('hidden');
     chosen = null;
-    $('status').classList.remove('hidden');
     try {
       if (urls.length === 1) await runSingle(urls[0]);
       else await runBatch(urls);

@@ -261,7 +261,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
       <section className="rounded-2xl border border-line bg-nioaque-white p-4 sm:p-5">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
+            <h2 className="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red-dark">
               Alerta urgente da cidade
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-ink-muted">
@@ -489,7 +489,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
                 <button
                   type="button"
                   onClick={() => void removeLine(line.id)}
-                  className="rounded-sm border border-line px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-nioaque-red transition-colors hover:bg-nioaque-red-50"
+                  className="rounded-sm border border-line px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-nioaque-red-dark transition-colors hover:bg-nioaque-red-50"
                 >
                   Remover
                 </button>

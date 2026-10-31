@@ -16,6 +16,7 @@ import ArticlePills from '../components/ArticlePills.astro';
 import { getHomeFeed, getRegiaoArticles, getLotteryResults, getMarketQuotes } from '../lib/content';
 import { SCOPE_LABEL } from '../lib/types';
 import { formatRelative } from '../lib/format';
+import { pickLead } from '../lib/cover';
 import { isPhotoCover } from '../lib/rss';
 const hasPhoto = (a: Article) => isPhotoCover(a.cover_image_url);
 const photoFirst = (list: Article[]) => [...list.filter(hasPhoto), ...list.filter((a) => !hasPhoto(a))];
@@ -67,17 +68,14 @@ const horaAgora = new Intl.DateTimeFormat('pt-BR', {
 }).format(agora);
 
 /* --- Manchete principal: prioriza Nioaque --- */
-const leadPool = (
+// Capa: pin manual valido (Urgente/Destaque com validade) ou rotacao automatica (prioriza Nioaque)
+const leadPool =
   activeScope === null
-    ? [
-        ...photoFirst([...feed.featured.filter((a) => a.scope === 'nioaque'), ...feed.byScope.nioaque]),
-        ...photoFirst([...feed.featured, ...feed.articles]),
-      ]
+    ? feed.articles
     : activeScope === 'regiao'
       ? regiaoArticles
-      : photoFirst([...feed.byScope[activeScope], ...feed.articles])
-);
-const lead = leadPool[0] ?? null;
+      : feed.byScope[activeScope];
+const lead = pickLead(leadPool) ?? feed.articles[0] ?? null;
 
 /* --- Submanchetes --- */
 const nioaquePool = photoFirst(feed.byScope.nioaque).filter((article) => article.id !== lead?.id);
@@ -109,7 +107,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
           <span class="pill-scope shrink-0 bg-nioaque-red text-white">Última hora</span>
           <div class="no-scrollbar flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-medium text-ink">
             {breaking.map((article) => (
-              <a href={`/noticia/${article.slug}`} class="link-underline transition-colors hover:text-nioaque-red">
+              <a href={`/noticia/${article.slug}`} class="link-underline transition-colors hover:text-nioaque-red-dark">
                 {article.title}
               </a>
             ))}
@@ -199,14 +197,14 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
                     </span>
                   </span>
                   <img
-                    src={isPhotoCover(article.cover_image_url) ? article.cover_image_url! : '/artes-nioarquense/arte-cultura-9gac.svg'}
+                    src={isPhotoCover(article.cover_image_url) ? article.cover_image_url! : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22%3E%3Crect width=%2216%22 height=%229%22 fill=%22%2300661E%22/%3E%3C/svg%3E'}
                     alt=""
                     width="64"
                     height="64"
                     loading="lazy"
                     decoding="async"
                     referrerpolicy="no-referrer"
-                    onerror="this.src='/artes-nioarquense/arte-cultura-9gac.svg'; this.onerror=null;"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22%3E%3Crect width=%2216%22 height=%229%22 fill=%22%2300661E%22/%3E%3C/svg%3E'; this.onerror=null;"
                     class="h-16 w-16 shrink-0 rounded-[4px] bg-nioaque-green-50 object-cover"
                   />
                 </a>
@@ -245,7 +243,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             </h2>
             <a
               href="/editoria/nioaque"
-              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
             </a>
@@ -273,7 +271,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             </h2>
             <a
               href="/editoria/regiao"
-              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
             </a>
@@ -311,7 +309,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             </h2>
             <a
               href="/editoria/ms"
-              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
             </a>
@@ -339,7 +337,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             </h2>
             <a
               href="/anuncie"
-              class="ml-auto shrink-0 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+              class="ml-auto shrink-0 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Anuncie aqui
             </a>
@@ -373,7 +371,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
             </h2>
             <a
               href="/editoria/brasil"
-              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+              class="ml-auto text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
             >
               Ver tudo
             </a>
@@ -428,7 +426,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
         </div>
 
         <div class="rounded-[4px] bg-editorial p-5 sm:p-6">
-          <p class="text-xs font-semibold text-nioaque-red">Boca no Trombone</p>
+          <p class="text-xs font-semibold text-nioaque-red-dark">Boca no Trombone</p>
           <p class="mt-2 font-editorial text-xl font-semibold leading-snug text-ink">
             O canal direto entre o morador de Nioaque e a redação.
           </p>
@@ -454,7 +452,7 @@ const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTop
 
           <a
             href="/mande-sua-noticia"
-            class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+            class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
           >
             Abrir o canal
             <span aria-hidden="true">→</span>

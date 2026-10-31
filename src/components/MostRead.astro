@@ -26,7 +26,7 @@ const top = [...articles].sort((a, b) => b.views_count - a.views_count).slice(0,
       <ol class="divide-y divide-slate-200">
         {top.map((article, index) => (
           <li class="flex items-start gap-3 px-4 py-3">
-            <span class:list={['w-7 shrink-0 text-2xl font-extrabold leading-none tabular-nums', index === 0 ? 'text-nioaque-red' : 'text-slate-300']} aria-hidden="true">
+            <span class:list={['w-7 shrink-0 text-2xl font-extrabold leading-none tabular-nums', index === 0 ? 'text-nioaque-red-dark' : 'text-slate-300']} aria-hidden="true">
               {index + 1}
             </span>
             <a href={`/noticia/${article.slug}`} class="block min-w-0 text-base font-bold leading-snug text-ink transition-colors hover:text-nioaque-green">

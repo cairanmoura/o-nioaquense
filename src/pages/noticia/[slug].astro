@@ -55,6 +55,8 @@ const related = page.related.length
 const words = article.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 const readingMinutes = Math.max(1, Math.round(words / 200));
 const sourceName = article.source_name ?? null;
+const isColumnist = author?.role === 'columnist';
+const bylineName = article.author_name || (isColumnist ? (author?.column_name ?? author?.full_name) : null) || 'Redação';
 const sourceUrl = article.source_url ?? null;
 const sourceInitials = sourceName
   ? sourceName
@@ -87,7 +89,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
     <meta property="article:published_time" content={article.published_at ?? ''} />
     <meta property="article:modified_time" content={article.updated_at} />
     <meta property="article:section" content={SCOPE_LABEL[article.scope]} />
-    {author && <meta property="article:author" content={author.full_name} />}
+    <meta property="article:author" content={bylineName} />
 
     <meta name="twitter:title" content={article.title} />
     <meta name="twitter:description" content={description} />
@@ -109,13 +111,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
         image: photoCover ? [photoCover] : ['/icons/icon-512.png'],
         datePublished: article.published_at,
         dateModified: article.updated_at,
-        author: author
-          ? {
-              '@type': 'Person',
-              name: author.full_name,
-              url: new URL(`/colunistas/${author.slug}`, Astro.site ?? Astro.url.origin).href,
-            }
-          : { '@type': 'Organization', name: 'O Nioaquense' },
+        author: { '@type': isColumnist ? 'Person' : 'Organization', name: bylineName },
         publisher: {
           '@type': 'Organization',
           name: 'O Nioaquense',
@@ -137,7 +133,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
         <span class="font-medium text-ink-muted">&middot; {SCOPE_LABEL[article.scope]}</span>
       </div>
 
-      <h1 class="mt-4 text-display font-semibold leading-[1.04] text-ink">
+      <h1 class="mt-4 text-[clamp(1.75rem,1.2rem+2vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-ink">
         {article.title}
       </h1>
 
@@ -149,52 +145,26 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       <div
         class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-line py-4"
       >
-        {
-          sourceName ? (
-            <div class="flex min-w-0 items-center gap-3">
-              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green font-editorial text-sm font-semibold text-white">
-                {sourceInitials}
-              </span>
-              <span class="min-w-0">
-                <span class="block truncate font-editorial text-base font-semibold leading-tight text-ink">
-                  {sourceName}
-                </span>
-                <span class="block truncate text-xs text-ink-muted">Conteúdo de agência</span>
-              </span>
-            </div>
-          ) : (
-            author && (
-              <a
-                href={`/colunistas/${author.slug}`}
-                class="group flex min-w-0 items-center gap-3"
-              >
-                {author.avatar_url ? (
-                  <img
-                    src={author.avatar_url}
-                    alt=""
-                    width="44"
-                    height="44"
-                    loading="lazy"
-                    decoding="async"
-                    class="h-11 w-11 shrink-0 rounded-[4px] object-cover ring-2 ring-nioaque-green transition-transform group-hover:scale-105"
-                  />
+        <div class="min-w-0 text-sm leading-snug">
+          <p class="font-bold text-ink">
+            Por {bylineName}
+            {isColumnist && <span class="font-medium text-ink-muted"> · {author?.column_name}</span>}
+          </p>
+          {
+            sourceName && (
+              <p class="mt-0.5 text-xs text-ink-muted">
+                Fonte:{' '}
+                {sourceUrl && !/news.google.com|bing.com/i.test(sourceUrl) ? (
+                  <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="font-semibold text-nioaque-green-dark underline underline-offset-2">
+                    {sourceName}
+                  </a>
                 ) : (
-                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green font-editorial text-base font-semibold text-white">
-                    {author.full_name.charAt(0)}
-                  </span>
+                  <span class="font-semibold text-ink-soft">{sourceName}</span>
                 )}
-                <span class="min-w-0">
-                  <span class="block truncate font-editorial text-base font-semibold leading-tight text-ink">
-                    {author.column_name ?? author.full_name}
-                  </span>
-                  <span class="block truncate text-xs text-ink-muted">
-                    {author.column_name ? author.full_name : 'Redação O Nioaquense'}
-                  </span>
-                </span>
-              </a>
+              </p>
             )
-          )
-        }
+          }
+        </div>
 
         <div class="ml-auto flex items-center gap-3">
           <p class="text-xs font-medium text-ink-muted">
@@ -271,7 +241,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           loading="lazy"
           decoding="async"
           referrerpolicy="no-referrer"
-          onerror="this.src='/artes-nioarquense/arte-cultura-9gac.svg'; this.onerror=null;"
+          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22%3E%3Crect width=%2216%22 height=%229%22 fill=%22%2300661E%22/%3E%3C/svg%3E'; this.onerror=null;"
           class="aspect-[16/9] w-full rounded-[4px] object-cover"
         />
       ) : (
@@ -357,7 +327,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
 
         {/* Assinatura */}
         {
-          author && (
+          isColumnist && author && (
             <aside class="mt-10 flex items-start gap-4 rounded-[4px] border border-line bg-nioaque-white p-5">
               {author.avatar_url ? (
                 <img
@@ -377,7 +347,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
               <div class="min-w-0">
                 <p class="font-editorial text-lg font-semibold text-ink">{author.full_name}</p>
                 {author.column_name && (
-                  <p class="text-xs font-semibold text-nioaque-red">
+                  <p class="text-xs font-semibold text-nioaque-red-dark">
                     {author.column_name}
                   </p>
                 )}
@@ -386,7 +356,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
                 )}
                 <a
                   href={`/colunistas/${author.slug}`}
-                  class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red"
+                  class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-nioaque-green transition-colors hover:text-nioaque-red-dark"
                 >
                   Ver todos os textos
                   <span aria-hidden="true">→</span>

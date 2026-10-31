@@ -26,29 +26,33 @@ const user = Astro.locals.adminUser;
 const isEditorChefe = user?.profile.role === 'admin';
 const pathname = Astro.url.pathname;
 
-/** Itens da barra inferior (mobile): no maximo 5, para o polegar alcancar. */
+/** Menu agrupado por tarefa. `bottom` = aparece na barra inferior do celular. */
 const navItems = [
-  { href: '/admin', label: 'Inicio', icon: 'home', adminOnly: false },
-  { href: '/admin/artigos/novo', label: 'Escrever', icon: 'pen', adminOnly: false },
-  { href: '/admin/revisao', label: 'Revisao', icon: 'check', adminOnly: true },
-  { href: '/admin/rascunhos', label: 'Rascunhos', icon: 'pen', adminOnly: true },
-  { href: '/admin/leitores', label: 'Leitores', icon: 'bell', adminOnly: true },
-  { href: '/admin/perfil', label: 'Perfil', icon: 'profile', adminOnly: false },
-  { href: '/admin/utilidade-publica', label: 'Utilidade Publica', icon: 'pill', adminOnly: true },
-  { href: '/admin/fontes', label: 'Fontes RSS', icon: 'rss', adminOnly: true },
-  { href: '/admin/curadoria', label: 'Curadoria', icon: 'megaphone', adminOnly: true },
-  { href: '/admin/colunistas', label: 'Colunistas', icon: 'users', adminOnly: true },
-  { href: '/admin/anuncios', label: 'Anuncios', icon: 'megaphone', adminOnly: true },
+  { group: 'Matérias', href: '/admin', label: 'Início', icon: 'home', adminOnly: false, bottom: true },
+  { group: 'Matérias', href: '/admin/materias', label: 'Matérias', icon: 'list', adminOnly: true, bottom: true },
+  { group: 'Matérias', href: '/admin/artigos/novo', label: 'Escrever', icon: 'pen', adminOnly: false, bottom: true },
+  { group: 'Matérias', href: '/admin/curadoria', label: 'Importar link', icon: 'link', adminOnly: true, bottom: true },
+  { group: 'Automação', href: '/admin/fontes', label: 'Fontes automáticas', icon: 'rss', adminOnly: true, bottom: false },
+  { group: 'Portal', href: '/admin/leitores', label: 'Leitores', icon: 'bell', adminOnly: true, bottom: false },
+  { group: 'Portal', href: '/admin/utilidade-publica', label: 'Utilidade pública', icon: 'pill', adminOnly: true, bottom: false },
+  { group: 'Portal', href: '/admin/anuncios', label: 'Anúncios', icon: 'megaphone', adminOnly: true, bottom: false },
+  { group: 'Portal', href: '/admin/colunistas', label: 'Colunistas', icon: 'users', adminOnly: true, bottom: false },
+  { group: 'Conta', href: '/admin/perfil', label: 'Perfil', icon: 'profile', adminOnly: false, bottom: true },
 ];
 
-/** A barra inferior e enxuta (no maximo 5 itens) e so mostra o que o papel pode usar. */
-const bottomNav = navItems.filter((item) => !item.adminOnly || isEditorChefe).slice(0, 5);
-
-/** A barra lateral mostra o painel completo do Editor-Chefe. */
-const sidebarNav = navItems.filter((item) => !item.adminOnly || isEditorChefe);
+const visible = navItems.filter((item) => !item.adminOnly || isEditorChefe);
+const bottomNav = visible.filter((item) => item.bottom).slice(0, 5);
+const groups = [...new Set(visible.map((item) => item.group))].map((name) => ({
+  name,
+  items: visible.filter((item) => item.group === name),
+}));
 
 const isActive = (href: string) =>
-  href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+  href === '/admin'
+    ? pathname === '/admin'
+    : href === '/admin/materias'
+      ? /^\/admin\/(materias|rascunhos|revisao|artigos\/[^n])/.test(pathname)
+      : pathname.startsWith(href);
 ---
 
 <!doctype html>
@@ -80,27 +84,32 @@ const isActive = (href: string) =>
         </div>
 
         <nav aria-label="Navegacao do painel" class="flex-1 p-3">
-          <ul class="space-y-1">
-            {
-              sidebarNav.map((item) => (
-                <li>
-                  <a
-                    href={item.href}
-                    aria-current={isActive(item.href) ? 'page' : undefined}
-                    class:list={[
-                      'flex items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-colors',
-                      isActive(item.href)
-                        ? 'bg-nioaque-green text-white'
-                        : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
-                    ]}
-                  >
-                    <Icon name={item.icon} size={18} />
-                    {item.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
+          {
+            groups.map((g) => (
+              <div class="mb-4">
+                <p class="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">{g.name}</p>
+                <ul class="space-y-0.5">
+                  {g.items.map((item) => (
+                    <li>
+                      <a
+                        href={item.href}
+                        aria-current={isActive(item.href) ? 'page' : undefined}
+                        class:list={[
+                          'flex items-center gap-3 rounded-[4px] px-3 py-2.5 text-sm font-semibold transition-colors',
+                          isActive(item.href)
+                            ? 'bg-nioaque-green text-white'
+                            : 'text-ink-soft hover:bg-nioaque-green-50 hover:text-nioaque-green-dark',
+                        ]}
+                      >
+                        <Icon name={item.icon} size={18} />
+                        {item.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
         </nav>
 
         <div class="border-t border-line p-3">
@@ -114,7 +123,7 @@ const isActive = (href: string) =>
           <form method="POST" action="/api/auth/logout">
             <button
               type="submit"
-              class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red"
+              class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-nioaque-red-50 hover:text-nioaque-red-dark"
             >
               <Icon name="logout" size={18} />
               Sair
@@ -126,7 +135,7 @@ const isActive = (href: string) =>
       {/* ---------------- Conteudo ---------------- */}
       <div class="flex min-w-0 flex-1 flex-col pb-20 lg:pb-0">
         {/* Topo */}
-        <header class="sticky top-0 z-30 border-b border-line bg-editorial/95 backdrop-blur">
+        <header class="sticky top-0 z-30 border-b border-line bg-editorial">
           <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
             <a href="/admin" class="w-24 shrink-0 lg:hidden" aria-label="Painel O Nioaquense">
               <LogoNioaquense class="w-full" />
@@ -202,7 +211,7 @@ const isActive = (href: string) =>
     {/* ---------------- Navegacao inferior (mobile) ---------------- */}
     <nav
       aria-label="Navegacao do painel"
-      class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-nioaque-white/97 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-nioaque-white pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul class="flex">
         {

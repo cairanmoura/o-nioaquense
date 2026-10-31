@@ -80,6 +80,10 @@ export interface Article {
   tags?: string[];
   is_breaking: boolean;
   is_featured: boolean;
+  /** Fim da capa manual (is_featured/is_breaking). Depois disso a rotacao automatica assume. */
+  featured_until?: string | null;
+  /** Nome exibido como autor (padrao: Redação). */
+  author_name?: string | null;
   author_id: string;
   status: ArticleStatus;
   views_count: number;

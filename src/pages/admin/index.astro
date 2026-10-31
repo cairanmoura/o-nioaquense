@@ -19,48 +19,15 @@ const publishAllowed = canPublishDirectly(session);
 
 const shortcuts = editorChefe
   ? [
-      {
-        href: '/admin/artigos/novo',
-        title: 'Nova Materia',
-        description: 'Escreva e publique em 3 passos',
-        icon: 'pen',
-        tone: 'bg-nioaque-green text-white',
-      },
-      {
-        href: '/admin/revisao',
-        title: 'Fila de Revisao',
-        description: `${dashboard.counts.pendingReview} texto(s) aguardando`,
-        icon: 'check',
-        tone: 'bg-nioaque-red text-white',
-      },
-      {
-        href: '/admin/leitores',
-        title: 'Boca no Trombone',
-        description: `${dashboard.counts.submissions} relato(s) do leitor`,
-        icon: 'bell',
-        tone: 'bg-ink text-white',
-      },
-      {
-        href: '/admin/utilidade-publica',
-        title: 'Farmacia e Alertas',
-        description: 'Plantao da semana, alerta e onibus',
-        icon: 'pill',
-        tone: 'bg-nioaque-green-50 text-nioaque-green-dark',
-      },
-      {
-        href: '/admin/anuncios',
-        title: 'Anuncios Locais',
-        description: `${dashboard.counts.activeAds} anuncio(s) no ar`,
-        icon: 'megaphone',
-        tone: 'bg-nioaque-red-50 text-nioaque-red-dark',
-      },
-      {
-        href: '/admin/colunistas',
-        title: 'Gestao de Colunistas',
-        description: `${dashboard.counts.columnists} colunista(s) na equipe`,
-        icon: 'users',
-        tone: 'bg-nioaque-red-50 text-nioaque-red-dark',
-      },
+      { href: '/admin/materias', title: 'Gerenciar matérias', description: `${dashboard.counts.published} no ar · ${dashboard.counts.drafts} rascunho(s) · editar, excluir, trocar foto`, icon: 'list', tone: 'bg-nioaque-green text-white' },
+      { href: '/admin/curadoria', title: 'Importar por link', description: 'Cole links, reescreva com IA e publique', icon: 'link', tone: 'bg-nioaque-red text-white' },
+      { href: '/admin/artigos/novo', title: 'Escrever matéria', description: 'Texto próprio, em 3 passos', icon: 'pen', tone: 'bg-ink text-white' },
+      { href: '/admin/materias?status=draft', title: 'Rascunhos', description: 'Revisar e publicar o que a automação trouxe', icon: 'check', tone: 'bg-nioaque-green-50 text-nioaque-green-dark' },
+      { href: '/admin/fontes', title: 'Fontes automáticas', description: 'RSS, extração agora, ligar/desligar fontes', icon: 'rss', tone: 'bg-nioaque-green-50 text-nioaque-green-dark' },
+      { href: '/admin/leitores', title: 'Boca no Trombone', description: `${dashboard.counts.submissions} relato(s) do leitor`, icon: 'bell', tone: 'bg-nioaque-red-50 text-nioaque-red-dark' },
+      { href: '/admin/utilidade-publica', title: 'Utilidade pública', description: 'Alerta da cidade e ônibus', icon: 'pill', tone: 'bg-nioaque-green-50 text-nioaque-green-dark' },
+      { href: '/admin/anuncios', title: 'Anúncios locais', description: `${dashboard.counts.activeAds} anúncio(s) no ar`, icon: 'megaphone', tone: 'bg-nioaque-red-50 text-nioaque-red-dark' },
+      { href: '/admin/colunistas', title: 'Colunistas', description: `${dashboard.counts.columnists} na equipe`, icon: 'users', tone: 'bg-nioaque-red-50 text-nioaque-red-dark' },
     ]
   : [
       {
@@ -82,7 +49,7 @@ const shortcuts = editorChefe
 const stats = editorChefe
   ? [
       { label: 'Publicadas', value: dashboard.counts.published, icon: 'check', tone: 'text-nioaque-green' },
-      { label: 'Em revisao', value: dashboard.counts.pendingReview, icon: 'clock', tone: 'text-nioaque-red' },
+      { label: 'Em revisao', value: dashboard.counts.pendingReview, icon: 'clock', tone: 'text-nioaque-red-dark' },
       { label: 'Rascunhos', value: dashboard.counts.drafts, icon: 'pen', tone: 'text-ink-muted' },
       { label: 'Pistas', value: dashboard.counts.submissions, icon: 'bell', tone: 'text-ink-muted' },
     ]
@@ -97,7 +64,7 @@ const stats = editorChefe
         label: 'Em revisao',
         value: dashboard.myArticles.filter((article) => article.status === 'pending_review').length,
         icon: 'clock',
-        tone: 'text-nioaque-red',
+        tone: 'text-nioaque-red-dark',
       },
       {
         label: 'Rascunhos',
@@ -225,7 +192,7 @@ const greeting = (() => {
           </h2>
           <a
             href="/admin/revisao"
-            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red-dark"
           >
             Ver tudo →
           </a>
@@ -239,7 +206,7 @@ const greeting = (() => {
               <li class="rounded-sm border border-line bg-nioaque-white p-4">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div class="min-w-0 flex-1">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-nioaque-red">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-nioaque-red-dark">
                       {author?.column_name ?? author?.full_name ?? 'Colaborador'}
                     </p>
                     <h3 class="mt-1 font-editorial text-lg font-semibold leading-snug text-ink">
@@ -378,7 +345,7 @@ const greeting = (() => {
           </h2>
           <a
             href="/admin/leitores"
-            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red"
+            class="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:text-nioaque-red-dark"
           >
             Ver tudo →
           </a>

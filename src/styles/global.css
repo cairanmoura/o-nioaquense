@@ -15,7 +15,7 @@
 @theme {
   /* --- Cores oficiais da bandeira de Nioaque --- */
   --color-nioaque-green: #008026; /* Verde Nioaque (primaria) */
-  --color-nioaque-red: #e60000; /* Vermelho Nioaque (acento / urgencia) */
+  --color-nioaque-red: #d40000; /* Vermelho Nioaque (ajustado p/ contraste AA com texto branco; a bandeira no logo segue #E60000) */
   --color-nioaque-white: #ffffff; /* Branco puro (cards / faixa central) */
   --color-editorial: #f1f4f1; /* Fundo editorial */
   --color-ink: #1e293b; /* Texto principal */
@@ -29,7 +29,7 @@
   --color-nioaque-red-light: #ff2a2a;
   --color-nioaque-red-50: #fdeaea;
   --color-ink-soft: #475569;
-  --color-ink-muted: #64748b;
+  --color-ink-muted: #526071;
   --color-line: #e4e2dc;
   --color-line-strong: #d3d0c8;
 

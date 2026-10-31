@@ -198,7 +198,7 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
           <button
             type="button"
             onClick={stop}
-            className="inline-flex items-center justify-center gap-1.5 rounded-[4px] border border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-red hover:text-nioaque-red"
+            className="inline-flex items-center justify-center gap-1.5 rounded-[4px] border border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-nioaque-red hover:text-nioaque-red-dark"
           >
             Parar
           </button>

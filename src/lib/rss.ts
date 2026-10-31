@@ -340,8 +340,9 @@ const ARTE_FALLBACK: Record<ArticleScope, string> = {
   radar_oficial: '/artes-nioarquense/arte-seguranca-plantao.svg',
 };
 
-export function getArteFallback(scope: ArticleScope): string {
-  return ARTE_FALLBACK[scope] ?? '/artes-nioarquense/arte-cultura-9gac.svg';
+/** Sem foto real: nao grava arte generica; o site desenha a capa (CoverArt). */
+export function getArteFallback(_scope: ArticleScope): string | null {
+  return null;
 }
 
 /**
@@ -854,11 +855,12 @@ export function parseBingNewsItems(xml: string, maxItems = 20): GoogleNewsItem[]
     title = stripHtml(title).trim();
     if (title.length < 10) continue;
 
+    const bingSource = block.match(/<News:Source>([\s\S]*?)<\/News:Source>/i)?.[1];
     items.push({
       title,
       link: resolveBingUrl(link),
       sourceUrl: null,
-      sourceName: null,
+      sourceName: bingSource ? stripHtml(bingSource).trim() : null,
       pubDate: pubDate ? new Date(pubDate).toISOString() : null,
       description: descRaw ? stripHtml(descRaw) : null,
     });

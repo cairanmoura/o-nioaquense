@@ -1,0 +1,354 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { CATEGORY_OPTIONS, getArticleForAdmin } from '../../../lib/admin';
+import { isAdmin } from '../../../lib/auth';
+import { isPinLive } from '../../../lib/cover';
+import { formatDateTime } from '../../../lib/format';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+const { id = '' } = Astro.params;
+const article = await getArticleForAdmin(Astro.locals, session, id);
+if (!article) return Astro.redirect('/admin/materias');
+
+const pinLive = isPinLive({ ...article, published_at: article.published_at ?? article.created_at });
+const pinText = pinLive
+  ? article.featured_until
+    ? `${article.is_breaking ? 'Urgente' : 'Destaque'} na capa até ${formatDateTime(article.featured_until)}`
+    : `${article.is_breaking ? 'Urgente' : 'Destaque'} na capa (24 h após a publicação)`
+  : null;
+
+const data = JSON.stringify({
+  id: article.id,
+  title: article.title,
+  subtitle: article.subtitle ?? '',
+  slug: article.slug,
+  summary_bullets: article.summary_bullets,
+  content: article.content,
+  cover_image_url: article.cover_image_url,
+  cover_image_caption: article.cover_image_caption ?? '',
+  scope: article.scope,
+  category_label: article.category_label ?? '',
+  tags: article.tags ?? [],
+  local_tags: article.local_tags ?? [],
+  status: article.status,
+  author_name: article.author_name ?? 'Redação',
+  source_name: article.source_name ?? '',
+  source_url: article.source_url ?? '',
+  is_breaking: article.is_breaking,
+  is_featured: article.is_featured,
+  featured_until: article.featured_until ?? null,
+  pinLive,
+}).replace(/</g, '\\u003c');
+
+const SCOPES = [
+  ['nioaque', 'Nioaque'],
+  ['regiao', 'Região'],
+  ['ms', 'Mato Grosso do Sul'],
+  ['brasil', 'Brasil'],
+  ['coluna', 'Coluna (opinião)'],
+  ['radar_oficial', 'Radar Oficial'],
+];
+const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm';
+const lbl = 'block text-xs font-bold text-ink';
+---
+
+<AdminLayout title="Editar matéria" subtitle={article.title}>
+  <script type="application/json" id="art-data" set:html={data} />
+
+  <form id="f" class="mx-auto max-w-3xl space-y-5 pb-28">
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <a href="/admin/materias" class="font-semibold text-nioaque-green underline">← Todas as matérias</a>
+      {article.status === 'published' && <a href={`/noticia/${article.slug}`} target="_blank" rel="noopener" class="ml-auto font-semibold text-ink underline">Ver no site ↗</a>}
+    </div>
+
+    {pinText && <p class="rounded-[4px] border border-nioaque-red bg-nioaque-red-50 p-3 text-sm font-semibold text-nioaque-red-dark">{pinText}</p>}
+
+    <section class="space-y-4 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <label class={lbl}>Título<input id="title" class={inp} maxlength="200" required /></label>
+      <label class={lbl}>Subtítulo (linha fina)<input id="subtitle" class={inp} maxlength="240" /></label>
+      <fieldset>
+        <legend class={lbl}>Direto ao Ponto (até 3 tópicos)</legend>
+        <input id="b1" class={inp} aria-label="Tópico 1" />
+        <input id="b2" class={inp} aria-label="Tópico 2" />
+        <input id="b3" class={inp} aria-label="Tópico 3" />
+      </fieldset>
+      <div>
+        <label class={lbl} for="content">Texto <span id="mode-note" class="font-normal text-ink-muted"></span></label>
+        <textarea id="content" rows="16" class={`${inp} font-[inherit] leading-relaxed`}></textarea>
+        <p class="mt-1 text-[11px] text-ink-muted">Separe parágrafos com uma linha em branco. Para intertítulo, comece a linha com <code>## </code>. O crédito da fonte é adicionado automaticamente.</p>
+      </div>
+    </section>
+
+    <section class="space-y-3 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <h2 class="text-sm font-extrabold text-ink">Foto de capa</h2>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <div id="photo-box" class="flex h-40 w-full shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-slate-100 text-xs text-ink-muted sm:w-64">Sem foto</div>
+        <div class="min-w-0 flex-1 space-y-2">
+          <label class="inline-flex cursor-pointer items-center rounded-[4px] bg-nioaque-green px-4 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+            Enviar do celular / computador
+            <input id="file" type="file" accept="image/*" class="sr-only" />
+          </label>
+          <div class="flex gap-2">
+            <input id="photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-slate-300 px-3 py-2 text-sm" />
+            <button id="photo-use" type="button" class="shrink-0 rounded-[4px] border border-slate-300 px-3 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
+          </div>
+          <button id="photo-remove" type="button" class="text-xs font-semibold text-nioaque-red-dark underline">Remover foto</button>
+          <p id="photo-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></p>
+          <label class={lbl}>Legenda / crédito da foto<input id="caption" class={inp} maxlength="200" placeholder="Foto: Prefeitura / Redação" /></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid gap-4 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+      <label class={lbl}>Seção (onde aparece)
+        <select id="scope" class={inp}>{SCOPES.map(([v, l]) => <option value={v}>{l}</option>)}</select>
+      </label>
+      <label class={lbl}>Editoria / categoria
+        <input id="category" class={inp} list="cats" placeholder="Saúde, Política, Agro…" />
+        <datalist id="cats">{CATEGORY_OPTIONS.map((c) => <option value={c} />)}</datalist>
+      </label>
+      <label class={lbl}>Tags (separe por vírgula)<input id="tags" class={inp} placeholder="saúde, outubro rosa" /></label>
+      <label class={lbl}>Cidades citadas (separe por vírgula)<input id="local_tags" class={inp} placeholder="Nioaque, Jardim" /></label>
+      <label class={lbl}>Autor exibido
+        <input id="author" class={inp} list="authors" maxlength="80" />
+        <datalist id="authors"><option value="Redação" /><option value="Redação O Nioaquense" /><option value="Assessoria de Imprensa" /></datalist>
+      </label>
+      <label class={lbl}>Status
+        <select id="status" class={inp}>
+          <option value="published">No ar</option>
+          <option value="draft">Rascunho</option>
+          <option value="pending_review">Em revisão</option>
+        </select>
+      </label>
+      <label class={lbl}>Fonte (nome do veículo)<input id="source_name" class={inp} placeholder="Jornal O Pantaneiro" /></label>
+      <label class={lbl}>Link da matéria original<input id="source_url" type="url" inputmode="url" class={inp} placeholder="https://…" /></label>
+    </section>
+
+    <section class="rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <h2 class="text-sm font-extrabold text-ink">Capa do site</h2>
+      <p class="mt-1 text-xs text-ink-muted">Fixa a matéria no topo da home por um tempo. Depois do prazo, a capa volta ao rodízio automático (que prioriza Nioaque).</p>
+      <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <label class={lbl}>Posição
+          <select id="pin" class={inp}>
+            <option value="keep">Manter como está</option>
+            <option value="none">Automático (sem fixar)</option>
+            <option value="featured">Destaque na capa</option>
+            <option value="breaking">Urgente (capa + faixa “Última hora”)</option>
+          </select>
+        </label>
+        <label class={lbl}>Por quanto tempo
+          <select id="pin-hours" class={inp}>
+            <option value="6">6 horas</option>
+            <option value="12" selected>12 horas</option>
+            <option value="24">24 horas</option>
+            <option value="48">2 dias</option>
+            <option value="72">3 dias</option>
+            <option value="168">7 dias</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:left-64">
+      <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+        <button id="save" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Salvar alterações</button>
+        <button id="delete" type="button" class="rounded-[4px] border border-nioaque-red px-4 py-3 text-sm font-semibold text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
+        <span id="msg" class="min-w-0 text-sm text-ink-muted" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </form>
+</AdminLayout>
+
+<script>
+  import { uploadPhotoFile, mirrorPhotoUrl, looksLikeUrl } from '../../../lib/photo-client';
+
+  const A = JSON.parse(document.getElementById('art-data')!.textContent!);
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
+
+  /* ---------- texto <-> HTML ---------- */
+  const decode = (t: string) => {
+    const d = document.createElement('textarea');
+    d.innerHTML = t;
+    return d.value;
+  };
+  const escapeHtml = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // tira o paragrafo "Fonte:" (e o <p><br/></p> antes dele): e' recriado no salvamento
+  const body = String(A.content ?? '')
+    .replace(/<p>\s*<br\s*\/?>\s*<\/p>/gi, '')
+    .replace(/<p>\s*Fonte:[\s\S]*?<\/p>\s*$/i, '')
+    .trim();
+  const isRich = /<(strong|em|b|i|a|ul|ol|li|img|blockquote|iframe|figure|table|h[1-6])\b/i.test(body.replace(/<h2>[\s\S]*?<\/h2>/gi, ''));
+  let rich = isRich;
+
+  const toText = (html: string) =>
+    html
+      .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => `## ${decode(t.replace(/<[^>]+>/g, '')).trim()}\n\n`)
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .split('\n')
+      .map((l) => (l.startsWith('## ') ? l : decode(l)))
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  const toHtml = (text: string) =>
+    text
+      .split(/\n{2,}/)
+      .map((b) => b.trim())
+      .filter(Boolean)
+      .map((b) => (b.startsWith('## ') ? `<h2>${escapeHtml(b.slice(3).trim())}</h2>` : `<p>${escapeHtml(b).replace(/\n/g, '<br/>')}</p>`))
+      .join('');
+
+  /* ---------- preencher ---------- */
+  $('title').value = A.title;
+  $('subtitle').value = A.subtitle;
+  [0, 1, 2].forEach((i) => ($(`b${i + 1}`).value = A.summary_bullets[i] ?? ''));
+  $<HTMLTextAreaElement>('content').value = rich ? body : toText(body);
+  $('mode-note').textContent = rich ? '(HTML — este texto tem formatação especial)' : '';
+  $('caption').value = A.cover_image_caption;
+  $<HTMLSelectElement>('scope').value = A.scope;
+  $('category').value = A.category_label;
+  $('tags').value = (A.tags ?? []).join(', ');
+  $('local_tags').value = (A.local_tags ?? []).join(', ');
+  $('author').value = A.author_name;
+  $<HTMLSelectElement>('status').value = A.status;
+  $('source_name').value = A.source_name;
+  $('source_url').value = A.source_url;
+  if (!A.pinLive) $<HTMLSelectElement>('pin').querySelector('option[value="keep"]')!.remove();
+
+  /* ---------- foto ---------- */
+  let cover: string | null = A.cover_image_url;
+  const isFake = (u: string | null) => !u || /^\/(covers|artes)/i.test(u) || /\.svg(\?|$)/i.test(u);
+  const renderPhoto = () => {
+    const box = $<HTMLDivElement>('photo-box');
+    box.innerHTML = '';
+    if (isFake(cover)) {
+      box.textContent = 'Sem foto (o site mostra uma capa desenhada)';
+      return;
+    }
+    const img = document.createElement('img');
+    img.src = cover!;
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.className = 'h-full w-full object-cover';
+    img.onerror = () => (box.textContent = 'Não foi possível carregar a foto atual.');
+    box.appendChild(img);
+  };
+  renderPhoto();
+  const photoMsg = (t: string) => ($('photo-msg').textContent = t);
+
+  $('file').addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    photoMsg('Enviando…');
+    try {
+      cover = await uploadPhotoFile(file);
+      renderPhoto();
+      photoMsg('Foto trocada. Clique em “Salvar alterações”.');
+    } catch (err: any) {
+      photoMsg(err?.message ?? 'Falha ao enviar.');
+    }
+  });
+  $('photo-use').addEventListener('click', async () => {
+    const url = $('photo-url').value.trim();
+    if (!looksLikeUrl(url)) return photoMsg('Cole um link que comece com http(s)://');
+    photoMsg('Baixando a foto…');
+    try {
+      cover = await mirrorPhotoUrl(url, $('source_url').value || undefined);
+      renderPhoto();
+      $('photo-url').value = '';
+      photoMsg('Foto trocada. Clique em “Salvar alterações”.');
+    } catch (err: any) {
+      photoMsg(err?.message ?? 'Falha ao baixar.');
+    }
+  });
+  $('photo-remove').addEventListener('click', () => {
+    cover = null;
+    renderPhoto();
+    photoMsg('Foto removida. Clique em “Salvar alterações”.');
+  });
+
+  /* ---------- salvar ---------- */
+  const list = (v: string) => v.split(',').map((t) => t.trim()).filter(Boolean);
+  const msg = (t: string, bad = false) => {
+    const m = $('msg');
+    m.textContent = t;
+    m.style.color = bad ? '#E60000' : '';
+  };
+
+  $('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $<HTMLButtonElement>('save');
+    btn.disabled = true;
+    msg('Salvando…');
+    try {
+      const pin = $<HTMLSelectElement>('pin').value;
+      const hours = Number($<HTMLSelectElement>('pin-hours').value);
+      let is_breaking = A.is_breaking;
+      let is_featured = A.is_featured;
+      let featured_until: string | null = A.featured_until;
+      if (pin === 'none') {
+        is_breaking = false;
+        is_featured = false;
+        featured_until = null;
+      } else if (pin === 'featured' || pin === 'breaking') {
+        is_breaking = pin === 'breaking';
+        is_featured = true;
+        featured_until = new Date(Date.now() + hours * 3_600_000).toISOString();
+      }
+
+      const raw = $<HTMLTextAreaElement>('content').value.trim();
+      const srcName = $('source_name').value.trim();
+      const srcUrl = $('source_url').value.trim();
+      const fonte = srcName || srcUrl
+        ? `<p>Fonte: ${srcUrl ? `<a href="${escapeHtml(srcUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(srcName || srcUrl)}</a>` : escapeHtml(srcName)}.</p>`
+        : '';
+      const content = (rich ? raw : toHtml(raw)) + fonte;
+
+      const res = await fetch('/api/admin/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: A.id,
+          slug: A.slug,
+          title: $('title').value.trim(),
+          subtitle: $('subtitle').value.trim() || null,
+          summary_bullets: [1, 2, 3].map((i) => $(`b${i}`).value.trim()).filter(Boolean),
+          content,
+          cover_image_url: cover && !isFake(cover) ? cover : null,
+          cover_image_caption: $('caption').value.trim() || null,
+          scope: $<HTMLSelectElement>('scope').value,
+          category_label: $('category').value.trim() || null,
+          tags: list($('tags').value),
+          local_tags: list($('local_tags').value),
+          author_name: $('author').value.trim() || 'Redação',
+          source_name: srcName,
+          source_url: srcUrl,
+          status: $<HTMLSelectElement>('status').value,
+          is_breaking,
+          is_featured,
+          featured_until,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? 'Falha ao salvar.');
+      msg('Salvo ✔');
+      setTimeout(() => location.reload(), 700);
+    } catch (err: any) {
+      msg(err?.message ?? 'Falha ao salvar.', true);
+      btn.disabled = false;
+    }
+  });
+
+  $('delete').addEventListener('click', async () => {
+    if (!confirm(`Excluir de vez?\n\n“${A.title}”\n\nIsso não pode ser desfeito.`)) return;
+    msg('Excluindo…');
+    const res = await fetch(`/api/admin/articles/${A.id}`, { method: 'DELETE' });
+    if (res.ok) location.href = '/admin/materias';
+    else msg((await res.json().catch(() => ({}))).error ?? 'Falha ao excluir.', true);
+  });
+</script>

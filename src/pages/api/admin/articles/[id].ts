@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { readPayload, requireSession, jsonOk, toErrorResponse } from '../../../../lib/api';
-import { publishArticle, returnArticleToDraft } from '../../../../lib/admin';
+import { publishArticle, returnArticleToDraft, deleteArticle } from '../../../../lib/admin';
 
 /**
  * POST /api/admin/articles/[id]
@@ -29,6 +29,17 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     return jsonOk({ error: 'Acao desconhecida.' }, 400);
+  } catch (error) {
+    return toErrorResponse(error);
+  }
+};
+
+/** DELETE /api/admin/articles/[id] - exclui a materia (so Editor-Chefe). */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    const session = requireSession(locals);
+    await deleteArticle(locals, session, params.id ?? '');
+    return jsonOk({ ok: true });
   } catch (error) {
     return toErrorResponse(error);
   }

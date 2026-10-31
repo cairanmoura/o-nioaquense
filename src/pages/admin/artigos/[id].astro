@@ -2,7 +2,7 @@
 import QuickPublishWizard from '../../../components/admin/QuickPublishWizard.tsx';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { CATEGORY_OPTIONS, SCOPE_OPTIONS, getArticleForAdmin } from '../../../lib/admin';
-import { canPublishDirectly } from '../../../lib/auth';
+import { canPublishDirectly, isAdmin } from '../../../lib/auth';
 
 const session = Astro.locals.adminUser;
 
@@ -11,6 +11,8 @@ if (!session) {
 }
 
 const { id = '' } = Astro.params;
+// Editor-Chefe usa o editor completo (foto, autor, capa, exclusão…)
+if (isAdmin(session)) return Astro.redirect(`/admin/materias/${id}`);
 const article = await getArticleForAdmin(Astro.locals, session, id);
 
 if (!article) {

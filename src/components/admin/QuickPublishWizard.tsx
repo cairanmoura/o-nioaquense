@@ -582,7 +582,7 @@ export default function QuickPublishWizard({
                         setCover(null);
                         setExistingCover(null);
                       }}
-                      className="text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-red"
+                      className="text-[11px] font-bold uppercase tracking-[0.1em] text-nioaque-red-dark"
                     >
                       Remover
                     </button>

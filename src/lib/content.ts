@@ -10,6 +10,7 @@ import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-
 
 import { mockReaderSubmissions } from './mock-data';
 import { cleanTitle } from './format';
+import { isPinLive } from './cover';
 import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
 import { isAdLive, pickLiveAd } from './ads';
@@ -52,6 +53,8 @@ function normalizeArticle(row: Record<string, unknown>): Article {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
     is_featured: Boolean(row.is_featured),
+    featured_until: row.featured_until ? String(row.featured_until) : null,
+    author_name: row.author_name ? String(row.author_name) : null,
     author_id: row.author_id ? String(row.author_id) : '',
     status: (row.status ?? 'draft') as Article['status'],
     views_count: Number(row.views_count ?? 0),
@@ -273,8 +276,8 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
 
       return {
         articles: feedArticles,
-        featured: feedArticles.filter((article) => article.is_featured),
-        breaking: feedArticles.filter((article) => article.is_breaking),
+        featured: feedArticles.filter((article) => article.is_featured && isPinLive(article)),
+        breaking: feedArticles.filter((article) => article.is_breaking && isPinLive(article)),
         byScope: groupByScope(feedArticles),
         profiles: profiles ?? [],
         utility,
@@ -307,8 +310,8 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
 
   return {
     articles,
-    featured: articles.filter((article) => article.is_featured),
-    breaking: articles.filter((article) => article.is_breaking),
+    featured: articles.filter((article) => article.is_featured && isPinLive(article)),
+    breaking: articles.filter((article) => article.is_breaking && isPinLive(article)),
     byScope: groupByScope(articles),
     profiles: demoStore.listProfiles(),
     utility: demoStore.listUtilities()[0] ?? null,

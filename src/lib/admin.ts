@@ -134,6 +134,8 @@ function mapArticle(row: Record<string, unknown>): Article {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     is_breaking: Boolean(row.is_breaking),
     is_featured: Boolean(row.is_featured),
+    featured_until: row.featured_until ? String(row.featured_until) : null,
+    author_name: row.author_name ? String(row.author_name) : null,
     author_id: row.author_id ? String(row.author_id) : '',
     status: (row.status ?? 'draft') as ArticleStatus,
     views_count: Number(row.views_count ?? 0),
@@ -353,6 +355,8 @@ export interface ArticleInput {
   local_tags?: string[];
   source_name?: string | null;
   source_url?: string | null;
+  author_name?: string | null;
+  featured_until?: string | null;
   category_label?: string | null;
   /** Tags da materia. */
   tags?: string[];
@@ -427,6 +431,8 @@ export async function saveArticle(
     tags: Array.isArray(input.tags) ? input.tags.filter((t) => t.trim()).slice(0, 10) : [],
     is_breaking: Boolean(input.is_breaking),
     is_featured: isAdmin(session) ? Boolean(input.is_featured) : (existing?.is_featured ?? false),
+    featured_until: isAdmin(session) ? (input.featured_until ?? null) : (existing?.featured_until ?? null),
+    author_name: (input.author_name ?? existing?.author_name ?? 'Redação').toString().trim().slice(0, 80) || 'Redação',
     author_id: existing?.author_id ?? session.profile.id,
     status,
     views_count: existing?.views_count ?? 0,
@@ -448,9 +454,13 @@ export async function saveArticle(
       scope: payload.scope,
       category_label: payload.category_label,
       tags: payload.tags,
-      ...(input.source_url ? { source_url: input.source_url, source_name: input.source_name ?? null } : {}),
+      ...(input.source_url !== undefined ? { source_url: input.source_url || null } : {}),
+      ...(input.source_name !== undefined ? { source_name: input.source_name || null } : {}),
+      ...(input.local_tags ? { local_tags: input.local_tags } : {}),
       is_breaking: payload.is_breaking,
       is_featured: payload.is_featured,
+      featured_until: payload.featured_until,
+      author_name: payload.author_name,
       status: payload.status,
       published_at: payload.published_at,
       updated_at: payload.updated_at,
@@ -1256,4 +1266,15 @@ export async function convertSubmissionToDraft(
   const savedSubmission = await updateSubmission(locals, session, id, 'converted_to_article');
 
   return { article: savedArticle, submission: savedSubmission };
+}
+
+/** Exclui uma materia (so Editor-Chefe). */
+export async function deleteArticle(locals: App.Locals, session: AdminSession, id: string): Promise<void> {
+  if (!isAdmin(session)) throw new ForbiddenError('Só o Editor-Chefe pode excluir matérias.');
+  if (locals.supabase) {
+    const { error } = await locals.supabase.from('articles').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+  (demoStore as any).deleteArticle?.(id);
 }

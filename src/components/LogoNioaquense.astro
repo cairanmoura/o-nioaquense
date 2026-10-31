@@ -42,9 +42,9 @@ const {
   version = '01',
 } = Astro.props;
 
-const LOGO_SRC = version === '02' ? '/icons/02-logo-empilhada-editorial.svg' : '/icons/01-logo-horizontal-bandeira.svg';
+const LOGO_SRC = '/icons/01-logo-horizontal-bandeira.svg';
 
-const LOGO_DIM = version === '02' ? { width: 400, height: 520 } : { width: 470, height: 100 };
+const LOGO_DIM = { width: 470, height: 100 };
 
 ---
 {/* Sem style inline de width/height: as classes do chamador (ex.: h-8 w-auto

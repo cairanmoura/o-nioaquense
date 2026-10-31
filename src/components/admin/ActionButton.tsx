@@ -126,7 +126,7 @@ export default function ActionButton({
       {message && (
         <span
           className={`text-[11px] font-semibold ${
-            state === 'error' ? 'text-nioaque-red' : 'text-nioaque-green'
+            state === 'error' ? 'text-nioaque-red-dark' : 'text-nioaque-green'
           }`}
           role="status"
         >

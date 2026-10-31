@@ -1,0 +1,145 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+import { formatDateTime } from '../../lib/format';
+import { SCOPE_LABEL } from '../../lib/types';
+import type { ArticleScope } from '../../lib/types';
+import { isPinLive } from '../../lib/cover';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+const status = Astro.url.searchParams.get('status') ?? 'all';
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+
+const supabase = Astro.locals.supabase;
+let rows: any[] = [];
+const counts: Record<string, number> = { published: 0, draft: 0, pending_review: 0 };
+
+if (supabase) {
+  const { data } = await supabase
+    .from('articles')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(300);
+  rows = data ?? [];
+  for (const r of rows) counts[r.status] = (counts[r.status] ?? 0) + 1;
+}
+
+const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const list = rows
+  .filter((r) => status === 'all' || r.status === status)
+  .filter((r) => !q || norm(`${r.title} ${r.category_label ?? ''} ${r.source_name ?? ''}`).includes(norm(q)));
+
+const tabs = [
+  { key: 'all', label: 'Todas', n: rows.length },
+  { key: 'published', label: 'No ar', n: counts.published },
+  { key: 'draft', label: 'Rascunhos', n: counts.draft },
+  { key: 'pending_review', label: 'Em revisão', n: counts.pending_review },
+];
+const STATUS_LABEL: Record<string, string> = { published: 'No ar', draft: 'Rascunho', pending_review: 'Em revisão' };
+const STATUS_TONE: Record<string, string> = {
+  published: 'bg-nioaque-green text-white',
+  draft: 'bg-slate-200 text-ink',
+  pending_review: 'bg-nioaque-red-50 text-nioaque-red-dark',
+};
+const photoOf = (u: string | null) => (u && !/\.svg(\?|$)|^\/(covers|artes)/i.test(u) ? u : null);
+---
+
+<AdminLayout title="Matérias" subtitle="Tudo em um lugar: editar, publicar, excluir, trocar foto" actionHref="/admin/artigos/novo" actionLabel="Nova matéria">
+  <div class="mx-auto max-w-5xl">
+    <div class="flex flex-wrap items-center gap-2">
+      {
+        tabs.map((t) => (
+          <a
+            href={`/admin/materias?status=${t.key}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+            class:list={[
+              'rounded-[4px] border px-3 py-2 text-sm font-semibold',
+              status === t.key ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-slate-300 bg-white text-ink hover:border-nioaque-green',
+            ]}
+          >
+            {t.label} <span class="opacity-75">({t.n})</span>
+          </a>
+        ))
+      }
+      <form method="get" class="ml-auto flex w-full gap-2 sm:w-auto">
+        <input type="hidden" name="status" value={status} />
+        <input name="q" value={q} type="search" placeholder="Buscar título, editoria, fonte…" class="w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2 text-sm sm:w-64" />
+        <button class="rounded-[4px] bg-ink px-3 py-2 text-sm font-semibold text-white">Buscar</button>
+      </form>
+    </div>
+
+    {
+      list.length === 0 ? (
+        <p class="mt-6 rounded-[4px] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-ink-soft">Nenhuma matéria encontrada.</p>
+      ) : (
+        <ul class="mt-4 space-y-3">
+          {list.map((a) => (
+            <li class="flex gap-3 rounded-[4px] border border-slate-200 bg-white p-3 shadow-sm" data-row={a.id}>
+              <a href={`/admin/materias/${a.id}`} class="shrink-0">
+                {photoOf(a.cover_image_url) ? (
+                  <img src={a.cover_image_url} alt="" width="120" height="90" loading="lazy" referrerpolicy="no-referrer" class="h-[72px] w-24 rounded-[4px] bg-slate-100 object-cover sm:h-[90px] sm:w-32" />
+                ) : (
+                  <span class="flex h-[72px] w-24 items-center justify-center rounded-[4px] bg-slate-100 text-[11px] text-ink-muted sm:h-[90px] sm:w-32">Sem foto</span>
+                )}
+              </a>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+                  <span class:list={['rounded-[4px] px-1.5 py-0.5', STATUS_TONE[a.status] ?? 'bg-slate-200 text-ink']}>{STATUS_LABEL[a.status] ?? a.status}</span>
+                  <span class="text-nioaque-green-dark">{SCOPE_LABEL[a.scope as ArticleScope] ?? a.scope}</span>
+                  {a.category_label && <span class="text-ink-muted">· {a.category_label}</span>}
+                  {(a.is_breaking || a.is_featured) && isPinLive({ ...a, published_at: a.published_at ?? a.created_at } as any) && (
+                    <span class="rounded-[4px] bg-nioaque-red px-1.5 py-0.5 text-white">{a.is_breaking ? 'Urgente na capa' : 'Destaque na capa'}</span>
+                  )}
+                </div>
+                <a href={`/admin/materias/${a.id}`} class="mt-1 block text-[15px] font-extrabold leading-snug text-ink hover:text-nioaque-green">{a.title}</a>
+                <p class="mt-0.5 text-xs text-ink-muted">
+                  {a.author_name ?? 'Redação'} · {a.source_name ? `${a.source_name} · ` : ''}{formatDateTime(a.published_at ?? a.created_at)}
+                </p>
+                <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+                  <a href={`/admin/materias/${a.id}`} class="rounded-[4px] border border-slate-300 px-3 py-1.5 text-ink hover:border-nioaque-green hover:text-nioaque-green">Editar</a>
+                  {a.status === 'published' && <a href={`/noticia/${a.slug}`} target="_blank" rel="noopener" class="rounded-[4px] border border-slate-300 px-3 py-1.5 text-ink hover:border-nioaque-green">Ver no site</a>}
+                  {a.status !== 'published' && <button type="button" data-act="publish" data-id={a.id} class="rounded-[4px] bg-nioaque-green px-3 py-1.5 text-white hover:bg-nioaque-green-dark">Publicar</button>}
+                  {a.status === 'published' && <button type="button" data-act="draft" data-id={a.id} class="rounded-[4px] border border-slate-300 px-3 py-1.5 text-ink hover:border-nioaque-red">Tirar do ar</button>}
+                  <button type="button" data-act="delete" data-id={a.id} data-title={a.title} class="rounded-[4px] border border-nioaque-red px-3 py-1.5 text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <p class="mt-4 text-xs text-ink-muted">Mostrando as 300 mais recentes.</p>
+  </div>
+</AdminLayout>
+
+<script>
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id!;
+    const act = btn.dataset.act!;
+    if (act === 'delete' && !confirm(`Excluir de vez?\n\n“${btn.dataset.title}”\n\nIsso não pode ser desfeito.`)) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = '…';
+    try {
+      const res =
+        act === 'delete'
+          ? await fetch(`/api/admin/articles/${id}`, { method: 'DELETE' })
+          : await fetch(`/api/admin/articles/${id}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: act }),
+            });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Falha');
+      if (act === 'delete') btn.closest('li')?.remove();
+      else location.reload();
+    } catch (err: any) {
+      btn.disabled = false;
+      btn.textContent = original;
+      alert(err?.message ?? 'Não deu certo.');
+    }
+  });
+</script>
