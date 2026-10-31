@@ -37,6 +37,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       name: String(payload.name ?? ''),
       rss_url: String(payload.rss_url ?? ''),
       source_type: payload.source_type === 'html_scraper' ? 'html_scraper' : 'rss',
+      ownership: payload.ownership === 'public' ? 'public' : 'private',
       is_active: payload.is_active !== false,
       auto_publish: payload.auto_publish !== false,
       ai_rewrite: payload.ai_rewrite !== false,

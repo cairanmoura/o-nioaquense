@@ -79,7 +79,7 @@ export function sanitizeArticleHtml(raw: string): CleanContent {
     if (!text) continue;
 
     const isHeading = tag === 'h2' || tag === 'h3';
-    if (!isHeading && text.length < 45) continue;
+    if (!isHeading && text.length < 30) continue;
     if (isHeading && (text.length < 8 || text.length > 140)) continue;
     if (BOILERPLATE.test(text)) continue;
     if (/(class=|data-[a-z]+=|function\s*\(|\bvar\s|{\s*"|=>)/.test(text)) continue;

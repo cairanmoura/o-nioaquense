@@ -27,6 +27,10 @@ import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS }
 
 import { cleanTitle } from '../../../lib/format';
 import { sanitizeArticleHtml, assessQuality, htmlToText } from '../../../lib/clean-content';
+import { extractArticle, extractFromUrl } from '../../../lib/extractor';
+import { mirrorImageToStorage } from '../../../lib/media';
+import { rewriteArticle } from '../../../lib/rewrite';
+import { parseFeedItems } from '../../../lib/feed';
 import { refreshDollarQuote, refreshAgroQuotes } from '../../../lib/quotes';
 import type { ArticleScope } from '../../../lib/types';
 
@@ -210,8 +214,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // 2 chamadas de IA + 1 insert (~5 subrequests). Com folga, limitamos a 6
   // inserts por execucao — o cron horario continua pegando o restante nas
   // proximas rodadas.
-  const MAX_TOTAL_INSERTS = 6;
+  const MAX_TOTAL_INSERTS = 5;
   let globalInserted = 0;
+  // Disjuntor da IA: se a reescrita falhar uma vez, os demais itens de portais
+  // privados nesta execucao sao adiados (sem gastar subrequests a toa).
+  let aiDown = false;
 
   for (const source of sources ?? []) {
     if (globalInserted >= MAX_TOTAL_INSERTS) {
@@ -239,6 +246,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
         scrapedCover?: string | null;
         scrapedCaption?: string | null;
         scrapedContent?: string;
+        /** HTML bruto da pagina (scraper), para extracao limpa na Fase 3. */
+        scrapedHtml?: string;
+        /** Imagem declarada no proprio feed RSS. */
+        rssImage?: string | null;
         /** true quando o link e' um redirect do Google News (resolver antes de usar). */
         needsResolution?: boolean;
         /** true quando o link ja e' a URL real, mas a pagina precisa ser baixada
@@ -284,7 +295,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             pubDate: parsed.pubDate,
             scrapedCover: parsed.coverImageUrl,
             scrapedCaption: parsed.coverImageCaption,
-            scrapedContent: parsed.contentHtml,
+            scrapedHtml: html,
           });
 
           // Orcamento de paginas novas por fonte/invocacao
@@ -340,23 +351,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
               needsPageFetch: true,
             });
           }
-        } else if (xml && /<item\b/i.test(xml)) {
-          // --- RSS classico: parseia os blocos <item> do XML ---
-          const itemRegex = /<item\b([\s\S]*?)<\/item>/gi;
-          let match;
-          while ((match = itemRegex.exec(xml)) !== null) {
-            const block = match[1];
-            const title = (block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
-              block.match(/<title>(.*?)<\/title>/))?.[1]?.trim();
-            const link = (block.match(/<link>(.*?)<\/link>/) ||
-              block.match(/<link\s+href="(.*?)"/))?.[1]?.trim();
-            const rawDesc = (block.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) ||
-              block.match(/<description>(.*?)<\/description>/))?.[1]?.trim();
-            const pubDate = (block.match(/<pubDate>(.*?)<\/pubDate>/))?.[1]?.trim();
-
-            if (!title || !link) continue;
-
-            entries.push({ title, link, rawDesc: rawDesc ?? null, pubDate: pubDate ?? null, rssBlock: block });
+        } else if (xml && /<(item|entry)\b/i.test(xml)) {
+          // --- RSS/Atom classico: fast-xml-parser ---
+          for (const item of parseFeedItems(xml, 30)) {
+            entries.push({
+              title: item.title,
+              link: item.link,
+              rawDesc: item.description,
+              pubDate: item.pubDate,
+              rssImage: item.image,
+            });
           }
         }
 
@@ -383,7 +387,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               pubDate: parsed.pubDate,
               scrapedCover: parsed.coverImageUrl,
               scrapedCaption: parsed.coverImageCaption,
-              scrapedContent: parsed.contentHtml,
+              scrapedHtml: html,
             });
           }
 
@@ -469,6 +473,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
           .in('slug', uniqueSlugs);
         existingSlugs = new Set((dupRows ?? []).map((r: any) => r.slug));
       }
+      let existingLinks = new Set<string>();
+      if (candidates.length > 0) {
+        const { data: linkRows } = await supabase
+          .from('articles')
+          .select('source_url')
+          .in('source_url', candidates.map((c) => c.link));
+        existingLinks = new Set((linkRows ?? []).map((r: any) => r.source_url));
+      }
 
       // --- Fase 3: processa no MAXIMO MAX_NEW_PER_SOURCE itens novos por
       //     fonte por invocacao (economiza subrequests do plano free: cada
@@ -486,8 +498,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
           break;
         }
         const { entry, slug } = c;
+        if (aiDown && source.ownership !== 'public') {
+          skipped++;
+          continue;
+        }
 
-        if (existingSlugs.has(slug)) {
+        if (existingSlugs.has(slug) || existingLinks.has(c.link)) {
           skipped++;
           continue;
         }
@@ -506,22 +522,17 @@ export const GET: APIRoute = async ({ request, locals }) => {
           entry.link = resolved;
         }
 
-        if (entry.needsResolution || entry.needsPageFetch) {
-          // Baixa a pagina real para extrair og:image + conteudo completo
-          const html = await fetchPageHtml(entry.link);
-          if (html) {
-            const parsed = parseArticlePage(html, entry.link, source.name);
-            if (parsed) {
-              entry.scrapedCover = parsed.coverImageUrl;
-              entry.scrapedCaption = parsed.coverImageCaption;
-              entry.scrapedContent = parsed.contentHtml;
-              c.scrapedText = stripHtml(parsed.contentHtml);
-              // Usa o titulo real do portal (mais preciso que o do agregador)
-              if (parsed.title && parsed.title.length >= 10) {
-                c.title = parsed.title;
-              }
-            }
-          }
+        // Pagina real da materia -> extracao limpa (linkedom + Readability;
+        // Jina Reader de reserva quando o portal bloqueia o Worker).
+        let ex = entry.scrapedHtml ? extractArticle(entry.scrapedHtml, entry.link, source.name) : null;
+        if (!ex || ex.text.length < 300) ex = (await extractFromUrl(entry.link, source.name)) ?? ex;
+        if (ex) {
+          entry.scrapedCover = entry.scrapedCover ?? ex.coverImage;
+          entry.scrapedCaption = ex.coverCaption ?? entry.scrapedCaption;
+          entry.scrapedContent = ex.contentHtml;
+          c.scrapedText = ex.text;
+          // Titulo real do portal (mais preciso que o do agregador)
+          if ((entry.needsResolution || entry.needsPageFetch) && ex.title.length >= 10) c.title = ex.title;
         }
 
         const { title, link, rawDesc, pubDate, scrapedText } = c;
@@ -553,6 +564,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
             // Scraper ou Google News resolvido: og:image ja extraida da pagina
             coverImage = entry.scrapedCover;
             coverCaption = entry.scrapedCaption ?? `Foto: Reproducao / ${source.name}`;
+          } else if (entry.rssImage && /^https?:\/\//i.test(entry.rssImage)) {
+            coverImage = entry.rssImage;
+            coverCaption = `Foto: Reproducao / ${source.name}`;
           } else if (!isScraper) {
             const rssImage = entry.rssBlock ? extractRssImage(entry.rssBlock, source.rss_url) : undefined;
             if (rssImage) {
@@ -575,9 +589,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
         }
 
         // --- IA: reescrever título e gerar 3 bullets (se ai_rewrite = true) ---
-        let finalTitle = title;
-        let summaryBullets: string[] = [];
-
         // Instrucao dinamica quando Nioaque aparece com outras cidades da regiao
         const hasNioaqueAndRegion =
           localTags.some((t) => normCity(t) === normCity('Nioaque')) &&
@@ -586,69 +597,66 @@ export const GET: APIRoute = async ({ request, locals }) => {
           ? '\nImportante: Esta notícia cita Nioaque e outras cidades da região. Ao reescrever, puxe o foco narrativo do título e do primeiro parágrafo para o impacto local em Nioaque e sua conexão com as cidades vizinhas.'
           : '';
 
-        if (source.ai_rewrite) {
-          try {
-            const rewriteRes = await runAI(
-              `Reescreva o seguinte título de notícia de forma inédita e imparcial, mantendo os fatos.${nioaqueRegionInstruction}\n\nRetorne APENAS o título reescrito, sem aspas, sem texto adicional.\n\nTítulo original: ${title}`,
-              env,
-            );
-            if (rewriteRes.text.trim()) {
-              finalTitle = cleanTitle(rewriteRes.text.trim().slice(0, 200)) || cleanTitle(title) || title;
-              rewritten++;
-            }
+        const ownership: 'public' | 'private' = source.ownership === 'public' ? 'public' : 'private';
+        const sourceText = scrapedText.length >= 200 ? scrapedText : htmlToText(rawDesc ?? '');
+        let finalTitle = title;
+        let subtitle: string | null = null;
+        let summaryBullets: string[] = [];
+        let content = '';
+        let bodyText = '';
+        let bodyParagraphs = 0;
+        let aiCategory: string | null = null;
 
-            const descText = rawDesc ?? (scrapedText ? scrapedText.slice(0, 2000) : title);
-            const bulletsRes = await runAI(
-              `Leia o texto abaixo e crie EXATAMENTE 3 tópicos curtos (máximo 15 palavras cada) para o "Direto ao Ponto" de uma notícia.${nioaqueRegionInstruction}\n\nRetorne APENAS os 3 tópicos, um por linha, sem numeração, sem bullets, sem marcadores, sem texto adicional.\n\nTexto: ${descText}`,
+        if (ownership === 'private') {
+          // Portal privado: reescrita TOTAL obrigatoria (nunca republica o texto original)
+          try {
+            const rw = await rewriteArticle(
+              { text: sourceText, sourceName: source.name ?? 'portal de origem', sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
               env,
             );
-            summaryBullets = bulletsRes.text
-              .split('\n')
-              .map((line) => line.replace(/^[-•\*\d.\s]+/, '').trim())
-              .filter((line) => line.length > 0)
-              .slice(0, 3);
+            finalTitle = rw.title;
+            subtitle = rw.subtitle;
+            summaryBullets = rw.summary_bullets;
+            content = rw.content_html;
+            aiCategory = rw.suggested_category;
+            const clean = sanitizeArticleHtml(rw.content_html);
+            bodyText = clean.text;
+            bodyParagraphs = clean.paragraphs;
+            rewritten++;
           } catch (aiErr) {
-            console.warn(`IA falhou para "${title}":`, aiErr);
+            // Sem IA nao ha texto proprio: adia o item para a proxima rodada
+            console.warn(`Reescrita falhou para "${title}":`, aiErr);
+            aiDown = true;
+            skipped++;
+            continue;
+          }
+        } else {
+          // Fonte publica: mantem o texto limpo; IA (se ligada) so gera o Direto ao Ponto
+          const clean = sanitizeArticleHtml(entry.scrapedContent ?? '');
+          content = clean.html;
+          bodyText = clean.text;
+          bodyParagraphs = clean.paragraphs;
+          if (clean.text.length < 400 && htmlToText(rawDesc ?? '').length >= 80) {
+            const d = htmlToText(rawDesc ?? '').slice(0, 1500);
+            content = `<p>${d.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`;
+            bodyText = d;
+            bodyParagraphs = 1;
+          }
+          if (source.ai_rewrite) {
+            try {
+              const rw = await rewriteArticle(
+                { text: sourceText, sourceName: source.name ?? 'fonte', sourceUrl: link, extraInstruction: nioaqueRegionInstruction.trim() || undefined },
+                env,
+              );
+              summaryBullets = rw.summary_bullets;
+              aiCategory = rw.suggested_category;
+            } catch (aiErr) {
+              console.warn(`IA falhou para "${title}":`, aiErr);
+            }
           }
         }
 
-        if (summaryBullets.length === 0) {
-          const cleanDesc = (rawDesc ?? scrapedText)
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          summaryBullets = cleanDesc ? [cleanDesc.slice(0, 160)] : [];
-        }
-
-        // --- Categoria tematica (editoria) ---
-        const categoryLabel = detectCategory(finalTitle);
-
-        // --- Corpo da materia: scraper/Google News ja extraiu; RSS busca na URL original ---
-        let fullContent = '';
-        if (entry.scrapedContent) {
-          fullContent = entry.scrapedContent ?? '';
-        } else if (!isScraper && source.use_original_image) {
-          try {
-            fullContent = await fetchArticleContent(link, source.rss_url);
-          } catch {
-            // ignora erro de extracao de conteudo completo
-          }
-        }
-
-        // Corpo reconstruido (so paragrafos de texto); nunca HTML bruto da fonte
-        const clean = sanitizeArticleHtml(fullContent);
-        const descClean = htmlToText(rawDesc ?? '');
-        let content = clean.html;
-        let bodyText = clean.text;
-        let bodyParagraphs = clean.paragraphs;
-        if (clean.text.length < 400 && descClean.length >= 80) {
-          // Fonte sem corpo aproveitavel: usa so a descricao
-          content = `<p>${descClean.slice(0, 1500).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`;
-          bodyText = descClean;
-          bodyParagraphs = 1;
-        }
-
-        // Sem IA (ou IA falhou): monta o "Direto ao Ponto" com as primeiras frases do corpo
+        // Direto ao Ponto sem IA: primeiras frases do corpo
         if (summaryBullets.length < 3) {
           const sentences = bodyText
             .split(/(?<=[.!?])\s+/)
@@ -656,6 +664,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
             .filter((x) => x.length >= 40 && x.length <= 220);
           const extra = sentences.filter((x) => !summaryBullets.some((b) => b.slice(0, 40) === x.slice(0, 40)));
           summaryBullets = [...summaryBullets.filter((b) => b.length >= 20), ...extra].slice(0, 3);
+        }
+
+        const categoryLabel = aiCategory || detectCategory(finalTitle);
+
+        // Capa espelhada no nosso Storage (evita hotlink/mixed content); falhou -> mantem a original
+        if (coverImage && isPhotoCover(coverImage) && /^https?:\/\//i.test(coverImage)) {
+          const stored = await mirrorImageToStorage(supabase, coverImage, link);
+          if (stored) coverImage = stored;
         }
 
         content += `<p><br/></p><p>Fonte: <a href="${link}" target="_blank" rel="noopener noreferrer">${source.name}</a>.</p>`;
@@ -670,7 +686,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
           bullets: summaryBullets,
         });
         // Auto-publica so o que passa no porteiro; o resto vai para revisao
-        const status = source.auto_publish && quality.ok ? 'published' : 'draft';
+        // Portal privado: SEMPRE rascunho (Editor-Chefe revisa texto e foto). Fonte publica: segue auto_publish + porteiro.
+        const status = ownership === 'private' ? 'draft' : source.auto_publish && quality.ok ? 'published' : 'draft';
         if (!quality.ok) heldForReview.push(`${title.slice(0, 50)} [${quality.issues.join('; ')}]`);
         const publishedAt = status === 'published'
           ? pubDate
@@ -680,7 +697,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
         const article = {
           title: (cleanTitle(finalTitle) || finalTitle).slice(0, 200),
-          subtitle: null,
+          subtitle,
           slug,
           summary_bullets: summaryBullets,
           content,
@@ -722,7 +739,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
           }
           break;
         }
-        if (insErr) {
+        if (insErr && /duplicate key|23505/i.test(insErr.message)) {
+          skipped++; // mesmo source_url ja importado
+        } else if (insErr) {
           console.error('Insert error:', insErr.message);
           insertErrors.push(`${title.slice(0, 60)}: ${insErr.message}`);
         } else {

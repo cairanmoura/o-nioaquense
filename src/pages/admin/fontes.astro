@@ -91,6 +91,10 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           <option value="rss">RSS (feed XML)</option>
           <option value="html_scraper">Web Scraper (raspagem de HTML — para portais sem RSS)</option>
         </select>
+        <select name="ownership" class="w-full rounded-[4px] border border-line bg-editorial px-4 py-3 text-sm" aria-label="Tipo de fonte">
+          <option value="private">Portal privado (reescrita total com IA, sempre rascunho)</option>
+          <option value="public">Fonte pública / oficial (texto limpo + resumo)</option>
+        </select>
         <input
           name="default_category"
           placeholder="Categoria padrão (nioaque, ms, brasil)"

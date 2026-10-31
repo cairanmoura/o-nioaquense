@@ -9,111 +9,172 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
 <AdminLayout title="Curadoria" subtitle="Importador por link com fotos reais">
   <div class="mx-auto max-w-5xl space-y-6">
-    <section class="rounded-sm border border-line bg-nioaque-white p-5">
+    <section class="rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
       <header class="mb-4">
-        <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-red">
-          Colar URL de notícia
-        </h2>
+        <h2 class="text-sm font-extrabold text-ink">Colar URL de notícia</h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
-          Cole a URL de uma notícia de site privado (Campo Grande News, Midiamax,
-          G1). O sistema extrai o texto, reescreve com IA e puxa automaticamente a
-          foto de capa (<code class="text-[10px] bg-editorial px-1 py-0.5 rounded">og:image</code>)
-          e todas as fotos internas da matéria original.
+          O sistema extrai só o corpo da matéria (sem menus e rodapé), pega a capa e as fotos
+          do texto, e reescreve com IA em texto autoral, citando a fonte.
         </p>
       </header>
 
-      <form id="curate" class="space-y-3">
+      <form id="curate" class="flex flex-col gap-3 sm:flex-row">
         <input
           name="url"
           type="url"
-          placeholder="https://www.campograndenews.com.br/..."
-          class="w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm"
+          placeholder="https://fato67.com/interior/..."
+          class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm"
           required
         />
-        <button type="submit" class="rounded-sm bg-nioaque-green px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
-          Extrair e reescrever com IA
+        <button id="go" type="submit" class="shrink-0 rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
+          Extrair e reescrever
         </button>
       </form>
+      <p id="status" class="mt-3 hidden text-sm text-ink-muted" role="status" aria-live="polite"></p>
+    </section>
 
-      <div id="result" class="mt-4 hidden space-y-4">
-        <h3 class="text-sm font-semibold text-ink">Resultado</h3>
-        <div id="result-content" class="rounded-xl border border-line bg-editorial p-4 text-sm text-ink">
-          Processando…
-        </div>
+    <section id="result" class="hidden space-y-5 rounded-[4px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div>
+        <p id="meta" class="text-[11px] font-bold uppercase tracking-wider text-nioaque-green"></p>
+        <h3 id="r-title" class="mt-1 text-2xl font-extrabold leading-tight text-ink"></h3>
+        <p id="r-sub" class="mt-1 text-base text-ink-soft"></p>
+      </div>
+      <ul id="r-bullets" class="space-y-1.5 border-l-4 border-nioaque-green bg-editorial p-4 text-sm"></ul>
+      <div id="r-body" class="prose-editorial space-y-3 text-[15px] leading-relaxed text-ink"></div>
 
-        {/* Imagens extraídas da matéria original */}
-        <div id="images-section" class="mt-4 hidden">
-          <h4 class="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">
-            Fotos extraídas da matéria original
-          </h4>
-          <div id="images-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-          <p class="mt-2 text-xs text-ink-muted">
-            A foto de capa é preenchida automaticamente. O upload final para o
-            Supabase deve ser aprovado pelo editor.
-          </p>
-        </div>
+      <div>
+        <h4 class="mb-2 text-xs font-bold uppercase tracking-wider text-ink-muted">Fotos da matéria original (clique para escolher a capa)</h4>
+        <div id="photos" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
+        <p id="no-photos" class="hidden text-xs text-ink-muted">Nenhuma foto utilizável encontrada.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+        <button id="save" type="button" class="rounded-[4px] bg-nioaque-red px-5 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-red-dark">
+          Salvar como rascunho
+        </button>
+        <span id="save-msg" class="text-sm text-ink-muted" role="status" aria-live="polite"></span>
       </div>
     </section>
   </div>
 </AdminLayout>
 
 <script>
-  const form = document.getElementById('curate');
-  const result = document.getElementById('result');
-  const content = document.getElementById('result-content');
-  const imagesSection = document.getElementById('images-section');
-  const imagesGrid = document.getElementById('images-grid');
+  type Photo = { original: string; preview: string; caption: string | null; stored?: string | null };
+  let data: any = null;
+  let chosen: Photo | null = null;
 
-  form?.addEventListener('submit', async (e) => {
+  const $ = (id: string) => document.getElementById(id)!;
+  const form = $('curate') as HTMLFormElement;
+
+  function renderPhotos() {
+    const grid = $('photos');
+    grid.innerHTML = '';
+    const photos: Photo[] = [];
+    if (data.cover) photos.push(data.cover);
+    for (const i of data.images) if (!photos.some((p) => p.original === i.original)) photos.push(i);
+    $('no-photos').classList.toggle('hidden', photos.length > 0);
+    for (const p of photos) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'overflow-hidden rounded-[4px] border-2 border-slate-200 bg-white text-left hover:border-nioaque-green';
+      const img = document.createElement('img');
+      img.src = p.preview;
+      img.alt = p.caption ?? '';
+      img.loading = 'lazy';
+      img.className = 'aspect-[4/3] w-full object-cover';
+      const cap = document.createElement('span');
+      cap.className = 'block truncate px-2 py-1 text-[11px] text-ink-muted';
+      cap.textContent = p.caption ?? 'Sem legenda';
+      b.append(img, cap);
+      b.addEventListener('click', () => {
+        chosen = p;
+        grid.querySelectorAll('button').forEach((x) => {
+          x.classList.remove('border-nioaque-green');
+          x.classList.add('border-slate-200');
+        });
+        b.classList.remove('border-slate-200');
+        b.classList.add('border-nioaque-green');
+      });
+      grid.appendChild(b);
+      if (!chosen && data.cover && p.original === data.cover.original) b.click();
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(form as HTMLFormElement);
-    const url = fd.get('url');
-    if (content) content.textContent = 'Processando…';
-    if (imagesSection) imagesSection.classList.add('hidden');
-    if (imagesGrid) imagesGrid.innerHTML = '';
-    result?.classList.remove('hidden');
+    const status = $('status');
+    const btn = $('go') as HTMLButtonElement;
+    status.classList.remove('hidden');
+    status.textContent = 'Extraindo e reescrevendo… (até 30 s)';
+    btn.disabled = true;
+    $('result').classList.add('hidden');
+    chosen = null;
     try {
       const res = await fetch('/api/ai/curate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: new FormData(form).get('url') }),
       });
-      const data = await res.json();
-      if (content) content.innerHTML = data?.draft ?? data?.error ?? 'Sem resultado';
+      data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Falha ao processar.');
 
-      // Se a IA retornou dados de imagem, exibe as fotos extraídas
-      if (data && data.coverImage) {
-        if (imagesSection) imagesSection.classList.remove('hidden');
-        if (imagesGrid) {
-          const cap = document.createElement('div');
-          cap.className = 'col-span-full bg-nioaque-white/50 p-2 rounded text-[10px] text-ink-muted';
-          cap.textContent = `Capa: ${data.coverImage}`;
-          imagesGrid.appendChild(cap);
-          if (data.internalImages && data.internalImages.length) {
-            for (const img of data.internalImages) {
-              const wrap = document.createElement('div');
-              wrap.className = 'flex flex-col items-center gap-1';
-              const imgEl = document.createElement('img');
-              imgEl.src = img.url;
-              imgEl.alt = img.caption || '';
-              imgEl.className = 'w-24 h-24 rounded object-cover border border-line';
-              imgEl.referrerPolicy = 'no-referrer';
-              imgEl.loading = 'lazy';
-              imgEl.onerror = function () { this.src = '/artes-nioarquense/arte-cultura-9gac.svg'; };
-              wrap.appendChild(imgEl);
-              if (img.caption) {
-                const capEl = document.createElement('div');
-                capEl.className = 'text-[10px] text-center text-ink-muted';
-                capEl.textContent = img.caption;
-                wrap.appendChild(capEl);
-              }
-              imagesGrid.appendChild(wrap);
-            }
-          }
+      $('meta').textContent = `${data.source.name} · ${data.suggested_category} · extração ${data.extraction} · IA ${data.provider}`;
+      $('r-title').textContent = data.title;
+      $('r-sub').textContent = data.subtitle ?? '';
+      $('r-bullets').innerHTML = '';
+      for (const b of data.summary_bullets) {
+        const li = document.createElement('li');
+        li.textContent = b;
+        $('r-bullets').appendChild(li);
+      }
+      $('r-body').innerHTML = data.content_html; // ja sanitizado no servidor (so <p>/<h2>)
+      renderPhotos();
+      $('result').classList.remove('hidden');
+      status.classList.add('hidden');
+    } catch (err: any) {
+      status.textContent = err?.message ?? 'Erro ao processar.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('save').addEventListener('click', async () => {
+    const msg = $('save-msg');
+    msg.textContent = 'Salvando…';
+    try {
+      let coverUrl: string | null = null;
+      if (chosen) {
+        coverUrl = chosen.stored ?? null;
+        if (!coverUrl) {
+          const m = await fetch('/api/admin/mirror-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: chosen.original, ref: data.source.url }),
+          });
+          const mj = await m.json();
+          coverUrl = mj.url ?? null;
         }
       }
-    } catch (err) {
-      if (content) content.textContent = 'Erro ao processar.';
+      const fonte = `<p>Fonte: <a href="${data.source.url}" target="_blank" rel="noopener noreferrer">${data.source.name}</a>.</p>`;
+      const res = await fetch('/api/admin/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          subtitle: data.subtitle,
+          summary_bullets: data.summary_bullets,
+          content: data.content_html + fonte,
+          cover_image_url: coverUrl,
+          cover_image_caption: chosen?.caption ?? null,
+          scope: data.scope,
+          category_label: data.suggested_category,
+          status: 'draft',
+        }),
+      });
+      const j = await res.json();
+      msg.textContent = res.ok ? 'Rascunho salvo. Revise em Revisão.' : (j.error ?? 'Falha ao salvar.');
+    } catch {
+      msg.textContent = 'Falha ao salvar.';
     }
   });
 </script>
