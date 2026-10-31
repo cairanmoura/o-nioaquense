@@ -115,11 +115,6 @@ export const CATEGORIES: Category[] = [
     keywords: ['tecnologia', 'internet', 'inteligencia artificial', 'aplicativo', 'celular', 'golpe virtual', 'whatsapp', 'hacker', 'starlink', 'fibra optica', 'ciencia'],
   },
   {
-    label: 'Mundo', slug: 'mundo', description: 'O que acontece no exterior e importa para o Brasil.',
-    synonyms: ['internacional', 'exterior'],
-    keywords: ['estados unidos', 'china', 'russia', 'ucrania', 'israel', 'gaza', 'europa', 'argentina', 'paraguai', 'bolivia', 'onu', 'otan', 'trump'],
-  },
-  {
     label: 'Geral', slug: 'geral', description: 'Outros assuntos.',
     synonyms: ['outros', 'variedades', 'noticias'],
     keywords: [],

@@ -44,6 +44,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       use_original_image: payload.use_original_image !== false,
       keywords_filter: payload.keywords_filter ? String(payload.keywords_filter) : null,
       default_category: payload.default_category ? String(payload.default_category) : null,
+      ...(payload.default_scope ? { default_scope: String(payload.default_scope) } : {}),
     }).select().single();
     if (error) throw new Error(error.message);
     return new Response(JSON.stringify(data), { status: 201, headers: { 'Content-Type': 'application/json' } });

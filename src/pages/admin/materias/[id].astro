@@ -62,7 +62,14 @@ const lbl = 'block text-xs font-bold text-ink';
   <form id="f" class="mx-auto max-w-3xl space-y-5 pb-28">
     <div class="flex flex-wrap items-center gap-2 text-xs">
       <a href="/admin/materias" class="font-semibold text-nioaque-green underline">← Todas as matérias</a>
-      {article.status === 'published' && <a href={`/noticia/${article.slug}`} target="_blank" rel="noopener" class="ml-auto font-semibold text-ink underline">Ver no site ↗</a>}
+      {article.status === 'published' ? (
+        <span class="ml-auto flex items-center gap-2">
+          <a href={`/noticia/${article.slug}`} target="_blank" rel="noopener" class="rounded-[4px] border border-nioaque-green px-3 py-1.5 font-semibold text-nioaque-green-dark hover:bg-nioaque-green-50">Abrir no site ↗</a>
+          <button type="button" id="copy-link" data-url={`/noticia/${article.slug}`} class="rounded-[4px] border border-slate-300 px-3 py-1.5 font-semibold text-ink hover:border-nioaque-green">Copiar link</button>
+        </span>
+      ) : (
+        <span class="ml-auto text-ink-muted">Link público disponível após publicar</span>
+      )}
     </div>
 
     {pinText && <p class="rounded-[4px] border border-nioaque-red bg-nioaque-red-50 p-3 text-sm font-semibold text-nioaque-red-dark">{pinText}</p>}
@@ -167,6 +174,18 @@ const lbl = 'block text-xs font-bold text-ink';
   import { uploadPhotoFile, mirrorPhotoUrl, looksLikeUrl } from '../../../lib/photo-client';
 
   const A = JSON.parse(document.getElementById('art-data')!.textContent!);
+
+  const copyBtn = document.getElementById('copy-link') as HTMLButtonElement | null;
+  copyBtn?.addEventListener('click', async () => {
+    const full = location.origin + copyBtn.dataset.url;
+    try {
+      await navigator.clipboard.writeText(full);
+      copyBtn.textContent = 'Link copiado ✔';
+    } catch {
+      prompt('Copie o link:', full);
+    }
+    setTimeout(() => (copyBtn.textContent = 'Copiar link'), 2000);
+  });
   const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
 
   /* ---------- texto <-> HTML ---------- */

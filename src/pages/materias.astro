@@ -33,7 +33,7 @@ const themeObj = CATEGORIES.find((c) => c.slug === tema) ?? null;
 const matchTema = (a: (typeof feed.articles)[number]) =>
   !themeObj || [norm(themeObj.label), ...themeObj.synonyms.map(norm)].includes(norm(a.category_label));
 const matchTag = (a: (typeof feed.articles)[number]) =>
-  !tag || [...a.tags, ...a.local_tags].some((t) => norm(t) === norm(tag));
+  !tag || [...(a.tags ?? []), ...(a.local_tags ?? [])].some((t) => norm(t) === norm(tag));
 
 const base = feed.articles.filter((a) => a.scope !== 'coluna' && a.scope !== 'radar_oficial');
 const validLocal = (PUBLIC_SCOPES as string[]).includes(local) ? local : '';

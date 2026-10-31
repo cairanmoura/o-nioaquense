@@ -166,6 +166,17 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     }
   }
 
+  const inputCls = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2 text-sm';
+  const labelCls = 'block text-xs font-bold text-ink';
+
+  function toggleHtml(id: string, field: string, checked: boolean, label: string, hint: string) {
+    return `
+      <label class="flex cursor-pointer items-start gap-2 rounded-[4px] border border-slate-200 bg-white px-3 py-2 text-xs">
+        <input type="checkbox" data-toggle="${field}" data-id="${id}" ${checked ? 'checked' : ''} class="mt-0.5 h-4 w-4 accent-[#008026]" />
+        <span><span class="block font-bold text-ink">${label}</span><span class="text-ink-muted">${hint}</span></span>
+      </label>`;
+  }
+
   function renderFontes(sources: any[]) {
     const container = fontesContainer;
 
@@ -180,62 +191,68 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
 
     sources.forEach((s) => {
       const li = document.createElement('li');
-      li.className = 'flex items-start justify-between gap-4 rounded-xl border border-line bg-editorial p-4';
+      li.dataset.sourceId = s.id;
+      li.className = 'rounded-xl border border-line bg-editorial p-4';
       li.innerHTML = `
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold text-ink truncate">
-            ${escapeHtml(s.name)}
-            <span class="ml-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-              s.source_type === 'html_scraper'
-                ? 'bg-nioaque-red-50 text-nioaque-red-dark'
-                : 'bg-nioaque-green-50 text-nioaque-green-dark'
-            }">${s.source_type === 'html_scraper' ? 'Scraper' : 'RSS'}</span>
-          </p>
-          <p class="truncate text-xs text-ink-muted">${escapeHtml(s.rss_url)}</p>
-          <p class="mt-1 text-xs text-ink-muted">
-            Categoria: ${escapeHtml(s.default_category ?? '—')} · Última busca: ${escapeHtml(s.last_fetched_at ?? 'nunca')}
-          </p>
-          ${s.last_message ? `<p class="mt-1 text-xs ${s.last_status === 'erro' ? 'text-nioaque-red-dark' : 'text-ink-muted'}">${escapeHtml(s.last_message)}</p>` : ''}
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <!-- Switches serão hidratados pelo ToggleSwitch (client:load) -->
-          <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full">
-            <ToggleSwitch
-              client:load
-              endpoint="/api/admin/news-sources/${s.id}"
-              field="is_active"
-              checked="${Boolean(s.is_active)}"
-              label="Ativo"
-              description="O robô busca esta fonte"
-            />
-            <ToggleSwitch
-              client:load
-              endpoint="/api/admin/news-sources/${s.id}"
-              field="auto_publish"
-              checked="${Boolean(s.auto_publish)}"
-              label="Publicar Direto"
-              description="Insere direto na Home (status publicado)"
-              highlight="green"
-            />
-            <ToggleSwitch
-              client:load
-              endpoint="/api/admin/news-sources/${s.id}"
-              field="ai_rewrite"
-              checked="${Boolean(s.ai_rewrite)}"
-              label="Reescrever com IA"
-              description="Título inédito + 3 bullets do Direto ao Ponto"
-            />
-            <ToggleSwitch
-              client:load
-              endpoint="/api/admin/news-sources/${s.id}"
-              field="use_original_image"
-              checked="${Boolean(s.use_original_image)}"
-              label="Usar Foto Original"
-              description="Extrai a foto real da matéria"
-            />
-            ${s.keywords_filter ? `<p class="mt-2 text-xs text-ink-muted font-medium w-full">Filtro: ${escapeHtml(s.keywords_filter)}</p>` : ''}
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold text-ink">
+              ${escapeHtml(s.name)}
+              <span class="ml-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                s.source_type === 'html_scraper'
+                  ? 'bg-nioaque-red-50 text-nioaque-red-dark'
+                  : 'bg-nioaque-green-50 text-nioaque-green-dark'
+              }">${s.source_type === 'html_scraper' ? 'Scraper' : 'RSS'}</span>
+              <span class="ml-1 inline-block rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">${s.ownership === 'public' ? 'Fonte pública' : 'Portal privado'}</span>
+            </p>
+            <p class="truncate text-xs text-ink-muted">${escapeHtml(s.rss_url)}</p>
+            <p class="mt-1 text-xs text-ink-muted">
+              Tema padrão: ${escapeHtml(s.default_category ?? '—')} · Local padrão: ${escapeHtml(s.default_scope ?? 'automático')} · Última busca: ${escapeHtml(s.last_fetched_at ?? 'nunca')}
+            </p>
+            ${s.keywords_filter ? `<p class="mt-1 text-xs font-medium text-ink-muted">Filtro: ${escapeHtml(s.keywords_filter)}</p>` : ''}
+            ${s.last_message ? `<p class="mt-1 text-xs ${s.last_status === 'erro' ? 'text-nioaque-red-dark' : 'text-ink-muted'}">${escapeHtml(s.last_message)}</p>` : ''}
+          </div>
+          <div class="flex shrink-0 gap-2 text-xs font-semibold">
+            <button type="button" data-edit="${s.id}" class="rounded-[4px] border border-slate-300 bg-white px-3 py-1.5 text-ink hover:border-nioaque-green">Editar</button>
+            <button type="button" data-del="${s.id}" data-name="${escapeHtml(s.name)}" class="rounded-[4px] border border-nioaque-red px-3 py-1.5 text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
           </div>
         </div>
+
+        <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          ${toggleHtml(s.id, 'is_active', Boolean(s.is_active), 'Ativo', 'O robô busca esta fonte')}
+          ${toggleHtml(s.id, 'auto_publish', Boolean(s.auto_publish), 'Publicar direto', 'Vai ao ar sem revisão (fonte pública)')}
+          ${toggleHtml(s.id, 'ai_rewrite', Boolean(s.ai_rewrite), 'Reescrever com IA', 'Título inédito + resumo')}
+          ${toggleHtml(s.id, 'use_original_image', Boolean(s.use_original_image), 'Foto original', 'Extrai a foto real da matéria')}
+        </div>
+
+        <form data-form="${s.id}" hidden class="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
+          <label class="${labelCls}">Nome<input name="name" value="${escapeHtml(s.name)}" required class="${inputCls}" /></label>
+          <label class="${labelCls}">URL do feed / página<input name="rss_url" type="url" value="${escapeHtml(s.rss_url)}" required class="${inputCls}" /></label>
+          <label class="${labelCls}">Tipo
+            <select name="source_type" class="${inputCls}">
+              <option value="rss" ${s.source_type !== 'html_scraper' ? 'selected' : ''}>RSS / Atom / News</option>
+              <option value="html_scraper" ${s.source_type === 'html_scraper' ? 'selected' : ''}>Scraper (página inicial)</option>
+            </select>
+          </label>
+          <label class="${labelCls}">Origem do texto
+            <select name="ownership" class="${inputCls}">
+              <option value="private" ${s.ownership !== 'public' ? 'selected' : ''}>Portal privado (reescrita total, sempre rascunho)</option>
+              <option value="public" ${s.ownership === 'public' ? 'selected' : ''}>Fonte pública / governo (pode publicar direto)</option>
+            </select>
+          </label>
+          <label class="${labelCls}">Filtro de palavras (vírgula)<input name="keywords_filter" value="${escapeHtml(s.keywords_filter ?? '')}" placeholder="nioaque, jardim, br-060" class="${inputCls}" /></label>
+          <label class="${labelCls}">Tema padrão (só se a IA não definir)<input name="default_category" value="${escapeHtml(s.default_category ?? '')}" class="${inputCls}" /></label>
+          <label class="${labelCls}">Local padrão (só se nada indicar o local)
+            <select name="default_scope" class="${inputCls}">
+              ${['', 'nioaque', 'regiao', 'ms', 'brasil', 'mundo'].map((v) => `<option value="${v}" ${(s.default_scope ?? '') === v ? 'selected' : ''}>${({ '': 'Automático (recomendado)', nioaque: 'Nioaque', regiao: 'Região', ms: 'Mato Grosso do Sul', brasil: 'Brasil', mundo: 'Mundo' } as any)[v]}</option>`).join('')}
+            </select>
+          </label>
+          <div class="flex items-end gap-2 sm:col-span-2">
+            <button type="submit" class="rounded-[4px] bg-nioaque-green px-4 py-2 text-sm font-semibold text-white hover:bg-nioaque-green-dark">Salvar alterações</button>
+            <button type="button" data-cancel="${s.id}" class="rounded-[4px] border border-slate-300 px-4 py-2 text-sm font-semibold text-ink">Cancelar</button>
+            <span data-msg="${s.id}" class="text-xs text-ink-muted" role="status"></span>
+          </div>
+        </form>
       `;
       ul.appendChild(li);
     });
@@ -243,6 +260,65 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     container.innerHTML = '';
     container.appendChild(ul);
   }
+
+  /* Editar / salvar / excluir / chaves (delegação de eventos) */
+  const api = (id: string, method: string, body?: unknown) =>
+    fetch('/api/admin/news-sources/' + id, {
+      method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+  fontesContainer.addEventListener('click', async (e) => {
+    const t = e.target as HTMLElement;
+    const edit = t.closest<HTMLElement>('[data-edit]');
+    if (edit) {
+      const f = fontesContainer.querySelector<HTMLFormElement>(`form[data-form="${edit.dataset.edit}"]`);
+      if (f) f.hidden = !f.hidden;
+      return;
+    }
+    const cancel = t.closest<HTMLElement>('[data-cancel]');
+    if (cancel) {
+      const f = fontesContainer.querySelector<HTMLFormElement>(`form[data-form="${cancel.dataset.cancel}"]`);
+      if (f) f.hidden = true;
+      return;
+    }
+    const del = t.closest<HTMLElement>('[data-del]');
+    if (del) {
+      if (!confirm(`Excluir a fonte "${del.dataset.name}"?\n\nAs matérias já importadas continuam no site.`)) return;
+      const res = await api(del.dataset.del!, 'DELETE');
+      if (res.ok) carregarFontes();
+      else alert((await res.json().catch(() => ({}))).error ?? 'Falha ao excluir');
+    }
+  });
+
+  fontesContainer.addEventListener('change', async (e) => {
+    const box = e.target as HTMLInputElement;
+    if (!box.dataset.toggle) return;
+    box.disabled = true;
+    const res = await api(box.dataset.id!, 'PATCH', { [box.dataset.toggle]: box.checked });
+    box.disabled = false;
+    if (!res.ok) {
+      box.checked = !box.checked;
+      alert((await res.json().catch(() => ({}))).error ?? 'Falha ao salvar');
+    }
+  });
+
+  fontesContainer.addEventListener('submit', async (e) => {
+    const form = e.target as HTMLFormElement;
+    if (!form.dataset.form) return;
+    e.preventDefault();
+    const id = form.dataset.form;
+    const msgEl = form.querySelector<HTMLElement>(`[data-msg="${id}"]`);
+    const fd = new FormData(form);
+    const body: Record<string, unknown> = {};
+    fd.forEach((v, k) => (body[k] = String(v).trim() || null));
+    if (msgEl) msgEl.textContent = 'Salvando…';
+    const res = await api(id, 'PATCH', body);
+    if (res.ok) carregarFontes();
+    else if (msgEl) msgEl.textContent = (await res.json().catch(() => ({}))).error ?? 'Falha ao salvar';
+  });
 
   function escapeHtml(text: string) {
     if (!text) return '';

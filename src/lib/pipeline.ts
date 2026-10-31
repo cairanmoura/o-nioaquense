@@ -100,6 +100,26 @@ const slugify = (title: string) =>
     .replace(/^-|-$/g, '')
     .slice(0, 80);
 
+/** Similaridade (0-1) entre dois titulos pelas palavras significativas (>= 4 letras). */
+export function titleSimilarity(a: string, b: string): number {
+  const tok = (t: string) =>
+    new Set(
+      t
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .split(/[^a-z0-9]+/)
+        .filter((w) => w.length >= 4),
+    );
+  const A = tok(a);
+  const B = tok(b);
+  if (A.size < 3 || B.size < 3) return 0;
+  let inter = 0;
+  for (const w of A) if (B.has(w)) inter++;
+  // Jaccard, exigindo ao menos 4 palavras em comum: evita juntar fatos diferentes da mesma cidade
+  return inter >= 4 ? inter / (A.size + B.size - inter) : 0;
+}
+
 const hostOf = (u: string): string | null => {
   try {
     return new URL(u).hostname.replace(/^www\./, '');
@@ -335,11 +355,18 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
   if (!title) return { status: 'skipped', reason: 'sem titulo' };
   const slug = slugify(title);
 
-  if (!matches(title) && !(rawDesc && matches(rawDesc)) && !matches(ex.text)) {
+  if (!matches(title) && !(rawDesc && matches(rawDesc)) && !matches(ex.text) && !matches(entry.link)) {
     return { status: 'skipped', reason: 'fora das palavras-chave da fonte' };
   }
   const { data: slugDup } = await supabase.from('articles').select('id').eq('slug', slug).limit(1);
   if (slugDup?.length) return { status: 'skipped', reason: 'titulo ja publicado' };
+
+  // Mesmo fato noticiado por outro veiculo (titulos quase iguais nas ultimas 72 h)
+  const since = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+  const { data: recent } = await supabase.from('articles').select('title').gte('created_at', since).limit(300);
+  if (recent?.some((r: any) => titleSimilarity(title, String(r.title ?? '')) >= 0.5)) {
+    return { status: 'skipped', reason: 'mesmo fato ja publicado por outro veiculo' };
+  }
 
   const link = entry.link;
   const scrapedText = ex.text;

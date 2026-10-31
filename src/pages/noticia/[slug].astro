@@ -8,6 +8,7 @@ import LocalAdBanner from '../../components/LocalAdBanner.astro';
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getArticlePage, getHomeFeed } from '../../lib/content';
 import { excerpt } from '../../lib/seo';
+import { linkifyArticle } from '../../lib/linkify';
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { SCOPE_LABEL } from '../../lib/types';
 import { isPhotoCover } from '../../lib/rss';
@@ -308,7 +309,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       <div class="min-w-0">
         <div
           class="prose-editorial space-y-5 font-editorial text-[1.125rem] leading-[1.8] text-ink sm:text-[1.1875rem]"
-          set:html={article.content}
+          set:html={linkifyArticle(article.content, { tags: article.tags ?? [], localTags: article.local_tags ?? [] })}
         />
 
         {sourceName && sourceUrl && (

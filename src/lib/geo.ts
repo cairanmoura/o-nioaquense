@@ -93,7 +93,17 @@ export function classifyScope(i: ScopeInput): ArticleScope {
     return regionTags.length ? 'regiao' : 'ms';
   }
   if (ai === 'regiao') return regionTags.length ? 'regiao' : 'ms';
-  if (ai) return ai;
+  if (ai) {
+    // Rede de seguranca: a IA disse "ms", mas o TITULO e' claramente nacional/internacional e nao cita MS
+    if (ai === 'ms') {
+      const t = ` ${norm(i.title)} `;
+      if (has(t, MS_WORDS) === 0) {
+        if (has(t, MUNDO_WORDS) > 0 && has(t, BRASIL_WORDS) === 0) return 'mundo';
+        if (has(t, BRASIL_WORDS) > 0) return 'brasil';
+      }
+    }
+    return ai;
+  }
 
   if (regionTags.length) return 'regiao';
 
