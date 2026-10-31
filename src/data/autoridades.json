@@ -52,7 +52,7 @@
      "nome": "Hermenegildo Santa Cruz Neto",
      "cargo": "Secretário Municipal de Governo",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-governo.jpg",
      "telefones": [
       "(67) 3236-1011"
      ],
@@ -72,7 +72,7 @@
      "nome": "Rafael Bueno do Amaral",
      "cargo": "Secretário Municipal de Finanças",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-financas.jpg",
      "telefones": [
       "(67) 3236-1011"
      ],
@@ -92,7 +92,7 @@
      "nome": "Cristiane Regina Gomes de Sousa",
      "cargo": "Secretária Municipal de Saúde",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-saude.jpg",
      "telefones": [
       "(67) 3236-2177"
      ],
@@ -112,7 +112,7 @@
      "nome": "Maria Solange de França Brito",
      "cargo": "Secretária Municipal de Educação",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-educacao.jpg",
      "telefones": [
       "(67) 3236-1183"
      ],
@@ -132,7 +132,7 @@
      "nome": "Tessalonica Fernandes Ribeiro",
      "cargo": "Secretária Municipal de Assistência Social",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-assistencia-social.jpg",
      "telefones": [
       "(67) 3236-1804"
      ],
@@ -152,7 +152,7 @@
      "nome": "Dionas Martins de Souza",
      "cargo": "Secretário Municipal de Cultura, Esporte, Turismo e Lazer",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-cultura-esporte-turismo-e-lazer.jpg",
      "telefones": [
       "(67) 3236-1011"
      ],
@@ -172,7 +172,7 @@
      "nome": "Ademar Michalski",
      "cargo": "Secretário Municipal de Desenvolvimento Rural",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-secretaria-de-desenvolvimento-rural.jpg",
      "telefones": [
       "(67) 3236-1011"
      ],
@@ -192,7 +192,7 @@
      "nome": "César Augusto de Castro Santos",
      "cargo": "Secretário Municipal de Meio Ambiente, Desenvolvimento, Infraestrutura, Turismo, Cultura e Cidade (SEMDITEC)",
      "partido": null,
-     "foto": null,
+     "foto": "/autoridades/sec-semditec.jpg",
      "telefones": [
       "(67) 3236-1011"
      ],
@@ -260,10 +260,8 @@
      "cargo": "Presidente da Câmara",
      "partido": "PP",
      "foto": "/autoridades/vereador-reinaldo-andrea.jpg",
-     "telefones": [
-      "(67) 99986-8287"
-     ],
-     "email": null,
+     "telefones": [],
+     "email": "cmnioaqueoficial@gmail.com",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
@@ -273,7 +271,12 @@
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/1/1/"
-     ]
+     ],
+     "celular": "(67) 99986-8287",
+     "whatsapp": "https://wa.me/5567999868287",
+     "bio": null,
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/1/1"
     },
     {
      "id": "vereador-sergio-marques",
@@ -281,9 +284,7 @@
      "cargo": "Vice-presidente da Câmara",
      "partido": "PT",
      "foto": "/autoridades/vereador-sergio-marques.jpg",
-     "telefones": [
-      "(67) 99138-0931"
-     ],
+     "telefones": [],
      "email": "sergioterena407@gmail.com",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
@@ -294,7 +295,12 @@
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/2/1/"
-     ]
+     ],
+     "celular": "(67) 99138-0931",
+     "whatsapp": "https://wa.me/5567991380931",
+     "bio": "Currículo NOME: SERGIO MARQUES ENDEREÇO: ALDEIA CABECEIRA Nº 50 NATURALIDADE: NIOAQUE DATA DE NASCIMENTO: 03/09/1975 ESTADO CIVIL: CASADO FILIAÇÃO: IZABELINO MARQUES E SABINA MIRANDA MARQUES PROFISSÃO: TECNICO EM AGROPECUARIA ESPOSA(O): EVANIA DA SILVA MARQUES FILHOS: SERGIO EVERTON DA SILVA MARQUES, FERNANDA DA SILVA MARQUES E IZABELIN",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/2/1"
     },
     {
      "id": "vereador-joao-carlos-corumba",
@@ -302,20 +308,23 @@
      "cargo": "1º Secretário",
      "partido": "PL",
      "foto": "/autoridades/vereador-joao-carlos-corumba.jpg",
-     "telefones": [
-      "(67) 99937-2250"
-     ],
+     "telefones": [],
      "email": "ver.joaocarlos@cmnioaque.ms.gov.br",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/joaocarlosveragoncalves/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/3/1/"
-     ]
+     ],
+     "celular": "(67) 99937-2250",
+     "whatsapp": "https://wa.me/5567999372250",
+     "bio": "Vereador pelo 2º Mandato, no bienio 2025/26 atua como 1º secretário. Nascido em Corumbá-MS no ano de 1983, Casado com a Srª Janaina Câmara Preguiça, 01 filho João Victor Preguiça Gonçalves Mudou-se para Nioaque no ano de: Ingressou na politica em:",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/3/1"
     },
     {
      "id": "vereador-silas-ferreira",
@@ -323,20 +332,23 @@
      "cargo": "2º Secretário",
      "partido": "PSDB",
      "foto": "/autoridades/vereador-silas-ferreira.jpg",
-     "telefones": [
-      "(67) 99971-1291"
-     ],
+     "telefones": [],
      "email": "versilas@cmnioaque.ms.gov.br",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/silasferreiravereador/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/4/1/"
-     ]
+     ],
+     "celular": "(67) 99971-1291",
+     "whatsapp": "https://wa.me/5567999711291",
+     "bio": "Vereador Silas Nunes Ferreira, natura de Caarapó-MS, nascido em 12/08 de 1966, filho de Valter Ferreira e Amélia Nunes Ferreira,. Mudou-se para Nioaque no ano de, vez que trabalhou nas empresas: No ano de iniciou sua carreira politica. Foi presidente por 4 anos no mandatode 2021a 2024.Cumpre o seu 5º Mandato consecutivo. Hoje faz parte do partido PSDB, mas ja fez parte dos partidos: Casado com Euza Camargo Nunes, constituiu uma filha Cinthia Aparecida Camargo Ferreira.",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/4/1"
     },
     {
      "id": "vereador-jeuzimar-seco",
@@ -344,20 +356,23 @@
      "cargo": "Vereador",
      "partido": "PSDB",
      "foto": "/autoridades/vereador-jeuzimar-seco.jpg",
-     "telefones": [
-      "(67) 99621-7629"
-     ],
+     "telefones": [],
      "email": "jeuzimararaujo2025@gmail.com",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/jeuzimarseco/",
      "facebook": null,
      "observacao": "Mais votado em 2024 (650 votos), segundo a Câmara.",
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/5/1/"
-     ]
+     ],
+     "celular": "(67) 99621-7629",
+     "whatsapp": "https://wa.me/5567996217629",
+     "bio": "Vereador Seco - PSDB está em seu 2º mandato consecutivo, recebeu o maior numeros de voto no pleito de 2024, seja 650 votos. Nascido em Nioaque, filho Sebastião Paulo de Araújo e Adelaide Teixeira Mendes, casado. É funcionário Público do municipio de Nioaque, cuja ocupação na Pastsa da saúde como motorista.",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/5/1"
     },
     {
      "id": "vereador-jorge-uirapuru",
@@ -365,20 +380,23 @@
      "cargo": "Vereador",
      "partido": "PP",
      "foto": "/autoridades/vereador-jorge-uirapuru.jpg",
-     "telefones": [
-      "(67) 99653-3157"
-     ],
+     "telefones": [],
      "email": "jorgedouirapuru@hotmail.com",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/jorge_do_uirapuru/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/6/1/"
-     ]
+     ],
+     "celular": "(67) 99653-3157",
+     "whatsapp": "https://wa.me/5567996533157",
+     "bio": "Vereador Jorge Lemes eleito no pleito atual pelo PP, já foi vereador por 3 mandatos e atuou como suplente na gestão de 2018 a 2021, iniciando sua carreira política como vereador  no ano de 2001. Filliação: Nicanor Pereira Lemes e Filomena Fernandes. Possui o Ensino Médio completo - Magistério. Residente no P.A Uirapuru, atuando no seguimento rural, casado com Marilaine Menconça Viana com quem tem 02 filhas: Mary Hellen Mendonça Viana Lemes e Emylly Dayne Menconça Viana Lemes.",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/6/1"
     },
     {
      "id": "vereador-pablo-correa",
@@ -386,20 +404,23 @@
      "cargo": "Vereador",
      "partido": "PSDB",
      "foto": "/autoridades/vereador-pablo-correa.jpg",
-     "telefones": [
-      "(67) 99602-0460"
-     ],
+     "telefones": [],
      "email": "pabloruam@hotmail.com",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/pablorpache/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/7/1/"
-     ]
+     ],
+     "celular": "(67) 99602-0460",
+     "whatsapp": "https://wa.me/5567996020460",
+     "bio": "Vereador Pablo Ruan Pache Corrêa está em seu 3º mandato consecutivo, é Médico Veterinario, funcionário Público seletivo no Poder Executivo, filho de Paulo José Corrêa e Eudes Pache Corrêa, casado,",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/7/1"
     },
     {
      "id": "vereador-neguinho-santa-amelia",
@@ -407,20 +428,23 @@
      "cargo": "Vereador",
      "partido": "PV",
      "foto": "/autoridades/vereador-neguinho-santa-amelia.jpg",
-     "telefones": [
-      "(67) 99989-6560"
-     ],
+     "telefones": [],
      "email": "ver.paulo@cmnioaque.ms.gov.br",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/neguinhodasantaamelia/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/8/1/"
-     ]
+     ],
+     "celular": "(67) 99989-6560",
+     "whatsapp": "https://wa.me/5567999896560",
+     "bio": "Vereador pelo 2º mandato consecutivo, natural de Bonito-MS, filho de Jose Simão e Terezinha Meira Simão.",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/8/1"
     },
     {
      "id": "vereador-rose-arruda",
@@ -428,20 +452,23 @@
      "cargo": "Vereadora",
      "partido": "PP",
      "foto": "/autoridades/vereador-rose-arruda.png",
-     "telefones": [
-      "(67) 99160-6767"
-     ],
+     "telefones": [],
      "email": "ver.rose@cmnioaque.ms.gov.br",
      "endereco": "Câmara Municipal de Nioaque, Rua Coronel Camissão, 791, Centro",
      "horario": null,
      "site": "https://www.cmnioaque.ms.gov.br",
-     "instagram": null,
+     "instagram": "https://www.instagram.com/ver.rosearruda/",
      "facebook": null,
      "observacao": null,
      "fontes": [
       "https://www.cmnioaque.ms.gov.br/portal/legislaturas/1/legislatura-2025-2028/",
       "https://www.cmnioaque.ms.gov.br/portal/vereadores/9/1/"
-     ]
+     ],
+     "celular": "(67) 99160-6767",
+     "whatsapp": "https://wa.me/5567991606767",
+     "bio": "A vereadora está em seu 2º mandato, sendo eleita no último pleito pelo PP. É funcionária do Poder Público Municipal, tem por formação Assistêcia Social,  atua na Pasta da saúde no Ambulatório. Casada com o Sr. Lizandro Antonio Medeiros Filiação: Benigno Dias Arruda e Cândida Meza Arruda No Poder Legislativo atua como membro das Comissões de Legislação, Justiça e Redação Final, e Comissão de Educação Saúde e Assistência social como Vice - Presidente.",
+     "mandato": "01/01/2025 a 31/12/2026",
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/9/1"
     }
    ]
   },
@@ -542,7 +569,150 @@
   {
    "id": "advocacia",
    "titulo": "Advocacia",
-   "itens": []
+   "itens": [
+    {
+     "id": "adv-rodrigues",
+     "nome": "Advocacia Rodrigues",
+     "cargo": "Escritório de advocacia",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99618-2478",
+     "whatsapp": "https://wa.me/5567996182478",
+     "email": null,
+     "endereco": "R. Cel. Juvêncio, 339, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 08h",
+     "site": "https://www.google.com/maps/search/?api=1&query=Advocacia+Rodrigues+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Advocacia+Rodrigues+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-aniel-amaral",
+     "nome": "Aniel Amaral Couto de Souza",
+     "cargo": "Advogado · OAB/MS 10.253",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99638-5821",
+     "whatsapp": "https://wa.me/5567996385821",
+     "email": null,
+     "endereco": "Av. Gen. Klinger, 420, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 07h30",
+     "site": "https://www.google.com/maps/search/?api=1&query=Aniel+Amaral+Couto+de+Souza+Advogado+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Aniel+Amaral+Couto+de+Souza+Advogado+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-herberth-lima",
+     "nome": "Herberth Lima, Sérgio Miranda e Ketulin Pereira",
+     "cargo": "Escritório de advocacia",
+     "partido": null,
+     "foto": null,
+     "telefones": [
+      "(67) 3236-1256"
+     ],
+     "celular": null,
+     "whatsapp": null,
+     "email": null,
+     "endereco": "Av. Gen. Klinger, 429, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 08h",
+     "site": "https://www.google.com/maps/search/?api=1&query=Escritório+de+Advocacia+Herberth+Lima+Sérgio+Miranda+Ketulin+Pereira+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Escritório+de+Advocacia+Herberth+Lima+Sérgio+Miranda+Ketulin+Pereira+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-jancer-moura",
+     "nome": "Jancer Vaz de Moura",
+     "cargo": "Advogado",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99939-7485",
+     "whatsapp": "https://wa.me/5567999397485",
+     "email": null,
+     "endereco": "R. Maria Rita Ferreira Bica, 25, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": null,
+     "site": "https://www.google.com/maps/search/?api=1&query=Jancer+Vaz+de+Moura+Advogado+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Jancer+Vaz+de+Moura+Advogado+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-figueira",
+     "nome": "Figueira Sociedade Individual de Advocacia",
+     "cargo": "Escritório de advocacia",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99651-4676",
+     "whatsapp": "https://wa.me/5567996514676",
+     "email": null,
+     "endereco": "R. Guia Lopes da Laguna, 414B, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 07h30",
+     "site": "https://www.google.com/maps/search/?api=1&query=Figueira+Sociedade+Individual+de+Advocacia+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Figueira+Sociedade+Individual+de+Advocacia+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-elder-rozendo",
+     "nome": "Élder Rozendo Advocacia",
+     "cargo": "Advogado",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99973-1209",
+     "whatsapp": "https://wa.me/5567999731209",
+     "email": null,
+     "endereco": "R. Primeiro de Março, 537, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 07h30",
+     "site": "https://www.google.com/maps/search/?api=1&query=Élder+Rozendo+Advocacia+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Élder+Rozendo+Advocacia+Nioaque+MS"
+     ]
+    },
+    {
+     "id": "adv-correa",
+     "nome": "Escritório Corrêa",
+     "cargo": "Advogado",
+     "partido": null,
+     "foto": null,
+     "telefones": [],
+     "celular": "(67) 99927-9404",
+     "whatsapp": "https://wa.me/5567999279404",
+     "email": null,
+     "endereco": "Tv. Maria Rita Ferreira Bica, Centro, Nioaque-MS, CEP 79220-000",
+     "horario": "Seg. a sex., a partir das 07h30",
+     "site": "https://www.google.com/maps/search/?api=1&query=Escritório+Corrêa+Advogado+Nioaque+MS",
+     "instagram": null,
+     "facebook": null,
+     "observacao": "Dados do Google Maps (perfil público do estabelecimento). Link abre o local no mapa.",
+     "fontes": [
+      "https://www.google.com/maps/search/?api=1&query=Escritório+Corrêa+Advogado+Nioaque+MS"
+     ]
+    }
+   ]
   },
   {
    "id": "saude",
@@ -690,7 +860,6 @@
   "Hospital Municipal de Nioaque: nenhuma fonte encontrada (o portal da Prefeitura lista apenas a Secretaria de Saúde e 5 ESFs)",
   "Telefone e horário de cada ESF; vigilância sanitária/epidemiológica, CAPS e farmácia básica: não localizados",
   "Foto do juiz Flávio Renato Almeida Reyes e da promotora Mariana Sleiman Gomes: sem foto pública em fonte oficial; e-mail da promotora não publicado",
-  "Advocacia: nenhum advogado ou escritório sediado em Nioaque com contato público verificável foi encontrado (resultados eram páginas de captação de bancas de outras cidades); grupo deixado vazio; sugerida consulta ao cadastro da OAB-MS",
   "Polícia Militar, Delegacia da Polícia Civil, Conselho Tutelar e CRAS: endereço/telefone não localizados em fonte confiável",
   "Site da Câmara indica data de eleição da Mesa como 06/12/2025, inconsistente com a posse em 01/01/2025; a Mesa atual vale até 31/12/2026"
  ]

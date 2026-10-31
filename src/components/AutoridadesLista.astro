@@ -20,6 +20,11 @@ type Item = {
   instagram: string | null;
   facebook: string | null;
   observacao: string | null;
+  celular?: string | null;
+  whatsapp?: string | null;
+  bio?: string | null;
+  mandato?: string | null;
+  perfil?: string | null;
 };
 type Group = { id: string; titulo: string; itens: Item[] };
 
@@ -28,7 +33,7 @@ const SUBTITLES: Record<string, string> = {
   legislativo: 'Câmara Municipal e vereadores',
   judiciario: 'Fórum e Comarca de Nioaque (TJMS)',
   'ministerio-publico': 'Promotoria de Justiça de Nioaque (MPMS)',
-  advocacia: 'Advogados e escritórios em Nioaque',
+  advocacia: 'Advogados e escritórios em Nioaque (dados do Google Maps)',
   saude: 'Secretaria de Saúde e unidades de atendimento',
   seguranca: 'Proteção social e segurança',
 };
@@ -41,8 +46,6 @@ const groups = (data.grupos as Group[])
 
 const initials = (n: string) => n.split(/\s+/).filter((w) => w.length > 2).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 const tel = (t: string) => t.replace(/[^\d+]/g, '');
-// Vereadores: o site da Camara publica celular/e-mail pessoal; aqui ficam so o cargo, o partido e a foto.
-const isVereador = (it: Item) => /vereador/i.test(it.cargo) && !/presidente/i.test(it.cargo);
 ---
 <nav class="no-scrollbar -mx-4 mb-8 flex flex-nowrap gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Poderes e órgãos">
       {groups.map((g) => (
@@ -70,16 +73,22 @@ const isVereador = (it: Item) => /vereador/i.test(it.cargo) && !/presidente/i.te
                 <h3 class="font-sans text-[0.95rem] font-extrabold leading-snug text-ink">{it.nome}</h3>
                 <p class="text-xs font-semibold text-nioaque-green-dark">{it.cargo}{it.partido ? ` · ${it.partido}` : ''}</p>
                 <dl class="mt-2 space-y-1 text-[13px] leading-snug text-ink-soft">
-                  {!isVereador(it) && it.telefones.length > 0 && (
+                  {it.telefones.length > 0 && (
                     <div class="flex gap-1.5"><dt class="sr-only">Telefone</dt><dd>{it.telefones.map((t, i) => (<>{i > 0 && ' · '}<a href={`tel:${tel(t)}`} class="font-semibold text-ink hover:text-nioaque-green">{t}</a></>))}</dd></div>
                   )}
-                  {!isVereador(it) && it.email && <div><dt class="sr-only">E-mail</dt><dd class="break-all"><a href={`mailto:${it.email}`} class="hover:text-nioaque-green">{it.email}</a></dd></div>}
+                  {it.email && <div><dt class="sr-only">E-mail</dt><dd class="break-all"><a href={`mailto:${it.email}`} class="hover:text-nioaque-green">{it.email}</a></dd></div>}
+                  {it.celular && (
+                    <div><dt class="sr-only">Celular</dt><dd><a href={`tel:${tel(it.celular)}`} class="font-semibold text-ink hover:text-nioaque-green">{it.celular}</a>{it.whatsapp && <> · <a href={it.whatsapp} target="_blank" rel="noopener noreferrer" class="font-semibold text-nioaque-green-dark hover:underline">WhatsApp</a></>}</dd></div>
+                  )}
+                  {it.mandato && <div><dt class="sr-only">Mandato</dt><dd>Mandato: {it.mandato}</dd></div>}
                   {it.endereco && <div><dt class="sr-only">Endereço</dt><dd>{it.endereco}</dd></div>}
                   {it.horario && <div><dt class="sr-only">Horário</dt><dd>{it.horario}</dd></div>}
                 </dl>
-                {(it.site || it.instagram || it.facebook) && (
+                {it.bio && <p class="mt-2 line-clamp-4 text-[13px] leading-snug text-ink-soft">{it.bio}</p>}
+                {(it.site || it.perfil || it.instagram || it.facebook) && (
                   <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold">
-                    {it.site && <a href={it.site} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Site</a>}
+                    {it.perfil && <a href={it.perfil} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Perfil na Câmara</a>}
+                    {it.site && <a href={it.site} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">{/google\.com\/maps/.test(it.site) ? 'Ver no mapa' : 'Site'}</a>}
                     {it.instagram && <a href={it.instagram} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Instagram</a>}
                     {it.facebook && <a href={it.facebook} target="_blank" rel="noopener noreferrer" class="text-nioaque-green-dark hover:underline">Facebook</a>}
                   </p>
