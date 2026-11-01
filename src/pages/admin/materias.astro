@@ -28,7 +28,9 @@ if (supabase) {
 }
 
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const list = rows
+const dateOf = (r: any) => new Date(r.published_at ?? r.created_at ?? 0).getTime() || 0;
+const list = [...rows]
+  .sort((a, b) => dateOf(b) - dateOf(a))
   .filter((r) => status === 'all' || r.status === status)
   .filter((r) => !q || norm(`${r.title} ${r.category_label ?? ''} ${r.source_name ?? ''}`).includes(norm(q)));
 

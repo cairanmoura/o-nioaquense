@@ -706,7 +706,13 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     hasPhoto: isPhotoCover(coverImage),
     bullets: summaryBullets,
   });
-  const status = ownership === 'private' || feedOnly || warnings.length ? 'draft' : source.auto_publish && quality.ok ? 'published' : 'draft';
+  // "Publicar direto" manda: so segura como rascunho se o texto veio quebrado (portal bloqueado/feed curto)
+  // ou se a checagem de qualidade achar problema SERIO. Avisos leves da IA (titulo curto, texto enxuto) nao seguram.
+  const hardIssues = quality.issues.filter((i) => /HTML vazando|lixo de IA|truncado|caixa alta/.test(i));
+  if (bodyText.length < 250) hardIssues.push(`corpo curto (${bodyText.length} caracteres)`);
+  const hold = feedOnly || hardIssues.length > 0;
+  const status = source.auto_publish && !hold ? 'published' : 'draft';
+  const holdReason = feedOnly ? 'portal bloqueou a leitura (so o texto do feed)' : hardIssues.join(', ');
   // Data do veiculo original (nunca a da extracao); rascunho tambem guarda, para sair com a data certa ao publicar
   const origDate = pubDate && !Number.isNaN(new Date(pubDate).getTime()) && new Date(pubDate).getTime() <= Date.now() ? new Date(pubDate).toISOString() : null;
   const publishedAt = origDate ?? (status === 'published' ? now : null);
@@ -763,10 +769,11 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     await noteSource(supabase, source.id, { last_message: `Insert: ${insErr.message.slice(0, 300)}` });
     return { status: 'retry', reason: `Insert: ${insErr.message}`, title };
   }
-  if (warnings.length) {
-    await noteSource(supabase, source.id, { last_message: `Rascunho para revisao: "${article.title.slice(0, 50)}" - ${warnings.join('; ')}` });
+  if (status === 'draft') {
+    const why = !source.auto_publish ? 'fonte sem "Publicar direto"' : holdReason;
+    await noteSource(supabase, source.id, { last_message: `Rascunho: "${article.title.slice(0, 50)}" - ${why}` });
   }
-  return { status: 'inserted', title: article.title, held: !quality.ok || warnings.length > 0 };
+  return { status: 'inserted', title: article.title, held: status === 'draft' };
 }
 
 /* -------------------------------------------------------------------------- */

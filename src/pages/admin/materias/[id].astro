@@ -59,7 +59,7 @@ const lbl = 'block text-xs font-bold text-ink';
 <AdminLayout title="Editar matéria" subtitle={article.title}>
   <script type="application/json" id="art-data" set:html={data} />
 
-  <form id="f" class="mx-auto max-w-3xl space-y-5 pb-28">
+  <form id="f" class="mx-auto max-w-3xl space-y-5 pb-40 lg:pb-28">
     <div class="flex flex-wrap items-center gap-2 text-xs">
       <a href="/admin/materias" class="font-semibold text-nioaque-green underline">← Todas as matérias</a>
       {article.status === 'published' ? (
@@ -160,7 +160,7 @@ const lbl = 'block text-xs font-bold text-ink';
       </div>
     </section>
 
-    <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:left-64">
+    <div class="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] lg:bottom-0 lg:left-64 lg:pb-3">
       <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
         <button id="save" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Salvar alterações</button>
         <button id="delete" type="button" class="rounded-[4px] border border-nioaque-red px-4 py-3 text-sm font-semibold text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
