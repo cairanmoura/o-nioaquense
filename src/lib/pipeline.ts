@@ -272,15 +272,44 @@ function keywordMatcher(source: any) {
 /* Etapa 1 - sweep: uma mensagem por fonte                                    */
 /* -------------------------------------------------------------------------- */
 
-export async function sweepSources(supabase: any): Promise<{ id: string; name: string }[]> {
+export async function sweepSources(supabase: any, onlyDue = false): Promise<{ id: string; name: string }[]> {
   const { data, error } = await supabase
     .from('news_sources')
-    .select('id, name')
+    .select('id, name, last_fetched_at')
     .eq('is_active', true)
     // Rodizio justo: a fonte atendida ha mais tempo (ou nunca) vai primeiro
     .order('last_fetched_at', { ascending: true, nullsFirst: true });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const rows = data ?? [];
+  // Cada fonte e' consultada no maximo 1x por hora (poupa a cota diaria de operacoes da fila)
+  if (!onlyDue) return rows;
+  const limit = Date.now() - 55 * 60_000;
+  return rows.filter((r: any) => !r.last_fetched_at || new Date(r.last_fetched_at).getTime() < limit);
+}
+
+/* Memoria de links ja processados e descartados: evita reenfileirar toda varredura */
+const seenKey = (sourceId: string) => `https://seen.local/${sourceId}`;
+const edge = (): any => (globalThis as any).caches?.default;
+
+async function loadSeen(sourceId: string): Promise<Set<string>> {
+  try {
+    const hit = await edge()?.match(seenKey(sourceId));
+    return new Set<string>(hit ? await hit.json() : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export async function markSeen(sourceId: string, link: string): Promise<void> {
+  try {
+    const seen = [...(await loadSeen(sourceId)), link].slice(-400);
+    await edge()?.put(
+      seenKey(sourceId),
+      new Response(JSON.stringify(seen), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } }),
+    );
+  } catch {
+    /* sem cache: segue sem memoria */
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -421,6 +450,13 @@ export async function discoverSource(
     }
     const before = entries.length;
     entries = entries.filter((e) => !haveLink.has(e.link) && !(e.title && haveSlug.has(slugify(e.title))));
+    skipped += before - entries.length;
+  }
+
+  if (!opts.backfill && entries.length) {
+    const seen = await loadSeen(source.id);
+    const before = entries.length;
+    entries = entries.filter((e) => !seen.has(e.link));
     skipped += before - entries.length;
   }
 

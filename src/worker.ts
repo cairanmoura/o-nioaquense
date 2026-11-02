@@ -4,6 +4,7 @@ import { handle } from '../node_modules/@astrojs/cloudflare/dist/utils/handler.j
 import { syncXColumnists } from './lib/xsync';
 import {
   enqueueJobs,
+  markSeen,
   makeServiceClient,
   processEntry,
   refreshQuotes,
@@ -49,9 +50,9 @@ export function createExports(manifest: any) {
         }
 
         if (job.type === 'sweep') {
-          const sources = await sweepSources(supabase);
+          const sources = await sweepSources(supabase, !job.backfill);
           const jobs: NewsJob[] = sources.map((s) => ({ type: 'source', sourceId: s.id, backfill: job.backfill }));
-          jobs.push({ type: 'quotes' });
+          if (new Date().getUTCMinutes() < 20) jobs.push({ type: 'quotes' });
           // Apify cobra por execucao: so 2x ao dia (09h e 21h UTC); a API oficial do X, a cada varredura
           const hr = new Date().getUTCHours();
           if (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 20)) jobs.push({ type: 'xposts' });
@@ -72,7 +73,10 @@ export function createExports(manifest: any) {
           const out = await processEntry(supabase, env, source, job.entry);
           console.log(`article [${out.status}] ${out.title ?? job.entry.link} ${out.reason ?? ''}`);
           if (out.status === 'retry') msg.retry({ delaySeconds: out.quota ? 1800 : 60 * Math.max(1, msg.attempts ?? 1) });
-          else msg.ack();
+          else {
+            await markSeen(job.sourceId, job.entry.link);
+            msg.ack();
+          }
         } else if (job.type === 'xposts') {
           const r = await syncXColumnists(supabase, env);
           console.log(`xposts: ${r.inserted} novo(s)`, r.errors.join(' | '));
