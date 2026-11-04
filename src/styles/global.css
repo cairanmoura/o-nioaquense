@@ -102,10 +102,14 @@
   h1,
   h2,
   h3,
-  h4,
-  .font-editorial {
+  h4 {
     font-family: var(--font-serif);
     font-weight: 800;
+  }
+
+  /* So a familia: o peso vem de cada uso (corpo de materia e' regular, nao negrito) */
+  .font-editorial {
+    font-family: var(--font-serif);
   }
 
   /* Foco visivel e consistente (acessibilidade) */
@@ -221,6 +225,10 @@
   }
 
   /* Corpo de materia (conteudo vindo do CMS via set:html) */
+  .prose-editorial {
+    font-weight: 400;
+  }
+
   .prose-editorial p {
     margin-block: 0;
   }

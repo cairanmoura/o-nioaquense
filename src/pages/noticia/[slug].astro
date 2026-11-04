@@ -416,7 +416,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
               >
                 Leia também
               </h2>
-              <div class="grid gap-6 pt-6 sm:grid-cols-3">
+              <div class="grid gap-5 pt-6 sm:grid-cols-2 [&>article]:border-b [&>article]:border-line [&>article]:pb-5 sm:[&>article]:border-0 sm:[&>article]:pb-0">
                 {related.map((item) => (
                   <ArticleCard
                     article={item}
