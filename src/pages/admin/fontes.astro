@@ -167,12 +167,12 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     }
   }
 
-  const inputCls = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2 text-sm';
+  const inputCls = 'mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2 text-sm';
   const labelCls = 'block text-xs font-bold text-ink';
 
   function toggleHtml(id: string, field: string, checked: boolean, label: string, hint: string) {
     return `
-      <label class="flex cursor-pointer items-start gap-2 rounded-[4px] border border-pedra bg-white px-3 py-2 text-xs">
+      <label class="flex cursor-pointer items-start gap-2 rounded-[4px] border border-pedra bg-branco px-3 py-2 text-xs">
         <input type="checkbox" data-toggle="${field}" data-id="${id}" ${checked ? 'checked' : ''} class="mt-0.5 h-4 w-4 accent-[#166A34]" />
         <span><span class="block font-bold text-ink">${label}</span><span class="text-ink-muted">${hint}</span></span>
       </label>`;
@@ -214,7 +214,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
             ${s.last_message ? `<p class="mt-1 text-xs ${s.last_status === 'erro' ? 'text-nioaque-red-dark' : 'text-ink-muted'}">${escapeHtml(s.last_message)}</p>` : ''}
           </div>
           <div class="flex shrink-0 gap-2 text-xs font-semibold">
-            <button type="button" data-edit="${s.id}" class="rounded-[4px] border border-pedra bg-white px-3 py-1.5 text-ink hover:border-nioaque-green">Editar</button>
+            <button type="button" data-edit="${s.id}" class="rounded-[4px] border border-pedra bg-branco px-3 py-1.5 text-ink hover:border-nioaque-green">Editar</button>
             <button type="button" data-del="${s.id}" data-name="${escapeHtml(s.name)}" class="rounded-[4px] border border-nioaque-red px-3 py-1.5 text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
           </div>
         </div>

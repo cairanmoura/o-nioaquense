@@ -49,7 +49,7 @@ const tel = (t: string) => t.replace(/[^\d+]/g, '');
 ---
 <nav class="no-scrollbar -mx-4 mb-8 flex flex-nowrap gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Poderes e órgãos">
       {groups.map((g) => (
-        <a href={`#${g.id}`} class="shrink-0 whitespace-nowrap rounded-[4px] border border-pedra bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:border-nioaque-green">
+        <a href={`#${g.id}`} class="shrink-0 whitespace-nowrap rounded-[4px] border border-pedra bg-branco px-3 py-1.5 text-xs font-semibold text-ink hover:border-nioaque-green">
           {g.titulo}
         </a>
       ))}
@@ -63,7 +63,7 @@ const tel = (t: string) => t.replace(/[^\d+]/g, '');
         </div>
         <ul class="mt-4 grid gap-3 sm:grid-cols-2">
           {g.itens.map((it) => (
-            <li class="flex gap-3 rounded-[8px] border border-pedra bg-white p-4">
+            <li class="flex gap-3 rounded-[8px] border border-pedra bg-branco p-4">
               {it.foto ? (
                 <img src={it.foto} alt={it.nome} width="64" height="64" loading="lazy" class="h-16 w-16 shrink-0 rounded-full bg-foto-reserva object-cover object-top" />
               ) : (

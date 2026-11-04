@@ -210,17 +210,17 @@ export const SCOPE_LABEL: Record<ArticleScope, string> = {
 };
 
 export const SCOPE_BADGE_CLASS: Record<ArticleScope, string> = {
-  nioaque: 'bg-nioaque-green text-nioaque-white',
-  regiao: 'bg-ink text-nioaque-white',
+  nioaque: 'bg-nioaque-green text-white',
+  regiao: 'bg-ink text-white',
   ms: 'bg-nioaque-green-50 text-nioaque-green-dark ring-1 ring-nioaque-green-100',
-  brasil: 'bg-ink text-nioaque-white',
-  mundo: 'bg-ink text-nioaque-white',
-  coluna: 'bg-nioaque-red text-nioaque-white',
+  brasil: 'bg-ink text-white',
+  mundo: 'bg-ink text-white',
+  coluna: 'bg-nioaque-red text-white',
   radar_oficial: 'bg-nioaque-red-50 text-nioaque-red-dark ring-1 ring-red-100',
 };
 
 export const ALERT_STYLE: Record<AlertLevel, { label: string; className: string }> = {
   info: { label: 'Informacao', className: 'bg-nioaque-green-50 text-nioaque-green-dark' },
   warning: { label: 'Atencao', className: 'bg-amber-50 text-amber-800' },
-  urgent: { label: 'Urgente', className: 'bg-nioaque-red text-nioaque-white' },
+  urgent: { label: 'Urgente', className: 'bg-nioaque-red text-white' },
 };

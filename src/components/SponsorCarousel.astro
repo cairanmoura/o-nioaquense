@@ -22,7 +22,7 @@ const items: Sponsor[] =
 const track = [...items, ...items];
 ---
 
-<section aria-label="Quem anuncia no Nioaquense" class="w-full border-y border-pedra bg-white">
+<section aria-label="Quem anuncia no Nioaquense" class="w-full border-y border-pedra bg-branco">
   <div class="container-editorial py-6">
     <h2 class="text-sm font-bold uppercase tracking-wider text-ink">Quem Anuncia no Nioaquense</h2>
     <div class="mt-4 overflow-hidden">
@@ -32,7 +32,7 @@ const track = [...items, ...items];
             <li class="shrink-0">
               <a
                 href={s.href ?? '/anuncie'}
-                class="flex h-16 w-40 items-center justify-center rounded-[4px] border border-pedra bg-white px-3 text-center text-xs font-bold uppercase tracking-wider text-ink-muted hover:border-nioaque-green"
+                class="flex h-16 w-40 items-center justify-center rounded-[4px] border border-pedra bg-branco px-3 text-center text-xs font-bold uppercase tracking-wider text-ink-muted hover:border-nioaque-green"
               >
                 {s.logo ? <img src={s.logo} alt={s.name} width="120" height="48" loading="lazy" referrerpolicy="no-referrer" class="max-h-12 max-w-full object-contain" /> : s.name}
               </a>

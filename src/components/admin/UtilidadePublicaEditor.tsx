@@ -282,7 +282,7 @@ export default function UtilidadePublicaEditor({ utilities, week, busSchedules }
             {/* `left-0` explícito: evita o knob nascer centralizado pelo
                 `text-align:center` do <button> (estado desligado torto). */}
             <span
-              className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-white shadow transition-transform ${
+              className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-branco shadow transition-transform ${
                 alertActive ? 'translate-x-6' : 'translate-x-1'
               }`}
             />

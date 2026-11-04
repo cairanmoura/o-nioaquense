@@ -19,7 +19,7 @@ const top = [...articles].sort((a, b) => b.views_count - a.views_count).slice(0,
 
 {
   top.length > 0 && (
-    <section class:list={['overflow-hidden rounded-[4px] border border-pedra bg-white', className]} aria-label={title}>
+    <section class:list={['overflow-hidden rounded-[4px] border border-pedra bg-branco', className]} aria-label={title}>
       <header class="border-b border-pedra bg-[#166A34] px-4 py-3">
         <h2 class="text-base font-extrabold text-white">{title}</h2>
       </header>

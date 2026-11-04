@@ -74,7 +74,7 @@ const pageHref = (n: number) => {
 const title = [validLocal && SCOPE_NAMES[validLocal], themeObj?.label, tag && `#${tag}`].filter(Boolean).join(' · ') || 'Matérias';
 const chip = (active: boolean) =>
   `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border px-3 py-1.5 text-xs font-semibold transition-colors ${
-    active ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-white text-ink hover:border-nioaque-green'
+    active ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green'
   }`;
 ---
 

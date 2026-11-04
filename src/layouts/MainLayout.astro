@@ -70,6 +70,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#0D4722" />
+    <meta name="color-scheme" content="light dark" />
 
     {/* PWA: instalacao como aplicativo no celular */}
     <link rel="manifest" href="/manifest.json" />
@@ -77,6 +78,16 @@ const billboard = await getHeaderBillboard(Astro.locals);
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="O Nioaquense" />
 
+    {/* Tema (claro/escuro): aplica a escolha salva ou a preferencia do sistema antes da pintura */}
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('tema');
+          if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 

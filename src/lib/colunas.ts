@@ -30,11 +30,22 @@ export interface XPost {
 export const avatarOf = (c: Pick<XColumnist, 'handle' | 'avatar_url'>) =>
   c.avatar_url || `https://unavatar.io/x/${encodeURIComponent(c.handle)}`;
 
+/**
+ * Chave de funcionamento das Colunas do X. Sem migracao: e' uma linha reservada em
+ * `x_columnists` (handle abaixo, active = true). A funcao fica PAUSADA por padrao e so
+ * funciona enquanto essa linha existir e estiver ativa (botao em /admin/colunas).
+ */
+export const X_FLAG_HANDLE = '_x_ativo_';
+
+/** Colunistas ativos; lista vazia (funcao pausada) se a chave estiver desligada. */
 export async function getColumnists(locals: App.Locals): Promise<XColumnist[]> {
   const sb = locals.supabase;
   if (!sb) return [];
   const { data, error } = await sb.from('x_columnists').select('*').eq('active', true).order('sort_order');
-  return error || !data ? [] : (data as XColumnist[]);
+  if (error || !data) return [];
+  const rows = data as XColumnist[];
+  if (!rows.some((c) => c.handle === X_FLAG_HANDLE)) return [];
+  return rows.filter((c) => c.handle !== X_FLAG_HANDLE);
 }
 
 export async function getXPosts(locals: App.Locals, opts: { limit?: number; columnistId?: string } = {}): Promise<XPost[]> {

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { jsonOk, readPayload, requireSession, toErrorResponse } from '../../../lib/api';
 import { isAdmin } from '../../../lib/auth';
-import { fetchTweet, fetchXProfile, parseTweetUrl } from '../../../lib/colunas';
+import { X_FLAG_HANDLE, fetchTweet, fetchXProfile, parseTweetUrl } from '../../../lib/colunas';
 import { syncXColumnists } from '../../../lib/xsync';
 import { getServiceRoleKey, getSupabaseCredentials } from '../../../lib/supabase/server';
 
@@ -29,7 +29,9 @@ export const GET: APIRoute = async ({ locals }) => {
       sb.from('x_posts').select('*').order('posted_at', { ascending: false }).limit(60),
     ]);
     if (c.error) throw new Error(c.error.message + ' (rode a migracao 018)');
-    return jsonOk({ columnists: c.data ?? [], posts: p.data ?? [] });
+    const all = c.data ?? [];
+    const running = all.some((x: any) => x.handle === X_FLAG_HANDLE && x.active);
+    return jsonOk({ columnists: all.filter((x: any) => x.handle !== X_FLAG_HANDLE), posts: p.data ?? [], running });
   } catch (err) {
     return toErrorResponse(err);
   }
@@ -42,6 +44,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const sb = client(locals);
     const body = (await readPayload(request)) as Record<string, any>;
     const action = String(body.action ?? '');
+
+    if (action === 'set_running') {
+      const on = Boolean(body.running);
+      const { error } = await sb.from('x_columnists').upsert(
+        { handle: X_FLAG_HANDLE, name: 'Chave das Colunas do X (nao e colunista)', active: on, sort_order: 999 },
+        { onConflict: 'handle' },
+      );
+      if (error) throw new Error(error.message);
+      return jsonOk({ ok: true, running: on });
+    }
 
     if (action === 'add_columnist') {
       const handle = String(body.handle ?? '').replace(/^@/, '').replace(/^.*(?:x|twitter)\.com\//i, '').split(/[/?]/)[0].trim();

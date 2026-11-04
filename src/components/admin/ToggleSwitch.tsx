@@ -96,7 +96,7 @@ export default function ToggleSwitch({
         {/* `left-0` explícito: sem ele o knob herda o `text-align:center` do
             <button> e nasce centralizado, deixando o estado "desligado" torto. */}
         <span
-          className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-white shadow transition-transform ${
+          className={`absolute left-0 top-1 h-5 w-5 rounded-sm bg-branco shadow transition-transform ${
             checked ? 'translate-x-6' : 'translate-x-1'
           }`}
         />

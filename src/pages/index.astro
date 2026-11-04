@@ -146,7 +146,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
                 'inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-[4px] border px-4 text-[13px] font-medium transition-colors',
                 isActive
                   ? 'border-nioaque-green bg-nioaque-green font-semibold text-white'
-                  : 'border-pedra bg-white text-ink hover:border-nioaque-green',
+                  : 'border-pedra bg-branco text-ink hover:border-nioaque-green',
               ]}
             >
               {SCOPE_LABEL[scope as ArticleScope]}
@@ -175,7 +175,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
               <div class="mb-3">
                 <ArticlePills article={lead} showEditor />
               </div>
-              <ArticleCard article={lead} author={authorOf(lead.author_id)} variant="lead" showEditor />
+              <ArticleCard article={lead} author={authorOf(lead.author_id)} variant="lead" showEditor showSummary summaryClass="hidden lg:block" />
             </div>
           )
         }
@@ -192,7 +192,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
       </section>
 
       <div class="min-w-0 space-y-5">
-      <aside aria-label="Plantão" class="overflow-hidden rounded-[4px] border border-pedra bg-white">
+      <aside aria-label="Plantão" class="overflow-hidden rounded-[4px] border border-pedra bg-branco">
         <header class="flex items-center gap-2 bg-nioaque-green px-4 py-3">
           <span class="h-2 w-2 rounded-full bg-nioaque-red-light" aria-hidden="true"></span>
           <h2 class="font-serif text-[17px] font-bold leading-5 text-white">Plantão</h2>
@@ -240,7 +240,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     </div>
   )}
 
-  <div class="w-full border-b border-pedra bg-white">
+  <div class="w-full border-b border-pedra bg-branco">
     <div class="container-editorial py-8 sm:py-10">
       <div class={feed.ads.home_middle || feed.ads.sidebar ? 'grid items-start gap-5 lg:grid-cols-[1fr_1.4fr_1fr]' : 'mx-auto max-w-3xl'}>
         {feed.ads.home_middle && <AdStrip ad={feed.ads.home_middle} class="order-2 lg:order-1" />}
@@ -310,7 +310,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     {/* Regiao */}
     {
       (activeScope === null || activeScope === 'regiao') && regiaoArticles.length > 0 && (
-        <section class="-mx-4 mt-16 bg-white px-4 py-8 sm:-mx-6 sm:mt-20 sm:px-6 lg:-mx-8 lg:px-8" aria-labelledby="sec-regiao" data-reveal>
+        <section class="-mx-4 mt-16 bg-branco px-4 py-8 sm:-mx-6 sm:mt-20 sm:px-6 lg:-mx-8 lg:px-8" aria-labelledby="sec-regiao" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-regiao" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Região

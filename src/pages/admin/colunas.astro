@@ -6,12 +6,21 @@ const session = Astro.locals.adminUser;
 if (!session) return Astro.redirect('/admin/login');
 if (!isAdmin(session)) return Astro.redirect('/admin');
 
-const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 text-sm';
+const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2.5 text-sm';
 ---
 
 <AdminLayout title="Colunas do X" subtitle="Cada post de um colunista vira uma coluna no portal">
   <div class="mx-auto max-w-4xl space-y-6">
-    <section class="rounded-[4px] border border-pedra bg-white p-5">
+    <section id="x-status" class="rounded-[4px] border border-pedra bg-branco p-5">
+      <h2 class="text-sm font-extrabold text-ink">Colunas do X no portal</h2>
+      <p id="x-status-text" class="mt-1 text-xs text-ink-muted">Verificando…</p>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <button id="x-toggle" type="button" class="min-h-11 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark">Retomar colunas do X</button>
+        <span id="x-toggle-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
       <h2 class="text-sm font-extrabold text-ink">Sincronização automática</h2>
       <p class="mt-1 text-xs text-ink-muted">O portal busca os posts novos dos colunistas 2 vezes ao dia pela Apify (segredo <code>APIFY_TOKEN</code>), descartando respostas, retweets e posts muito curtos. Custo estimado: menos de US$ 1 por mês.</p>
       <div class="mt-3 flex flex-wrap items-center gap-3">
@@ -20,7 +29,7 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
       </div>
     </section>
 
-    <section class="rounded-[4px] border border-pedra bg-white p-5">
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
       <h2 class="text-sm font-extrabold text-ink">Adicionar posts manualmente</h2>
       <p class="mt-1 text-xs text-ink-muted">Cole um ou mais links de posts do X (um por linha). O texto, a data e a foto vêm do próprio X.</p>
       <textarea id="urls" rows="4" class={inp} placeholder="https://x.com/SamPancher/status/123…"></textarea>
@@ -30,7 +39,7 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
       </div>
     </section>
 
-    <section class="rounded-[4px] border border-pedra bg-white p-5">
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <h2 class="text-sm font-extrabold text-ink">Colunistas</h2>
         <button id="refresh" type="button" class="rounded-[4px] border border-pedra px-3 py-1.5 text-xs font-semibold text-ink hover:border-nioaque-green">Atualizar fotos e bios do X</button>
@@ -45,7 +54,7 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
       <p id="col-msg" class="mt-2 text-xs text-ink-muted" role="status"></p>
     </section>
 
-    <section class="rounded-[4px] border border-pedra bg-white p-5">
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
       <h2 class="text-sm font-extrabold text-ink">Colunas publicadas</h2>
       <ul id="posts" class="mt-3 divide-y divide-pedra text-sm"></ul>
     </section>
@@ -58,6 +67,29 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
   const call = (method: string, body?: unknown, qs = '') =>
     fetch('/api/admin/colunas' + qs, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
 
+  let running = false;
+  function setRunning(on: boolean) {
+    running = on;
+    $('x-status-text').textContent = on
+      ? 'ATIVO: a faixa de colunas aparece na Home, o menu "Colunas" e as páginas /colunas estão no ar e os posts são buscados automaticamente.'
+      : 'PAUSADO: as colunas do X não aparecem no site (Home, menu e /colunas) e os posts não são buscados. Os dados ficam guardados.';
+    const b = $('x-toggle');
+    b.textContent = on ? 'Pausar colunas do X' : 'Retomar colunas do X';
+    b.className = on
+      ? 'min-h-11 rounded-[4px] border border-pedra px-4 text-sm font-semibold text-ink hover:border-nioaque-green'
+      : 'min-h-11 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark';
+  }
+
+  $('x-toggle').addEventListener('click', async () => {
+    const msg = $('x-toggle-msg');
+    msg.textContent = 'Salvando…';
+    const res = await call('POST', { action: 'set_running', running: !running });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return void (msg.textContent = d.error ?? 'Erro');
+    setRunning(Boolean(d.running));
+    msg.textContent = d.running ? 'Retomado. O site atualiza em até alguns minutos.' : 'Pausado.';
+  });
+
   async function load() {
     const res = await call('GET');
     const data = await res.json().catch(() => ({}));
@@ -65,6 +97,7 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
       $('columnists').innerHTML = `<li class="py-3 text-nioaque-red-dark">${esc(data.error ?? 'Erro ao carregar')}</li>`;
       return;
     }
+    setRunning(Boolean(data.running));
     const byId = new Map<string, any>(data.columnists.map((c: any) => [c.id, c]));
     $('columnists').innerHTML = data.columnists
       .map(
@@ -76,10 +109,10 @@ const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 
         </li>
         <li data-form="${c.id}" hidden class="bg-slate-50 px-3 py-3">
           <label class="block text-xs font-bold text-ink">Nome
-            <input data-f="name" value="${esc(c.name)}" maxlength="80" class="mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2 text-sm" />
+            <input data-f="name" value="${esc(c.name)}" maxlength="80" class="mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2 text-sm" />
           </label>
           <label class="mt-2 block text-xs font-bold text-ink">Bio (aparece nos mini-perfis de /colunas)
-            <textarea data-f="bio" rows="3" maxlength="600" class="mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2 text-sm">${esc(c.bio ?? '')}</textarea>
+            <textarea data-f="bio" rows="3" maxlength="600" class="mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2 text-sm">${esc(c.bio ?? '')}</textarea>
           </label>
           <div class="mt-2 flex items-center gap-3">
             <button data-savecol="${c.id}" class="rounded-[4px] bg-nioaque-green px-4 py-2 text-xs font-semibold text-white">Salvar</button>

@@ -8,6 +8,7 @@ import { avatarOf, getColumnists, getXPosts } from '../../lib/colunas';
  * Cada colunista tem um bloco: mini-perfil e, logo abaixo, as colunas mais recentes dele.
  */
 const [columnists, posts] = await Promise.all([getColumnists(Astro.locals), getXPosts(Astro.locals, { limit: 90 })]);
+if (columnists.length === 0) return Astro.redirect('/');
 const PER = 3;
 ---
 

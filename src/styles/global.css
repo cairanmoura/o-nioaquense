@@ -298,7 +298,7 @@ h1, h2, h3 { text-wrap: balance; }
   inset: 0 0 auto 0;
   z-index: 60;
   height: 4px;
-  background: var(--color-pedra);
+  background: transparent; /* sem faixa visivel: so o progresso aparece ao rolar */
   pointer-events: none;
 }
 .barra-leitura > i {
@@ -349,3 +349,69 @@ h1, h2, h3 { text-wrap: balance; }
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* 8) Tema escuro (sistema de design: segundo tema dos mesmos tokens) ------------
+   Ativado com data-theme="dark" na raiz (botao no header; script no <head> do
+   MainLayout aplica a escolha salva ou a preferencia do sistema antes da pintura).
+   Os nomes dos tokens nao mudam, so os valores. Verde-mata, verde-institucional,
+   vermelho, Plantao/Loterias, header e Cotacao Agro nao mudam. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-editorial: #0e1411; /* papel */
+  --color-branco: #17201a; /* superficie elevada (cards) */
+  --color-nioaque-white: #17201a;
+  --color-line: #2a362f; /* pedra */
+  --color-pedra: #2a362f;
+  --color-line-strong: #4b5a50; /* pedra-escura */
+  --color-pedra-escura: #4b5a50;
+  --color-ink: #eceae3; /* tinta */
+  --color-ink-soft: #c7cbc2;
+  --color-ink-muted: #a0a79d;
+  --color-foto-reserva: #26322b;
+  --color-nioaque-green-50: #1c2b21;
+  --color-nioaque-green-100: #254130;
+  --color-nioaque-red-50: #2b1919;
+  --color-nioaque-red-100: #4a2323;
+}
+
+/* Verde e vermelho como COR DE TEXTO no escuro: versoes claras (verde-texto, vermelho-texto). */
+:root[data-theme='dark'] .text-nioaque-green,
+:root[data-theme='dark'] .text-nioaque-green-dark,
+:root[data-theme='dark'] .hover\:text-nioaque-green:hover,
+:root[data-theme='dark'] .hover\:text-nioaque-green-dark:hover,
+:root[data-theme='dark'] .group:hover .group-hover\:text-nioaque-green,
+:root[data-theme='dark'] .prose-editorial a {
+  color: #6fcb8b;
+}
+:root[data-theme='dark'] .text-nioaque-red-dark,
+:root[data-theme='dark'] .hover\:text-nioaque-red-dark:hover {
+  color: #ff8f8f;
+}
+/* Cores de texto do bloco verde (Plantao, Loterias, header, pilula ativa) continuam brancas. */
+:root[data-theme='dark'] .bg-nioaque-green .text-nioaque-green,
+:root[data-theme='dark'] .bg-verde-mata .text-nioaque-green {
+  color: inherit;
+}
+/* Botoes escuros (bg-ink + texto branco) viram superficie verde-escura */
+:root[data-theme='dark'] .bg-ink {
+  background-color: #2f3d34;
+}
+:root[data-theme='dark'] .box-resumo {
+  background-color: var(--color-branco);
+}
+/* Bordas e realces em verde mantem contraste */
+:root[data-theme='dark'] .border-nioaque-green {
+  border-color: #3f9a5c;
+}
+:root[data-theme='dark'] :focus-visible {
+  outline-color: #7fc796;
+}
+/* Logo: verde sobre claro, branca sobre escuro */
+.logo-d { display: none; }
+:root[data-theme='dark'] .logo-l { display: none; }
+:root[data-theme='dark'] .logo-d { display: block; }
+
+/* Botao de tema */
+.theme-icon-moon { display: none; }
+:root[data-theme='dark'] .theme-icon-sun { display: none; }
+:root[data-theme='dark'] .theme-icon-moon { display: block; }

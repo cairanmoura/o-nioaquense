@@ -3,6 +3,7 @@ import LogoNioaquense from './LogoNioaquense.astro';
 import WeatherIcon from './WeatherIcon.astro';
 import { getNioaqueWeather } from '../lib/weather';
 import { CATEGORIES } from '../lib/categories';
+import { getColumnists } from '../lib/colunas';
 
 /**
  * Header.astro
@@ -17,10 +18,12 @@ import { CATEGORIES } from '../lib/categories';
 const principal = [
   { href: '/', label: 'Início' },
   { href: '/materias', label: 'Matérias' },
-  { href: '/colunas', label: 'Colunas' },
   { href: '/utilidade', label: 'Utilidade Pública' },
   { href: '/anuncie', label: 'Anuncie' },
 ];
+
+const colunasAtivas = (await getColumnists(Astro.locals)).length > 0;
+if (colunasAtivas) principal.splice(2, 0, { href: '/colunas', label: 'Colunas' });
 
 const locais = [
   { href: '/materias?local=nioaque', label: 'Nioaque' },
@@ -105,6 +108,21 @@ const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink
         </svg>
       </a>
 
+      <button
+        id="tema-toggle"
+        type="button"
+        class="inline-flex h-11 w-11 items-center justify-center rounded-[4px] text-white hover:bg-white/10"
+        aria-label="Alternar tema claro/escuro"
+      >
+        <svg class="theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+        </svg>
+      </button>
+
       <a
         href="/mande-sua-noticia"
         class="hidden min-h-11 items-center whitespace-nowrap rounded-[4px] bg-nioaque-red px-5 text-[15px] font-semibold text-white transition-colors hover:bg-nioaque-red-dark md:inline-flex"
@@ -130,7 +148,7 @@ const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink
         <div
           id="secoes-panel"
           hidden
-          class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] w-[min(calc(100vw-2rem),30rem)] overflow-y-auto rounded-[4px] border border-pedra bg-white p-4 text-ink"
+          class="absolute right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] w-[min(calc(100vw-2rem),30rem)] overflow-y-auto rounded-[4px] border border-pedra bg-branco p-4 text-ink"
         >
 <div class="xl:hidden">
             <p class={heading}>Navegar</p>
@@ -191,6 +209,13 @@ const itemLink = 'block rounded-[4px] px-2 py-1.5 text-sm font-semibold text-ink
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setOpen(false);
+  });
+
+  // Tema claro/escuro
+  document.getElementById('tema-toggle')?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('tema', next); } catch {}
   });
 
   // Barra de leitura: progresso de rolagem da pagina (4px, topo extremo).

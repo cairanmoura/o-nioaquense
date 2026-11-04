@@ -29,9 +29,15 @@ const SRC = { branca: 'logo-branca', verde: 'logo-verde', preta: 'logo-preta', v
 <img
   src={`/brand/${SRC}.svg`}
   alt={title}
-  class:list={['block', className]}
+  class:list={['block', tone === 'verde' && 'logo-l', className]}
   loading="eager"
   decoding="async"
   width="608"
   height="150"
 />
+{/* Tema escuro: sobre fundo escuro a logo verde some; usa a branca (so no tom padrao) */}
+{
+  tone === 'verde' && (
+    <img src="/brand/logo-branca.svg" alt="" aria-hidden="true" class:list={['logo-d', className]} loading="eager" decoding="async" width="608" height="150" />
+  )
+}

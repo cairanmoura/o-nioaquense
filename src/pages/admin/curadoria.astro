@@ -7,13 +7,13 @@ const session = Astro.locals.adminUser;
 if (!session) return Astro.redirect('/admin/login');
 if (!isAdmin(session)) return Astro.redirect('/admin');
 
-const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 text-sm';
+const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2.5 text-sm';
 const lbl = 'block text-xs font-bold text-ink';
 ---
 
 <AdminLayout title="Importar por link" subtitle="Cole links, reescreva com IA e publique">
   <div class="mx-auto max-w-4xl space-y-6">
-    <section class="rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
+    <section class="rounded-[4px] border border-pedra bg-branco p-4 sm:p-5">
       <header class="mb-3">
         <h2 class="text-sm font-extrabold text-ink">Colar links de notícias</h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
@@ -23,7 +23,7 @@ const lbl = 'block text-xs font-bold text-ink';
       </header>
 
       <form id="curate" class="space-y-3">
-        <textarea id="urls" rows="5" placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...'} class="w-full rounded-[4px] border border-pedra bg-white px-4 py-3 text-sm leading-relaxed" required></textarea>
+        <textarea id="urls" rows="5" placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...'} class="w-full rounded-[4px] border border-pedra bg-branco px-4 py-3 text-sm leading-relaxed" required></textarea>
 
         <label id="batch-opt" class="hidden items-start gap-2 text-sm text-ink">
           <input id="batch-publish" type="checkbox" class="mt-1 h-4 w-4" />
@@ -40,7 +40,7 @@ const lbl = 'block text-xs font-bold text-ink';
       <ul id="queue" class="mt-4 hidden divide-y divide-pedra rounded-[4px] border border-pedra text-sm"></ul>
     </section>
 
-    <section id="result" class="hidden space-y-5 rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
+    <section id="result" class="hidden space-y-5 rounded-[4px] border border-pedra bg-branco p-4 sm:p-5">
       <p id="meta" class="text-[11px] font-bold uppercase tracking-wider text-nioaque-green"></p>
 
       <div class="space-y-3">
@@ -190,7 +190,7 @@ const lbl = 'block text-xs font-bold text-ink';
     for (const p of photos) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'overflow-hidden rounded-[4px] border-2 border-pedra bg-white text-left hover:border-nioaque-green';
+      b.className = 'overflow-hidden rounded-[4px] border-2 border-pedra bg-branco text-left hover:border-nioaque-green';
       const img = document.createElement('img');
       img.src = p.preview;
       img.alt = p.caption ?? '';

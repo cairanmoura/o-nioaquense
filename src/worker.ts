@@ -2,6 +2,7 @@ import { App } from 'astro/app';
 // @ts-ignore
 import { handle } from '../node_modules/@astrojs/cloudflare/dist/utils/handler.js';
 import { syncXColumnists } from './lib/xsync';
+import { X_FLAG_HANDLE } from './lib/colunas';
 import {
   enqueueJobs,
   markSeen,
@@ -55,7 +56,8 @@ export function createExports(manifest: any) {
           if (new Date().getUTCMinutes() < 20) jobs.push({ type: 'quotes' });
           // Apify cobra por execucao: so 2x ao dia (09h e 21h UTC); a API oficial do X, a cada varredura
           const hr = new Date().getUTCHours();
-          if (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 20)) jobs.push({ type: 'xposts' });
+          const xOn = (await supabase.from('x_columnists').select('id').eq('handle', X_FLAG_HANDLE).eq('active', true).limit(1)).data?.length;
+          if (xOn && (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 20))) jobs.push({ type: 'xposts' });
           // fontes escalonadas de 8 em 8 s: nao disparam todas juntas
           await enqueueJobs(env.NEWS_QUEUE, jobs, 8);
           console.log(`sweep: ${sources.length} fonte(s) enfileirada(s)`);
