@@ -1,0 +1,34 @@
+---
+/** Área acumulada ao longo dos meses (ex.: diárias acumuladas no ano). */
+import { MESES } from '../../lib/transparencia';
+
+interface Props {
+  valores: number[];
+  ultimoMes: number;
+  cor?: string;
+  brl: (v: number) => string;
+  descricao: string;
+}
+const { valores, ultimoMes, cor = '#D92323', brl, descricao } = Astro.props;
+let soma = 0;
+const acum = valores.slice(0, ultimoMes + 1).map((v) => (soma += v));
+const max = Math.max(soma, 1);
+const W = 300;
+const H = 120;
+const x = (i: number) => (ultimoMes === 0 ? W / 2 : (i / ultimoMes) * W);
+const y = (v: number) => H - 6 - (v / max) * (H - 14);
+const pontos = acum.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+const area = `0,${H} ${pontos.join(' ')} ${x(acum.length - 1).toFixed(1)},${H}`;
+---
+
+<div>
+  <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" class="h-40 w-full" role="img" aria-label={descricao}>
+    {[0.25, 0.5, 0.75].map((f) => <line x1="0" x2={W} y1={H - 6 - f * (H - 14)} y2={H - 6 - f * (H - 14)} stroke="var(--color-line)" stroke-width="1" vector-effect="non-scaling-stroke"></line>)}
+    <polygon points={area} fill={cor} fill-opacity="0.15"></polygon>
+    <polyline points={pontos.join(' ')} fill="none" stroke={cor} stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
+  </svg>
+  <div class="mt-1 flex justify-between text-[10px] uppercase text-ink-soft">
+    <span>{MESES[0]}</span><span>{MESES[ultimoMes]}</span>
+  </div>
+  <p class="mt-2 text-xs text-ink-soft">Acumulado até {MESES[ultimoMes]}: <strong class="tabular-nums text-ink">{brl(soma)}</strong>.</p>
+</div>

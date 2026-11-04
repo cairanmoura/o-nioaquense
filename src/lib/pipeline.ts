@@ -31,7 +31,7 @@ import {
   isBingNewsFeed,
   parseBingNewsItems,
 } from './rss';
-import { normalizeCategory } from './categories';
+import { normalizeCategory, sanitizeCategory } from './categories';
 import { classifyScope } from './geo';
 import { blockedByViolencePolicy, violenceInfo } from './importance';
 import { fetchPageHtml, extractArticleLinks, parseArticlePage, BROWSER_HEADERS } from './scraper';
@@ -272,19 +272,43 @@ function keywordMatcher(source: any) {
 /* Etapa 1 - sweep: uma mensagem por fonte                                    */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Ordem de prioridade das fontes (menor = primeiro): fontes de Nioaque, depois Regiao,
+ * Mato Grosso do Sul, Brasil e Mundo. A prioridade vem do "Local padrao" da fonte; fontes
+ * sem local definido ficam no meio (como MS), e qualquer fonte com "Nioaque" no nome
+ * (ex.: Radar Nioaque) conta como Nioaque.
+ */
+export const SOURCE_RANK: Record<string, number> = { nioaque: 0, regiao: 1, ms: 2, brasil: 3, mundo: 4 };
+export function sourcePriority(s: { name?: string | null; default_scope?: string | null }): number {
+  if (/nioaque/i.test(s.name ?? '')) return 0;
+  return SOURCE_RANK[s.default_scope ?? ''] ?? 2;
+}
+/** Intervalo minimo entre buscas (min): quanto mais local a fonte, mais frequente (cron roda de 20 em 20 min). */
+const SOURCE_INTERVAL_MIN = [15, 35, 55, 55, 55];
+
 export async function sweepSources(supabase: any, onlyDue = false): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase
+  let res = await supabase
     .from('news_sources')
-    .select('id, name, last_fetched_at')
-    .eq('is_active', true)
-    // Rodizio justo: a fonte atendida ha mais tempo (ou nunca) vai primeiro
-    .order('last_fetched_at', { ascending: true, nullsFirst: true });
-  if (error) throw new Error(error.message);
-  const rows = data ?? [];
-  // Cada fonte e' consultada no maximo 1x por hora (poupa a cota diaria de operacoes da fila)
-  if (!onlyDue) return rows;
-  const limit = Date.now() - 55 * 60_000;
-  return rows.filter((r: any) => !r.last_fetched_at || new Date(r.last_fetched_at).getTime() < limit);
+    .select('id, name, last_fetched_at, default_scope')
+    .eq('is_active', true);
+  if (res.error && /default_scope/.test(res.error.message)) {
+    res = await supabase.from('news_sources').select('id, name, last_fetched_at').eq('is_active', true);
+  }
+  if (res.error) throw new Error(res.error.message);
+  const rows: any[] = res.data ?? [];
+  const now = Date.now();
+  const due = onlyDue
+    ? rows.filter((r) => {
+        const interval = SOURCE_INTERVAL_MIN[sourcePriority(r)] * 60_000;
+        return !r.last_fetched_at || new Date(r.last_fetched_at).getTime() < now - interval;
+      })
+    : rows;
+  // Prioridade primeiro (Nioaque > Regiao > MS > Brasil > Mundo); dentro dela, a atendida ha mais tempo vai antes
+  return due.sort(
+    (x, y) =>
+      sourcePriority(x) - sourcePriority(y) ||
+      new Date(x.last_fetched_at ?? 0).getTime() - new Date(y.last_fetched_at ?? 0).getTime(),
+  );
 }
 
 /* Memoria de links ja processados e descartados: evita reenfileirar toda varredura */
@@ -715,7 +739,8 @@ export async function processEntry(supabase: any, env: any, source: any, input: 
     return { status: 'skipped', reason: `duplicada de "${dup2.title.slice(0, 50)}" (guardada em Outras versoes)`, title: finalTitle };
   }
 
-  const categoryLabel = normalizeCategory(aiCategory) || detectCategory(finalTitle, bodyText);
+  // "Transparencia" so com sinais claros de fiscalizacao/gasto publico (a IA exagerava)
+  const categoryLabel = sanitizeCategory(normalizeCategory(aiCategory), finalTitle, bodyText);
   // Local pelo ASSUNTO (IA + palavras-chave); a fonte so desempata quando nada indica o local
   const scope = classifyScope({
     title: finalTitle,
@@ -849,6 +874,7 @@ export async function runSourceJob(supabase: any, queue: any, sourceId: string, 
       queue,
       entries.map((entry) => ({ type: 'article', sourceId, entry }) as NewsJob),
       backfill ? 5 : 6, // uma materia nova a cada ~6 s: a IA gratuita nao aguenta rajada
+      sourcePriority(source) * 40, // fontes locais entram na frente: Nioaque 0 s, Regiao 40 s, MS 80 s...
     );
     await noteSource(supabase, sourceId, {
       last_fetched_at: new Date().toISOString(),

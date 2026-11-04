@@ -1,0 +1,45 @@
+---
+/** Rosca de composição. Valores em reais; legenda ao lado com percentuais. */
+interface Props {
+  items: { label: string; value: number; color: string }[];
+  centro: string;
+  legendaCentro?: string;
+  brl: (v: number) => string;
+}
+const { items, centro, legendaCentro, brl } = Astro.props;
+const total = items.reduce((s, i) => s + i.value, 0) || 1;
+let acumulado = 0;
+const arcos = items
+  .filter((i) => i.value > 0)
+  .map((i) => {
+    const pct = (i.value / total) * 100;
+    const arco = { ...i, pct, dash: `${pct} ${100 - pct}`, offset: 25 - acumulado };
+    acumulado += pct;
+    return arco;
+  });
+---
+
+<div class="flex flex-col items-center gap-5 sm:flex-row">
+  <div class="relative h-44 w-44 shrink-0">
+    <svg viewBox="0 0 42 42" class="h-full w-full" role="img" aria-label={`Composição do gasto: ${items.map((i) => `${i.label} ${((i.value / total) * 100).toFixed(0)}%`).join(', ')}`}>
+      <circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--color-line)" stroke-width="6"></circle>
+      {arcos.map((a) => (
+        <circle cx="21" cy="21" r="15.9155" fill="none" stroke={a.color} stroke-width="6" stroke-dasharray={a.dash} stroke-dashoffset={a.offset}></circle>
+      ))}
+    </svg>
+    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+      <span class="font-editorial text-xl font-extrabold tabular-nums text-ink">{centro}</span>
+      {legendaCentro && <span class="text-[11px] text-ink-soft">{legendaCentro}</span>}
+    </div>
+  </div>
+  <ul class="w-full space-y-2">
+    {items.map((i) => (
+      <li class="flex items-center gap-3 text-sm">
+        <span class="h-3 w-3 shrink-0 rounded-[2px]" style={`background:${i.color}`}></span>
+        <span class="min-w-0 flex-1 text-ink">{i.label}</span>
+        <span class="shrink-0 font-semibold tabular-nums text-ink">{brl(i.value)}</span>
+        <span class="w-10 shrink-0 text-right text-xs tabular-nums text-ink-soft">{((i.value / total) * 100).toFixed(0)}%</span>
+      </li>
+    ))}
+  </ul>
+</div>

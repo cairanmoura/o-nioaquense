@@ -37,7 +37,7 @@ export const CATEGORIES: Category[] = [
   {
     label: 'Transparência', slug: 'transparencia', description: 'Contas públicas, licitações, fiscalização e controle: para onde vai o dinheiro do cidadão.',
     synonyms: ['fiscalizacao', 'controle', 'contas publicas', 'transparencia publica', 'licitacao', 'licitacoes'],
-    keywords: ['transparencia', 'tribunal de contas', 'tce-ms', 'tce ms', 'tcu', 'controladoria', 'cgu', 'licitac', 'dispensa de licitacao', 'pregao', 'contrato com a prefeitura', 'prestacao de contas', 'auditoria', 'improbidade', 'portal da transparencia', 'gastos publicos', 'orcamento', 'lei de acesso', 'fiscaliza', 'diario oficial', 'emenda parlamentar', 'verba', 'desvio de', 'superfaturamento', 'cpi'],
+    keywords: ['transparencia', 'tribunal de contas', 'tce-ms', 'tce ms', 'tcu', 'controladoria', 'cgu', 'licitac', 'dispensa de licitacao', 'pregao', 'contrato com a prefeitura', 'prestacao de contas', 'auditoria', 'improbidade', 'portal da transparencia', 'gastos publicos', 'orcamento publico', 'lei de acesso', 'emenda parlamentar', 'verba publica', 'desvio de', 'superfaturamento', 'cpi'],
   },
   {
     label: 'Justiça', slug: 'justica', description: 'Decisões judiciais, Ministério Público e direitos.',
@@ -62,7 +62,7 @@ export const CATEGORIES: Category[] = [
   {
     label: 'Economia', slug: 'economia', description: 'Preços, negócios e o bolso do cidadão.',
     synonyms: ['financas', 'negocios', 'mercado', 'dinheiro'],
-    keywords: ['economia', 'inflacao', 'dolar', 'juros', 'selic', 'pib', 'salario', 'imposto', 'ipva', 'iptu', 'comercio', 'empresa', 'preco', 'banco', 'pix', 'inss', 'aposentad', 'beneficio'],
+    keywords: ['economia', 'mercado financeiro', 'fundos imobiliarios', 'bolsa de valores', 'b3', 'acoes', 'loteria', 'mega-sena', 'mega da virada', 'lotofacil', 'quina', 'inflacao', 'dolar', 'juros', 'selic', 'pib', 'salario', 'imposto', 'ipva', 'iptu', 'comercio', 'empresa', 'preco', 'banco', 'pix', 'inss', 'aposentad', 'beneficio'],
   },
   {
     label: 'Emprego e Concursos', slug: 'emprego-concursos', description: 'Vagas, concursos, processos seletivos e oportunidades.',
@@ -153,3 +153,43 @@ export function detectCategory(title: string, body = ''): string {
   }
   return best && best.score >= 2 ? best.label : 'Geral';
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Guarda da editoria "Transparencia"                                          */
+/* -------------------------------------------------------------------------- */
+
+const norm2 = norm;
+const FISCAL = /(tribunal de contas|\btce\b|\btcu\b|\bcgu\b|controladoria|licitac|pregao|dispensa de licitacao|prestacao de contas|improbidade|portal da transparencia|gastos? publicos?|dinheiro publico|recursos? publicos?|verba publica|superfaturamento|desvio de|emenda parlamentar|contrato com (a )?prefeitura|auditoria|fiscaliz|remanejamento|fraude|contrata(?:cao|r|ra|ram|u)?\b|lei de acesso|orcamento publico|diario oficial|cpi\b)/;
+const PUBLICO = /(prefeitura|governo|camara|ministerio|municip|estadual|federal|secretaria|orgao|poder publico|servidor|autarquia|assembleia|senado|congresso|defensoria|ministerio publico|mpms|tribunal|judiciario)/;
+
+/**
+ * "Transparencia" so vale quando a materia trata de fiscalizacao, contas ou gasto PUBLICO.
+ * Mercado financeiro, loterias, esporte, clubes, empresas privadas etc. nao entram.
+ */
+export function isTransparencyStory(text: string): boolean {
+  const n = ` ${norm2(text)} `;
+  return FISCAL.test(n) && PUBLICO.test(n);
+}
+
+/** Corrige a editoria sugerida: "Transparencia" sem sinais claros de fiscalizacao vira o tema real. */
+export function sanitizeCategory(label: string | null | undefined, title: string, body = ''): string {
+  const given = label || detectCategory(title, body);
+  if (given !== 'Transparência') return given;
+  if (isTransparencyStory(`${title} ${body.slice(0, 1500)}`)) return given;
+  // reclassifica sem a Transparencia
+  const t = ` ${norm(title)} `;
+  const b = ` ${norm(body.slice(0, 1200))} `;
+  let best: { label: string; score: number } | null = null;
+  for (const c of CATEGORIES) {
+    if (c.label === 'Transparência' || c.label === 'Geral') continue;
+    let score = 0;
+    for (const k of c.keywords) {
+      if (t.includes(k)) score += 3;
+      else if (b.includes(k)) score += 1;
+    }
+    if (score > 0 && (!best || score > best.score)) best = { label: c.label, score };
+  }
+  return best && best.score >= 2 ? best.label : 'Geral';
+}
+

@@ -1,0 +1,52 @@
+---
+/** Mapa de calor: vereadores nas linhas, meses nas colunas. */
+import { MESES } from '../../lib/transparencia';
+
+interface Linha {
+  slug: string;
+  nome: string;
+  foto: string;
+  valores: number[];
+}
+interface Props {
+  linhas: Linha[];
+  ultimoMes: number;
+  brl: (v: number) => string;
+}
+const { linhas, ultimoMes, brl } = Astro.props;
+const max = Math.max(...linhas.flatMap((l) => l.valores), 1);
+---
+
+<div class="overflow-x-auto">
+  <table class="w-full min-w-[640px] border-separate border-spacing-1 text-xs">
+    <caption class="sr-only">Diárias pagas por vereador e por mês</caption>
+    <thead>
+      <tr>
+        <th class="w-40 text-left font-semibold text-ink-soft" scope="col">Vereador</th>
+        {MESES.map((m, i) => <th scope="col" class:list={['text-center font-semibold uppercase', i <= ultimoMes ? 'text-ink-soft' : 'text-ink-soft/50']}>{m}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {linhas.map((l) => (
+        <tr>
+          <th scope="row" class="text-left font-semibold text-ink">
+            <span class="flex items-center gap-2">
+              <img src={l.foto} alt="" width="24" height="24" loading="lazy" class="h-6 w-6 shrink-0 rounded-full object-cover" />
+              <span class="truncate">{l.nome}</span>
+            </span>
+          </th>
+          {l.valores.map((v, i) => (
+            <td
+              title={`${l.nome}, ${MESES[i]}: ${brl(v)}`}
+              class="h-8 rounded-[2px] text-center tabular-nums"
+              style={v > 0 ? `background:color-mix(in srgb, var(--color-nioaque-green) ${Math.max(14, Math.round((v / max) * 100))}%, transparent);color:${v / max > 0.5 ? '#fff' : 'var(--color-ink)'}` : 'background:var(--color-line);opacity:.45'}
+            >
+              {v > 0 ? (v >= 1000 ? `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1).replace('.', ',')}k` : Math.round(v)) : ''}
+              <span class="sr-only">{brl(v)}</span>
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

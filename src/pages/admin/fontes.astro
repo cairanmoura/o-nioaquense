@@ -57,6 +57,33 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
         </p>
       </header>
 
+      <div id="fontes-barra" class="mb-4 grid gap-3 rounded-[4px] border border-pedra bg-editorial p-3 sm:grid-cols-2 lg:grid-cols-6">
+        <label class="block text-xs font-bold text-ink lg:col-span-2">Buscar
+          <input id="f-q" type="search" placeholder="Nome ou endereço da fonte" class="mt-1 min-h-11 w-full rounded-[4px] border border-pedra bg-branco px-3 text-sm font-normal" />
+        </label>
+        <label class="block text-xs font-bold text-ink">Local
+          <select id="f-scope" class="mt-1 min-h-11 w-full rounded-[4px] border border-pedra bg-branco px-3 text-sm font-normal">
+            <option value="">Todos</option><option value="nioaque">Nioaque</option><option value="regiao">Região</option><option value="ms">Mato Grosso do Sul</option><option value="brasil">Brasil</option><option value="mundo">Mundo</option><option value="auto">Automático (sem local)</option>
+          </select>
+        </label>
+        <label class="block text-xs font-bold text-ink">Situação
+          <select id="f-status" class="mt-1 min-h-11 w-full rounded-[4px] border border-pedra bg-branco px-3 text-sm font-normal">
+            <option value="">Todas</option><option value="on">Ativas</option><option value="off">Desativadas</option><option value="erro">Com erro na última busca</option><option value="direto">Publicam direto</option><option value="rascunho">Vão para rascunho</option>
+          </select>
+        </label>
+        <label class="block text-xs font-bold text-ink">Tipo / origem
+          <select id="f-type" class="mt-1 min-h-11 w-full rounded-[4px] border border-pedra bg-branco px-3 text-sm font-normal">
+            <option value="">Todos</option><option value="rss">RSS</option><option value="html_scraper">Scraper</option><option value="public">Fonte pública / oficial</option><option value="private">Portal privado</option>
+          </select>
+        </label>
+        <label class="block text-xs font-bold text-ink">Agrupar por
+          <select id="f-group" class="mt-1 min-h-11 w-full rounded-[4px] border border-pedra bg-branco px-3 text-sm font-normal">
+            <option value="scope">Local (ordem de prioridade)</option><option value="status">Situação</option><option value="type">Tipo de fonte</option><option value="ownership">Origem do texto</option><option value="publish">Publicação (direto ou rascunho)</option><option value="none">Sem agrupar</option>
+          </select>
+        </label>
+      </div>
+      <p id="f-resumo" class="mb-3 text-xs text-ink-muted" role="status" aria-live="polite"></p>
+
       <div id="fontes-lista">
         <p class="text-xs text-ink-muted">Carregando fontes…</p>
       </div>
@@ -147,6 +174,59 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
   /* Carrega as fontes via API (cliente, com cookie de sessão) */
   const fontesContainer = document.getElementById('fontes-lista')!;
 
+  let allSources: any[] = [];
+
+  /* Prioridade da busca automática: Nioaque > Região > MS > Brasil > Mundo */
+  const RANK: Record<string, number> = { nioaque: 0, regiao: 1, ms: 2, brasil: 3, mundo: 4 };
+  const SCOPE_NAMES = ['Nioaque', 'Região', 'Mato Grosso do Sul', 'Brasil', 'Mundo'];
+  const prio = (s: any) => (/nioaque/i.test(s.name ?? '') ? 0 : RANK[s.default_scope ?? ''] ?? 2);
+  const prioLabel = (s: any) => `${prio(s) + 1}ª prioridade · ${SCOPE_NAMES[prio(s)]}${s.default_scope ? '' : ' (automático)'}`;
+
+  const FIL = ['f-q', 'f-scope', 'f-status', 'f-type', 'f-group'];
+  const el = (id: string) => document.getElementById(id) as HTMLInputElement;
+  try {
+    const saved = JSON.parse(localStorage.getItem('fontes-filtros') ?? '{}');
+    FIL.forEach((id) => { if (saved[id] != null) el(id).value = saved[id]; });
+  } catch { /* sem preferencias salvas */ }
+  FIL.forEach((id) =>
+    el(id).addEventListener(id === 'f-q' ? 'input' : 'change', () => {
+      try { localStorage.setItem('fontes-filtros', JSON.stringify(Object.fromEntries(FIL.map((i) => [i, el(i).value])))); } catch { /* ok */ }
+      renderFontes();
+    }),
+  );
+
+  function passes(s: any): boolean {
+    const q = el('f-q').value.trim().toLowerCase();
+    if (q && !`${s.name} ${s.rss_url}`.toLowerCase().includes(q)) return false;
+    const sc = el('f-scope').value;
+    if (sc === 'auto') { if (s.default_scope) return false; }
+    else if (sc && prio(s) !== RANK[sc]) return false;
+    const st = el('f-status').value;
+    const direto = Boolean(s.auto_publish && s.ownership === 'public');
+    if (st === 'on' && !s.is_active) return false;
+    if (st === 'off' && s.is_active) return false;
+    if (st === 'erro' && s.last_status !== 'erro') return false;
+    if (st === 'direto' && !direto) return false;
+    if (st === 'rascunho' && direto) return false;
+    const ty = el('f-type').value;
+    if (ty === 'rss' && s.source_type === 'html_scraper') return false;
+    if (ty === 'html_scraper' && s.source_type !== 'html_scraper') return false;
+    if (ty === 'public' && s.ownership !== 'public') return false;
+    if (ty === 'private' && s.ownership === 'public') return false;
+    return true;
+  }
+
+  function groupOf(s: any, by: string): [string, number] {
+    switch (by) {
+      case 'scope': return [`${prio(s) + 1}. ${SCOPE_NAMES[prio(s)]}`, prio(s)];
+      case 'status': return s.last_status === 'erro' ? ['Com erro na última busca', 0] : s.is_active ? ['Ativas', 1] : ['Desativadas', 2];
+      case 'type': return s.source_type === 'html_scraper' ? ['Scraper (raspagem de HTML)', 1] : ['RSS / feed', 0];
+      case 'ownership': return s.ownership === 'public' ? ['Fonte pública / oficial', 0] : ['Portal privado', 1];
+      case 'publish': return s.auto_publish && s.ownership === 'public' ? ['Publicam direto', 0] : ['Vão para rascunho', 1];
+      default: return ['', 0];
+    }
+  }
+
   async function carregarFontes() {
     try {
       const res = await fetch('/api/admin/news-sources', {
@@ -159,8 +239,8 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           '<p class="text-xs text-ink-muted">Erro ao carregar fontes. Faça login novamente.</p>';
         return;
       }
-      const sources = await res.json();
-      renderFontes(sources);
+      allSources = await res.json();
+      renderFontes();
     } catch (err) {
       fontesContainer.innerHTML =
         '<p class="text-xs text-ink-muted">Erro de conexão ao carregar fontes.</p>';
@@ -178,13 +258,11 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       </label>`;
   }
 
-  function renderFontes(sources: any[]) {
+  function renderCards(sources: any[]): HTMLUListElement {
     const container = fontesContainer;
 
     if (!sources || sources.length === 0) {
-      container.innerHTML =
-        '<p class="text-sm text-ink-muted">Nenhuma fonte cadastrada. Use o formulário abaixo para adicionar.</p>';
-      return;
+      return document.createElement('ul');
     }
 
     const ul = document.createElement('ul');
@@ -206,6 +284,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
               }">${s.source_type === 'html_scraper' ? 'Scraper' : 'RSS'}</span>
               <span class="ml-1 inline-block rounded-full bg-pedra px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">${s.ownership === 'public' ? 'Fonte pública' : 'Portal privado'}</span>
             </p>
+            <p class="mt-0.5 text-[11px] font-semibold text-nioaque-green">${prioLabel(s)}</p>
             <p class="truncate text-xs text-ink-muted">${escapeHtml(s.rss_url)}</p>
             <p class="mt-1 text-xs text-ink-muted">
               Tema padrão: ${escapeHtml(s.default_category ?? '—')} · Local padrão: ${escapeHtml(s.default_scope ?? 'automático')} · Última busca: ${escapeHtml(s.last_fetched_at ?? 'nunca')}
@@ -258,8 +337,49 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
       ul.appendChild(li);
     });
 
+    return ul;
+  }
+
+  function renderFontes() {
+    const container = fontesContainer;
+    const total = allSources.length;
+    if (total === 0) {
+      container.innerHTML = '<p class="text-sm text-ink-muted">Nenhuma fonte cadastrada. Use o formulário abaixo para adicionar.</p>';
+      el('f-resumo').textContent = '';
+      return;
+    }
+    const list = allSources.filter(passes).sort((a, b) => prio(a) - prio(b) || String(a.name).localeCompare(String(b.name), 'pt-BR'));
+    const ativas = list.filter((s) => s.is_active).length;
+    el('f-resumo').textContent = `Mostrando ${list.length} de ${total} fonte(s), ${ativas} ativa(s). A busca automática segue a ordem Nioaque, Região, Mato Grosso do Sul, Brasil, Mundo; fontes mais locais são consultadas com mais frequência.`;
     container.innerHTML = '';
-    container.appendChild(ul);
+    if (list.length === 0) {
+      container.innerHTML = '<p class="text-sm text-ink-muted">Nenhuma fonte com esses filtros.</p>';
+      return;
+    }
+    const by = el('f-group').value;
+    if (by === 'none') {
+      container.appendChild(renderCards(list));
+      return;
+    }
+    const groups = new Map<string, { order: number; items: any[] }>();
+    list.forEach((s) => {
+      const [name, order] = groupOf(s, by);
+      const g = groups.get(name) ?? { order, items: [] };
+      g.items.push(s);
+      groups.set(name, g);
+    });
+    [...groups.entries()]
+      .sort((a, b) => a[1].order - b[1].order)
+      .forEach(([name, g]) => {
+        const sec = document.createElement('details');
+        sec.open = true;
+        sec.className = 'mb-5';
+        sec.innerHTML = `<summary class="flex min-h-11 cursor-pointer items-center justify-between gap-2 border-b-2 border-nioaque-green pb-1 font-serif text-lg font-bold text-ink"><span>${escapeHtml(name)}</span><span class="text-xs font-semibold text-ink-muted">${g.items.length} fonte(s)</span></summary>`;
+        const ul = renderCards(g.items);
+        ul.classList.add('mt-3');
+        sec.appendChild(ul);
+        container.appendChild(sec);
+      });
   }
 
   /* Editar / salvar / excluir / chaves (delegação de eventos) */

@@ -20,6 +20,7 @@ import { getHomeFeed, getRegiaoArticles, getLotteryResults, getMarketQuotes } fr
 import { SCOPE_LABEL } from '../lib/types';
 import { formatRelative } from '../lib/format';
 import { pickLead } from '../lib/cover';
+import { isTransparencyStory } from '../lib/categories';
 import { isPhotoCover } from '../lib/rss';
 const hasPhoto = (a: Article) => isPhotoCover(a.cover_image_url);
 const photoFirst = (list: Article[]) => [...list.filter(hasPhoto), ...list.filter((a) => !hasPhoto(a))];
@@ -111,7 +112,9 @@ const ms = feed.byScope.ms.slice(0, 6);
 const sidebarTopId = secondary[0]?.id;
 const brasil = feed.byScope.brasil.filter((article) => article.id !== sidebarTopId).slice(0, 3);
 const mundo = feed.byScope.mundo.slice(0, 3);
-const transparencia = feed.articles.filter((a) => a.category_label === 'Transparência').slice(0, 3);
+const transparencia = feed.articles
+  .filter((a) => a.category_label === 'Transparência' && isTransparencyStory(`${a.title} ${a.subtitle ?? ''} ${(a.summary_bullets ?? []).join(' ')}`))
+  .slice(0, 3);
 ---
 
 <MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil.">
@@ -241,12 +244,12 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     </div>
   )}
 
-  <div class="container-editorial pb-2 pt-8 sm:pt-10">
+  <div class="container-editorial pb-2 pt-0">
 
     {/* Nioaque */}
     {
       nioaqueGrid.length > 0 && (
-        <section class="mt-16 sm:mt-20" aria-labelledby="sec-nioaque" data-reveal>
+        <section class="mt-8 sm:mt-10" aria-labelledby="sec-nioaque" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-nioaque" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Nioaque
@@ -302,7 +305,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     {/* Mato Grosso do Sul */}
     {
       ms.length > 0 && (
-        <section class="mt-16 sm:mt-20" aria-labelledby="sec-ms" data-reveal>
+        <section class="mt-8 sm:mt-10" aria-labelledby="sec-ms" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-ms" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Mato Grosso do Sul
@@ -330,7 +333,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     {/* Brasil */}
     {
       brasil.length > 0 && (
-        <section class="mt-16 sm:mt-20" aria-labelledby="sec-brasil" data-reveal>
+        <section class="mt-8 sm:mt-10" aria-labelledby="sec-brasil" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-brasil" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Brasil
@@ -354,7 +357,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     {/* Mundo */}
     {
       mundo.length > 0 && (
-        <section class="mt-16 sm:mt-20" aria-labelledby="sec-mundo" data-reveal>
+        <section class="mt-8 sm:mt-10" aria-labelledby="sec-mundo" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-green pb-3">
             <h2 id="sec-mundo" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Mundo
@@ -378,7 +381,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
     {/* Transparencia e fiscalizacao: tema de importancia editorial do jornal */}
     {
       transparencia.length > 0 && (
-        <section class="mt-16 sm:mt-20" aria-labelledby="sec-transparencia" data-reveal>
+        <section class="mt-8 sm:mt-10" aria-labelledby="sec-transparencia" data-reveal>
           <div class="flex items-baseline gap-3 border-b-2 border-nioaque-red pb-3">
             <h2 id="sec-transparencia" class="font-serif text-2xl font-bold tracking-tight text-ink sm:text-[30px] sm:leading-[34px]">
               Transparência e Fiscalização
@@ -404,7 +407,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
 
   {/* Mais lidas (e anuncios do meio), logo abaixo de Transparencia e Fiscalizacao */}
   <div class="w-full border-b border-pedra bg-branco">
-    <div class="container-editorial py-8 sm:py-10">
+    <div class="container-editorial py-6 sm:py-8">
       <div class={feed.ads.home_middle || feed.ads.sidebar ? 'grid items-start gap-5 lg:grid-cols-[1fr_1.4fr_1fr]' : 'mx-auto max-w-3xl'}>
         {feed.ads.home_middle && <AdStrip ad={feed.ads.home_middle} class="order-2 lg:order-1" />}
         <MostRead articles={feed.articles} authors={profilesById} limit={5} class="order-1 lg:order-2" />
@@ -419,7 +422,7 @@ const transparencia = feed.articles.filter((a) => a.category_label === 'Transpar
   <div class="container-editorial pb-10 pt-0">
 
     {/* Radar Oficial */}
-    <div class="mt-16 sm:mt-20" data-reveal>
+    <div class="mt-8 sm:mt-10" data-reveal>
       <RadarOficialBlock articles={feed.byScope.radar_oficial} />
     </div>
 

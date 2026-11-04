@@ -18,7 +18,7 @@
  */
 
 import { measureCleanContent, runRouted } from './ai-router';
-import { CATEGORY_LABELS, normalizeCategory, detectCategory } from './categories';
+import { CATEGORY_LABELS, normalizeCategory, sanitizeCategory } from './categories';
 import { normalizeScope } from './geo';
 import { sanitizeArticleHtml } from './clean-content';
 
@@ -79,7 +79,8 @@ CLASSIFICAÇÃO (decida pelo ASSUNTO da matéria, nunca pelo jornal onde foi pub
 - "tags": de 3 a 8 etiquetas curtas (cidades, órgãos, pessoas e assuntos centrais citados), sem repetir o tema.
 - "violencia": true se o assunto central é crime, morte, agressão, assalto, tráfico, acidente com vítima ou outra violência; senão false.
 - "importancia": inteiro de 1 a 5 (1 = fato corriqueiro de bairro, 3 = relevante para a cidade, 4 = grande repercussão no estado, 5 = nacional ou de enorme impacto). Casos policiais comuns valem 1 ou 2; só dê 4 ou 5 a violência com muitas vítimas, autoridades envolvidas ou repercussão estadual/nacional.
-- Foco editorial do portal: política, economia, cultura, cidade, lazer, infraestrutura, obras e transparência (contas públicas, licitações, fiscalização). Use o tema "Transparência" quando a matéria tratar de fiscalização, auditoria, licitação, contratos, prestação de contas ou gasto público.
+- Foco editorial do portal: política, economia, cultura, cidade, lazer, infraestrutura, obras e transparência.
+- REGRA DO TEMA "Transparência": use SOMENTE quando o assunto central é fiscalização, auditoria, licitação, contrato, prestação de contas ou gasto de dinheiro PÚBLICO por órgão do governo (ex.: TCE aponta irregularidade em contrato da prefeitura). NÃO use para: mercado financeiro, bolsa, fundos, empresas privadas, loterias e apostas, esporte e clubes, decisões judiciais comuns, cursos e programas de treinamento, ou qualquer assunto privado. Nesses casos escolha o tema real (Economia, Esporte, Justiça, Educação, Tecnologia...).
 
 Responda SOMENTE com um objeto JSON válido, sem markdown, com as chaves:
 "title", "subtitle", "summary_bullets" (array de 3), "content_html" (apenas <p> e <h2>), "suggested_scope", "suggested_category", "tags" (array), "violencia" (boolean), "importancia" (inteiro 1-5).`;
@@ -183,7 +184,7 @@ export async function rewriteArticle(
     subtitle: data.subtitle ? String(data.subtitle).trim().slice(0, 240) : null,
     summary_bullets: bullets,
     content_html: clean.html,
-    suggested_category: normalizeCategory(data.suggested_category) ?? detectCategory(data.title, clean.text),
+    suggested_category: sanitizeCategory(normalizeCategory(data.suggested_category), data.title, clean.text),
     suggested_scope: normalizeScope(data.suggested_scope),
     tags,
     violence: typeof data.violencia === 'boolean' ? data.violencia : null,
