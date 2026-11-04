@@ -3,6 +3,7 @@ import { App } from 'astro/app';
 import { handle } from '../node_modules/@astrojs/cloudflare/dist/utils/handler.js';
 import { syncXColumnists } from './lib/xsync';
 import { X_FLAG_HANDLE } from './lib/colunas';
+import { passoTransparencia, transparenciaCron } from './lib/transparencia-job';
 import {
   enqueueJobs,
   markSeen,
@@ -60,6 +61,11 @@ export function createExports(manifest: any) {
           if (xOn && (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 20))) jobs.push({ type: 'xposts' });
           // fontes escalonadas de 8 em 8 s: nao disparam todas juntas
           await enqueueJobs(env.NEWS_QUEUE, jobs, 8);
+          try {
+            console.log('transparencia cron:', await transparenciaCron(supabase, env.NEWS_QUEUE));
+          } catch (e: any) {
+            console.error('transparencia cron:', e?.message ?? e);
+          }
           console.log(`sweep: ${sources.length} fonte(s) enfileirada(s)`);
           msg.ack();
         } else if (job.type === 'source') {
@@ -82,6 +88,11 @@ export function createExports(manifest: any) {
         } else if (job.type === 'xposts') {
           const r = await syncXColumnists(supabase, env);
           console.log(`xposts: ${r.inserted} novo(s)`, r.errors.join(' | '));
+          msg.ack();
+        } else if (job.type === 'transparencia') {
+          const r = await passoTransparencia(supabase);
+          console.log('transparencia:', r.info);
+          if (r.continua) await env.NEWS_QUEUE.send({ type: 'transparencia' } satisfies NewsJob, { delaySeconds: r.atraso });
           msg.ack();
         } else if (job.type === 'quotes') {
           await refreshQuotes(supabase);

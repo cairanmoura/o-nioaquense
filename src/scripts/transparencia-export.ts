@@ -373,6 +373,68 @@ async function desenharVereador(ctx: CanvasRenderingContext2D, d: ExportData, v:
   });
 }
 
+
+/* -------------------------------------------------------------------------- */
+/* Secao "Diarias por vereador" isolada                                        */
+/* -------------------------------------------------------------------------- */
+
+function desenharVereadores(ctx: CanvasRenderingContext2D, d: ExportData, logo: HTMLImageElement | null, fotos: Map<string, HTMLImageElement | null>) {
+  cabecalho(ctx, logo, 'Transparência');
+  ctx.fillStyle = VERDE;
+  fonte(ctx, 700, 22);
+  ctx.fillText(`CÂMARA MUNICIPAL DE NIOAQUE · ${d.periodo.toUpperCase()}`, 54, 214);
+  ctx.fillStyle = TINTA;
+  fonte(ctx, 800, 58, SERIF);
+  ctx.fillText('Diárias por vereador', 54, 280);
+
+  const cols = 3;
+  const gap = 16;
+  const cw = (W - 108 - (cols - 1) * gap) / cols;
+  const ch = 318;
+  const max = Math.max(...d.vereadores.map((v) => v.total), 1);
+  d.vereadores.forEach((v, i) => {
+    const col = i % cols;
+    const lin = Math.floor(i / cols);
+    const bx = 54 + col * (cw + gap);
+    const by = 312 + lin * (ch + gap);
+    caixa(ctx, bx, by, cw, ch);
+    foto(ctx, fotos.get(v.slug) ?? null, bx + cw / 2, by + 74, 52, v.nome[0]);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = TINTA;
+    const px = ajustar(ctx, v.nome, 800, 27, cw - 24, SERIF);
+    fonte(ctx, 800, px, SERIF);
+    ctx.fillText(v.nome, bx + cw / 2, by + 158);
+    ctx.fillStyle = SUAVE;
+    fonte(ctx, 500, 19);
+    ctx.fillText(cortar(ctx, `${v.cargo} · ${v.partido}`, cw - 24), bx + cw / 2, by + 184);
+    ctx.fillStyle = v.total > 0 ? VERMELHO : SUAVE;
+    const txt = v.total > 0 ? brl(v.total) : 'R$ 0,00';
+    const pv = ajustar(ctx, txt, 800, 34, cw - 24, SERIF);
+    fonte(ctx, 800, pv, SERIF);
+    ctx.fillText(txt, bx + cw / 2, by + 232);
+    ctx.fillStyle = SUAVE;
+    fonte(ctx, 600, 20);
+    ctx.fillText(v.quantidade === 0 ? 'nenhuma diária' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'} · ${v.dias} ${v.dias === 1 ? 'dia' : 'dias'}`, bx + cw / 2, by + 262);
+    ctx.textAlign = 'left';
+    // barra proporcional
+    ctx.fillStyle = PEDRA;
+    ctx.fillRect(bx + 20, by + ch - 30, cw - 40, 10);
+    ctx.fillStyle = VERMELHO;
+    ctx.fillRect(bx + 20, by + ch - 30, (cw - 40) * (v.total / max), 10);
+  });
+
+  const yb = 312 + 3 * (ch + gap) + 2;
+  retArredondado(ctx, 54, yb, W - 108, 78, 6);
+  ctx.fillStyle = MATA;
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  fonte(ctx, 800, 32, SERIF);
+  ctx.fillText(`Diárias dos vereadores: ${brl(d.diarias.vereadoresTotal)}`, 78, yb + 34);
+  ctx.fillStyle = '#CFE0D3';
+  fonte(ctx, 500, 20);
+  ctx.fillText(cortar(ctx, `Total de diárias da Câmara: ${brl(d.diarias.total)} (inclui assessores e equipe: ${brlInt(d.diarias.equipeTotal)})`, W - 156), 78, yb + 62);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Entrada                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -386,7 +448,8 @@ async function gerar(d: ExportData, slug: string | null): Promise<void> {
     document.fonts.load(`800 24px Chivo`).catch(() => undefined),
   ]).catch(() => undefined);
 
-  const alvo = slug ? d.vereadores.filter((v) => v.slug === slug) : d.vereadores;
+  const soVereadores = slug === '__vereadores__';
+  const alvo = slug && !soVereadores ? d.vereadores.filter((v) => v.slug === slug) : d.vereadores;
   const fotos = new Map<string, HTMLImageElement | null>();
   const [logo] = await Promise.all([
     carregarImagem('/brand/logo-branca.svg'),
@@ -404,7 +467,8 @@ async function gerar(d: ExportData, slug: string | null): Promise<void> {
   ctx.fillRect(0, 0, W, H);
   ctx.textBaseline = 'alphabetic';
 
-  if (slug && alvo[0]) await desenharVereador(ctx, d, alvo[0], logo, fotos);
+  if (soVereadores) desenharVereadores(ctx, d, logo, fotos);
+  else if (slug && alvo[0]) await desenharVereador(ctx, d, alvo[0], logo, fotos);
   else await desenharResumo(ctx, d, logo, fotos);
   rodape(ctx, d.atualizadoEm);
 
@@ -413,7 +477,7 @@ async function gerar(d: ExportData, slug: string | null): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = slug ? `diarias-${slug}-${d.ano}.png` : `despesas-camara-nioaque-${d.ano}.png`;
+  a.download = soVereadores ? `diarias-por-vereador-${d.ano}.png` : slug ? `diarias-${slug}-${d.ano}.png` : `despesas-camara-nioaque-${d.ano}.png`;
   document.body.appendChild(a);
   a.click();
   a.remove();

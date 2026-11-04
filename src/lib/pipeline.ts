@@ -70,7 +70,8 @@ export type NewsJob =
   | { type: 'source'; sourceId: string; backfill?: boolean }
   | { type: 'article'; sourceId: string; entry: QueueEntry }
   | { type: 'quotes' }
-  | { type: 'xposts' };
+  | { type: 'xposts' }
+  | { type: 'transparencia' };
 
 export interface ProcessOutcome {
   /** retry = falha temporaria (IA fora do ar etc.): a fila tenta de novo mais tarde. */

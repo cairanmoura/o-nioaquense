@@ -1,0 +1,126 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+const sel = 'mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2.5 text-sm';
+---
+
+<AdminLayout title="Transparência" subtitle="Atualização dos dados da Câmara e da Prefeitura">
+  <div class="mx-auto max-w-3xl space-y-6">
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
+      <h2 class="text-sm font-extrabold text-ink">Situação</h2>
+      <p id="t-status" class="mt-1 text-sm text-ink">Verificando…</p>
+      <ul id="t-resumos" class="mt-3 space-y-1 text-xs text-ink-muted"></ul>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button id="t-atualizar" type="button" class="min-h-11 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Atualizar agora</button>
+        <span id="t-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></span>
+      </div>
+      <p class="mt-3 text-xs text-ink-muted">A atualização lê o portal oficial em lotes pequenos (de 1 a 20 minutos, conforme houver empenhos novos). O site continua mostrando os dados anteriores até terminar.</p>
+    </section>
+
+    <section class="rounded-[4px] border border-pedra bg-branco p-5">
+      <h2 class="text-sm font-extrabold text-ink">Agenda das atualizações</h2>
+      <p class="mt-1 text-xs text-ink-muted">O site informa que os dados são "atualizados semanalmente". Horário: a partir das 3h (Campo Grande).</p>
+      <div class="mt-4 space-y-4">
+        <label class="flex items-center gap-3 text-sm text-ink"><input id="c-ativo" type="checkbox" class="h-5 w-5" /> Atualização automática ligada</label>
+        <label class="flex items-center gap-3 text-sm text-ink"><input id="c-domingo" type="checkbox" class="h-5 w-5" /> Atualizar todo domingo</label>
+        <div>
+          <label for="c-modo" class="text-sm font-semibold text-ink">Segundo dia da semana</label>
+          <select id="c-modo" class={sel}>
+            <option value="auto">Sorteado: um dia de terça a sexta que muda toda semana</option>
+            <option value="fixo">Fixo: sempre o mesmo dia</option>
+          </select>
+        </div>
+        <div id="c-fixo-box" hidden>
+          <label for="c-fixo" class="text-sm font-semibold text-ink">Dia fixo</label>
+          <select id="c-fixo" class={sel}>
+            <option value="2">Terça-feira</option>
+            <option value="3">Quarta-feira</option>
+            <option value="4">Quinta-feira</option>
+            <option value="5">Sexta-feira</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="c-salvar" type="button" class="min-h-11 rounded-[4px] bg-ink px-4 text-sm font-semibold text-white">Salvar agenda</button>
+          <span id="c-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="mt-5 border-t border-pedra pt-4">
+        <h3 class="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">Próximas atualizações</h3>
+        <ul id="t-proximas" class="mt-2 space-y-1 text-sm text-ink"></ul>
+      </div>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  const $ = (id: string) => document.getElementById(id)!;
+  const call = (method: string, body?: unknown) =>
+    fetch('/api/admin/transparencia', { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const fmt = (iso: string) => new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Campo_Grande', dateStyle: 'short', timeStyle: 'short' });
+  const dia = (iso: string) => {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  };
+  let timer: number | undefined;
+
+  function mostrar(d: any) {
+    const est = d.estado ?? { pendentes: [] };
+    const andamento = est.pendentes?.length > 0;
+    $('t-status').textContent = andamento
+      ? `Atualizando agora… faltam ${est.pendentes.length} conjunto(s): ${est.pendentes.join(', ')}.${est.ultimoErro ? ' Último aviso: ' + est.ultimoErro : ''}`
+      : est.fimEm
+        ? `Última atualização concluída em ${fmt(est.fimEm)}.${est.ultimoErro ? ' Aviso: ' + est.ultimoErro : ''}`
+        : 'Ainda não houve atualização. A primeira acontece sozinha em até 20 minutos, ou use o botão abaixo.';
+    ($('t-atualizar') as HTMLButtonElement).disabled = andamento;
+    $('t-resumos').innerHTML = (d.resumos ?? []).map((r: any) => `<li>${r.key.replace('resumo:', '')} · atualizado em ${fmt(r.updated_at)}</li>`).join('');
+    const c = d.config;
+    ($('c-ativo') as HTMLInputElement).checked = c.ativo;
+    ($('c-domingo') as HTMLInputElement).checked = c.domingo;
+    ($('c-modo') as HTMLSelectElement).value = c.modo;
+    ($('c-fixo') as HTMLSelectElement).value = String(c.diaFixo);
+    $('c-fixo-box').hidden = c.modo !== 'fixo';
+    $('t-proximas').innerHTML = (d.proximas ?? []).map((p: any) => `<li>${dia(p.iso)} (${p.dia})</li>`).join('') || '<li class="text-ink-muted">Nenhuma nos próximos dias.</li>';
+    window.clearTimeout(timer);
+    if (andamento) timer = window.setTimeout(carregar, 8000);
+  }
+
+  async function carregar() {
+    const res = await call('GET');
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return void ($('t-status').textContent = d.error ?? 'Erro ao carregar');
+    mostrar(d);
+  }
+
+  $('c-modo').addEventListener('change', () => ($('c-fixo-box').hidden = ($('c-modo') as HTMLSelectElement).value !== 'fixo'));
+
+  $('t-atualizar').addEventListener('click', async () => {
+    $('t-msg').textContent = 'Iniciando…';
+    const res = await call('POST', { acao: 'atualizar' });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return void ($('t-msg').textContent = d.error ?? 'Erro');
+    $('t-msg').textContent = d.jaEmAndamento ? 'Já havia uma atualização em andamento.' : 'Atualização iniciada.';
+    mostrar(d);
+  });
+
+  $('c-salvar').addEventListener('click', async () => {
+    $('c-msg').textContent = 'Salvando…';
+    const res = await call('POST', {
+      acao: 'config',
+      ativo: ($('c-ativo') as HTMLInputElement).checked,
+      domingo: ($('c-domingo') as HTMLInputElement).checked,
+      modo: ($('c-modo') as HTMLSelectElement).value,
+      diaFixo: Number(($('c-fixo') as HTMLSelectElement).value),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return void ($('c-msg').textContent = d.error ?? 'Erro');
+    $('c-msg').textContent = 'Agenda salva.';
+    mostrar(d);
+  });
+
+  carregar();
+</script>

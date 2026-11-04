@@ -4,8 +4,12 @@ import ChartDonut from '../components/transparencia/ChartDonut.astro';
 import ChartMeses from '../components/transparencia/ChartMeses.astro';
 import ChartLinha from '../components/transparencia/ChartLinha.astro';
 import ChartCalor from '../components/transparencia/ChartCalor.astro';
+import PrefeituraView from '../components/transparencia/PrefeituraView.astro';
+import { createServiceClient } from '../lib/supabase/server';
+import { lerChave } from '../lib/transparencia-store';
+import { chaveResumo, chaveLista, anosPrefeitura } from '../lib/transparencia-job';
+import type { ResumoPref, PrefEmpenho } from '../lib/prefeitura';
 import {
-  getDespesasAno,
   anosDisponiveis,
   anoAtual,
   brl,
@@ -14,6 +18,7 @@ import {
   VEREADORES,
   CATEGORIAS,
   type Categoria,
+  type ResumoAno,
 } from '../lib/transparencia';
 import { formatDate } from '../lib/format';
 
@@ -23,7 +28,8 @@ import { formatDate } from '../lib/format';
  * Dados Abertos do portal oficial + atalhos organizados para o restante.
  */
 const BASE = 'https://web.qualitysistemas.com.br';
-const ID = '164';
+const entidade: 'camara' | 'prefeitura' = Astro.url.searchParams.get('entidade') === 'camara' ? 'camara' : 'prefeitura';
+const ID = entidade === 'prefeitura' ? '265' : '164';
 
 type Item = { titulo: string; pergunta: string; href: string; icone: string };
 type Grupo = { id: string; titulo: string; resumo: string; itens: Item[] };
@@ -97,12 +103,36 @@ const grupos: Grupo[] = [
 const total = grupos.reduce((n, g) => n + g.itens.length, 0);
 
 /* ----------------------------- dados do ano ----------------------------- */
-const anos = anosDisponiveis();
+const anos = entidade === 'camara' ? anosDisponiveis() : anosPrefeitura();
 const anoParam = Number(Astro.url.searchParams.get('ano'));
 const ano = anos.includes(anoParam) ? anoParam : anoAtual();
 const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 60);
 const slugSel = Astro.url.searchParams.get('vereador') ?? '';
-const resumo = await getDespesasAno(Astro.locals, ano);
+const sb = createServiceClient(Astro.locals);
+let resumo: ResumoAno | null = null;
+let resumoPref: ResumoPref | null = null;
+let atualizadoEm: string | null = null;
+if (sb) {
+  if (entidade === 'camara') {
+    const r = await lerChave<ResumoAno>(sb, chaveResumo('camara', ano));
+    resumo = r?.valor ?? null;
+    atualizadoEm = r?.atualizadoEm ?? null;
+  } else {
+    const r = await lerChave<ResumoPref>(sb, chaveResumo('prefeitura', ano));
+    resumoPref = r?.valor ?? null;
+    atualizadoEm = r?.atualizadoEm ?? null;
+  }
+}
+const orgaoSel = Astro.url.searchParams.get('orgao') ?? '';
+const areaSel = Astro.url.searchParams.get('area') ?? '';
+const catSel = Astro.url.searchParams.get('cat') ?? '';
+const escSel = Astro.url.searchParams.get('escalao') ?? '';
+const autSel = Astro.url.searchParams.get('autoridade') ?? '';
+const pag = Math.max(1, Number(Astro.url.searchParams.get('pag')) || 1);
+let listaPref: PrefEmpenho[] | null = null;
+if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel || catSel)) {
+  listaPref = (await lerChave<PrefEmpenho[]>(sb, chaveLista(ano)))?.valor ?? [];
+}
 
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const soDigitos = q.replace(/\D/g, '');
@@ -188,25 +218,54 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
 ---
 
 <MainLayout
-  title="Transparência da Câmara de Nioaque"
-  description="Despesas, diárias e gastos por vereador da Câmara Municipal de Nioaque, com gráficos e dados do portal oficial, mais atalhos para licitações, contratos e folha."
+  title={entidade === 'prefeitura' ? 'Transparência da Prefeitura de Nioaque' : 'Transparência da Câmara de Nioaque'}
+  description={entidade === 'prefeitura' ? 'Despesas, secretarias, primeiro escalão, maiores fornecedores e gráficos da Prefeitura de Nioaque, com dados do portal oficial e atalhos para licitações, contratos e folha.' : 'Despesas, diárias e gastos por vereador da Câmara Municipal de Nioaque, com gráficos e dados do portal oficial, mais atalhos para licitações, contratos e folha.'}
 >
   <div class="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
     <header class="mt-8 mb-6 border-b-2 border-nioaque-green pb-6">
-      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">Câmara Municipal de Nioaque</p>
+      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">{entidade === 'prefeitura' ? 'Prefeitura Municipal de Nioaque' : 'Câmara Municipal de Nioaque'}</p>
       <h1 class="mt-1 font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">Transparência</h1>
       <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-soft">
-        O dinheiro público é de todos. Aqui você acompanha, em gráficos e em linguagem simples, quanto a Câmara de Nioaque gasta, quanto cada vereador recebe em diárias e para onde vai cada real.
+        O dinheiro público é de todos. Aqui você acompanha, em gráficos e em linguagem simples, {entidade === 'prefeitura' ? 'quanto a Prefeitura de Nioaque gasta, com quem e em quais secretarias, e quanto vai para o primeiro escalão.' : 'quanto a Câmara de Nioaque gasta, quanto cada vereador recebe em diárias e para onde vai cada real.'}
       </p>
+      <p class="mt-2 text-sm font-semibold text-nioaque-green-dark">Dados do portal oficial, atualizados semanalmente.</p>
     </header>
 
-    <nav aria-label="Assuntos" class="mb-8 flex flex-wrap gap-2">
-      <a href="#despesas" class={pill}>Despesas em números</a>
-      <a href="#diarias" class={pill}>Diárias</a>
-      <a href="#vereadores" class={pill}>Por vereador</a>
-      {grupos.map((g) => <a href={`#${g.id}`} class={pill}>{g.titulo}</a>)}
+    <nav aria-label="Órgão" class="mb-6 flex gap-2">
+      <a href="?entidade=prefeitura" aria-current={entidade === 'prefeitura' ? 'page' : undefined} class:list={['inline-flex min-h-[44px] items-center rounded-[4px] border px-5 text-base font-bold', entidade === 'prefeitura' ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>Prefeitura</a>
+      <a href="?entidade=camara" aria-current={entidade === 'camara' ? 'page' : undefined} class:list={['inline-flex min-h-[44px] items-center rounded-[4px] border px-5 text-base font-bold', entidade === 'camara' ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>Câmara</a>
     </nav>
 
+    {entidade === 'camara' && (
+      <nav aria-label="Assuntos" class="mb-8 flex flex-wrap gap-2">
+        <a href="#despesas" class={pill}>Despesas em números</a>
+        <a href="#diarias" class={pill}>Diárias</a>
+        <a href="#vereadores" class={pill}>Por vereador</a>
+        {grupos.map((g) => <a href={`#${g.id}`} class={pill}>{g.titulo}</a>)}
+      </nav>
+    )}
+
+    {entidade === 'prefeitura' && (
+      <PrefeituraView
+        resumo={resumoPref}
+        ano={ano}
+        anos={anos}
+        q={q}
+        orgaoSel={orgaoSel}
+        areaSel={areaSel}
+        catSel={catSel}
+        escSel={escSel}
+        autSel={autSel}
+        pag={pag}
+        listaPref={listaPref}
+        atualizadoEm={atualizadoEm}
+        ID={ID}
+        BASE={BASE}
+      />
+    )}
+
+    {entidade === 'camara' && (
+    <>
     <!-- =============================== DESPESAS =============================== -->
     <section id="despesas" aria-labelledby="h-despesas" class="mb-10 scroll-mt-24">
       <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -216,14 +275,14 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
         </div>
         <nav aria-label="Ano" class="flex gap-1">
           {anos.map((a) => (
-            <a href={`?ano=${a}#despesas`} aria-current={a === ano ? 'true' : undefined} class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>{a}</a>
+            <a href={`?entidade=camara&ano=${a}#despesas`} aria-current={a === ano ? 'true' : undefined} class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>{a}</a>
           ))}
         </nav>
       </div>
 
       {!resumo && (
         <p class={`${cartao} text-sm text-ink-soft`}>
-          O portal oficial não respondeu agora. Tente novamente em alguns minutos ou consulte direto em
+          Os dados desta página estão sendo preparados e aparecem em instantes. Enquanto isso, consulte direto em
           <a class="underline" href={`${BASE}/despesas/${ID}`} target="_blank" rel="noopener noreferrer">Despesas</a>.
         </p>
       )}
@@ -233,7 +292,7 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
       {resumo && resumo.empenhos.length > 0 && exportData && (
         <>
           <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[4px] bg-nioaque-green-50 p-3">
-            <p class="text-sm text-ink"><strong>{periodo}.</strong> Atualizado a cada hora a partir do portal oficial.</p>
+            <p class="text-sm text-ink"><strong>{periodo}.</strong> Dados do portal oficial, atualizados semanalmente.</p>
             <button type="button" data-exportar-png="" class="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONES.imagem} /></svg>
               <span data-rotulo>Baixar resumo em imagem (PNG)</span>
@@ -366,16 +425,22 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
 
         <!-- =============================== VEREADORES =============================== -->
         <section id="vereadores" aria-labelledby="h-vereadores" class="mb-10 scroll-mt-24">
-          <div class="mb-4 border-l-4 border-nioaque-red pl-3">
-            <h2 id="h-vereadores" class={tituloSecao}>Diárias por vereador</h2>
-            <p class="text-sm text-ink-soft">Toque em um vereador para ver cada viagem paga em {ano}.</p>
+          <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div class="border-l-4 border-nioaque-red pl-3">
+              <h2 id="h-vereadores" class={tituloSecao}>Diárias por vereador</h2>
+              <p class="text-sm text-ink-soft">Toque em um vereador para ver cada viagem paga em {ano}.</p>
+            </div>
+            <button type="button" data-exportar-png="__vereadores__" class="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONES.imagem} /></svg>
+              <span data-rotulo>Salvar esta seção (PNG)</span>
+            </button>
           </div>
 
           <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {porVereador.map((v) => (
               <li>
                 <a
-                  href={`?ano=${ano}&vereador=${v.slug}#vereador-detalhe`}
+                  href={`?entidade=camara&ano=${ano}&vereador=${v.slug}#vereador-detalhe`}
                   aria-current={selecionado?.slug === v.slug ? 'true' : undefined}
                   class:list={['flex h-full min-h-[44px] gap-3 rounded-[4px] border bg-branco p-3 transition-colors hover:border-nioaque-green', selecionado?.slug === v.slug ? 'border-2 border-nioaque-green' : 'border-pedra']}
                 >
@@ -467,6 +532,7 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-pedra p-4">
               <h3 class="font-editorial text-lg font-extrabold text-ink">{q ? `Resultado para “${q}”` : 'Despesas mais recentes'}</h3>
               <form method="get" action="#lista" class="flex gap-2">
+                <input type="hidden" name="entidade" value="camara" />
                 <input type="hidden" name="ano" value={ano} />
                 <label class="sr-only" for="q-desp">Buscar por empresa, pessoa ou CNPJ</label>
                 <input id="q-desp" name="q" value={q} placeholder="Buscar empresa, pessoa ou CNPJ" class="min-h-[44px] w-56 rounded-[4px] border border-pedra bg-editorial px-3 text-sm text-ink" />
@@ -499,6 +565,8 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
           </p>
         </section>
       </>
+    )}
+    </>
     )}
 
     <!-- =============================== ATALHOS =============================== -->
@@ -552,16 +620,4 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
   <script>
     import '../scripts/transparencia-export';
   </script>
-  {resumo && resumo.semDetalhe > 0 && <script is:inline define:vars={{ anoAtual: ano }}>
-    (async () => {
-      for (let i = 0; i < 15; i++) {
-        try {
-          const r = await fetch('/api/transparencia/completar?ano=' + anoAtual);
-          const j = await r.json();
-          if (!j.faltam) { location.reload(); return; }
-        } catch { return; }
-      }
-      location.reload();
-    })();
-  </script>}
 </MainLayout>

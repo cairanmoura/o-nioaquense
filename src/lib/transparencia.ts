@@ -49,13 +49,10 @@ function md5(input: string): string {
     .join('');
 }
 
-const BASE = 'https://web.qualitysistemas.com.br/api/v1/dados-abertos';
+export const BASE_API = 'https://web.qualitysistemas.com.br/api/v1/dados-abertos';
 export const ENTIDADE = '164';
-const COD_CAMARA = '7';
+export const COD_CAMARA = '7';
 const TZ = 'America/Campo_Grande';
-const CACHE_TTL = 3600;
-const DETALHE_TTL = 60 * 60 * 24 * 30;
-const CACHE_VERSION = 'v3';
 
 /* -------------------------------------------------------------------------- */
 /* Vereadores                                                                  */
@@ -157,7 +154,8 @@ export interface ResumoAno {
   atualizadoEm: string;
 }
 
-interface RawEmpenho {
+export interface RawEmpenho {
+  nome_unidade_gestora?: string;
   numero_empenho: string;
   ano: string;
   data: string;
@@ -168,22 +166,28 @@ interface RawEmpenho {
   valor_pago: string;
 }
 
-interface Detalhe {
+export interface Detalhe {
   natureza: string;
   historico: string;
+  unidade?: string;
+  funcao?: string;
+  licitacao?: string;
+  contrato?: string;
+  cnpj?: string;
+  valor?: string;
 }
 
 /* -------------------------------------------------------------------------- */
 /* Utilidades                                                                  */
 /* -------------------------------------------------------------------------- */
 
-function brNumber(s: string | undefined): number {
+export function brNumber(s: string | undefined): number {
   if (!s) return 0;
   const n = parseFloat(s.replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
 }
 
-function parts(): Record<string, string> {
+export function parts(): Record<string, string> {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: TZ,
     year: 'numeric',
@@ -217,12 +221,12 @@ export function anosDisponiveis(): number[] {
 /* Acesso a API                                                                */
 /* -------------------------------------------------------------------------- */
 
-async function buscarBruto(ano: number): Promise<RawEmpenho[] | null> {
+export async function buscarBruto(entidade: string, ano: number): Promise<RawEmpenho[] | null> {
   const p = parts();
   const fim = ano === Number(p.year) ? `${p.day}${p.month}${ano}` : `3112${ano}`;
   try {
-    const r = await fetch(`${BASE}/despesas/${ENTIDADE}/0101${ano}/${fim}`, {
-      headers: { Authorization: authHeader(), Accept: 'application/json' },
+    const r = await fetch(`${BASE_API}/despesas/${entidade}/0101${ano}/${fim}`, {
+      headers: { Authorization: authHeader() },
     });
     if (r.status === 404) return [];
     if (!r.ok) return null;
@@ -233,69 +237,41 @@ async function buscarBruto(ano: number): Promise<RawEmpenho[] | null> {
   }
 }
 
-const memoriaDetalhes = new Map<string, Detalhe | null>();
-
-/** Teto de consultas novas ao portal por visita; o resto e' concluido nas proximas (detalhes ficam em cache). */
-const SIMULTANEAS = 5;
-
-async function buscarDetalhe(locals: App.Locals, ano: string, numero: string, orcamento: { restante: number }): Promise<Detalhe | null> {
-  const chave = `${ano}/${numero}`;
-  if (memoriaDetalhes.has(chave)) return memoriaDetalhes.get(chave) ?? null;
-
-  const cache = locals.runtime?.caches?.default;
-  const cacheUrl = `https://cache.onioaquense.com/transparencia/detalhe/${COD_CAMARA}/${chave}`;
-  if (cache) {
+/** Le o detalhe de um empenho. null = falha temporaria; 'nada' = o portal nao conhece esse empenho nesse orgao. */
+export async function buscarDetalheApi(entidade: string, ano: string, numero: string, orgao: string): Promise<Detalhe | null | 'nada'> {
+  let r: Response | null = null;
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
     try {
-      const hit = await cache.match(cacheUrl);
-      if (hit) {
-        const d = (await hit.json()) as Detalhe;
-        memoriaDetalhes.set(chave, d);
-        return d;
-      }
+      r = await fetch(`${BASE_API}/empenho/${entidade}/${numero}/${ano}/${orgao}`, { headers: { Authorization: authHeader() } });
+      if (r.ok || r.status === 404) break;
     } catch {
-      /* segue */
+      r = null;
     }
+    await new Promise((ok) => setTimeout(ok, 300 * (tentativa + 1)));
   }
-
-  if (orcamento.restante <= 0) return null;
-  orcamento.restante -= 1;
-
+  if (!r) return null;
+  if (r.status === 404) return 'nada';
+  if (!r.ok) return null;
   try {
-    let r: Response | null = null;
-    for (let tentativa = 0; tentativa < 2; tentativa++) {
-      try {
-        r = await fetch(`${BASE}/empenho/${ENTIDADE}/${numero}/${ano}/${COD_CAMARA}`, {
-          headers: { Authorization: authHeader(), Accept: 'application/json' },
-        });
-        if (r.ok || r.status === 404) break;
-      } catch {
-        r = null;
-      }
-      await new Promise((ok) => setTimeout(ok, 300 * (tentativa + 1)));
-    }
-    if (!r || !r.ok) return null;
-    const j = (await r.json()) as { detalhesempenho?: { natureza_despesa?: string; historico?: string }[] };
+    const j = (await r.json()) as { detalhesempenho?: Record<string, string>[] };
     const d = j.detalhesempenho?.[0];
-    if (!d) return null;
-    const detalhe: Detalhe = { natureza: d.natureza_despesa ?? '', historico: (d.historico ?? '').replace(/\s+/g, ' ').trim() };
-    memoriaDetalhes.set(chave, detalhe);
-    if (cache) {
-      try {
-        const res = new Response(JSON.stringify(detalhe), {
-          headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${DETALHE_TTL}` },
-        }) as unknown as Parameters<typeof cache.put>[1];
-        await cache.put(cacheUrl, res);
-      } catch {
-        /* segue */
-      }
-    }
-    return detalhe;
+    if (!d) return 'nada';
+    return {
+      natureza: d.natureza_despesa ?? '',
+      historico: (d.historico ?? '').replace(/s+/g, ' ').trim(),
+      unidade: d.unidade_orcamentaria ?? '',
+      funcao: d.funcao ?? '',
+      licitacao: d.licitacao ?? '',
+      contrato: d.contrato ?? '',
+      cnpj: d.cpf_cnpj ?? '',
+      valor: d.valor ?? '',
+    };
   } catch {
     return null;
   }
 }
 
-async function emLotes<T, R>(itens: T[], simultaneos: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+export async function emLotes<T, R>(itens: T[], simultaneos: number, fn: (x: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(itens.length);
   let i = 0;
   await Promise.all(
@@ -331,7 +307,7 @@ function diasDe(historico: string, valor: number): number {
   return valor > 1500 ? 2 : 1;
 }
 
-function semAcento(t: string): string {
+export function semAcento(t: string): string {
   return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
@@ -490,23 +466,15 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
   };
 }
 
-/** Resumo das despesas de um ano. Devolve null se o portal estiver fora do ar. */
-export async function getDespesasAno(locals: App.Locals, ano: number, limite = 0): Promise<ResumoAno | null> {
-  const cache = locals.runtime?.caches?.default;
-  const cacheUrl = `https://cache.onioaquense.com/transparencia/despesas/${CACHE_VERSION}/${ENTIDADE}/${ano}`;
+/** Calcula o resumo da Camara a partir dos dados brutos e dos detalhes ja guardados. */
+export function montarResumoCamara(ano: number, bruto: RawEmpenho[], detalhes: Record<string, Detalhe>): ResumoAno {
+  const mapa = new Map<string, Detalhe | null>();
+  for (const x of bruto) mapa.set(`${x.ano}/${x.numero_empenho}`, detalhes[`${x.ano}/${x.numero_empenho}`] ?? null);
+  return resumir(ano, bruto, mapa);
+}
 
-  if (cache) {
-    try {
-      const hit = await cache.match(cacheUrl);
-      if (hit) return (await hit.json()) as ResumoAno;
-    } catch {
-      /* sem cache */
-    }
-  }
-
-  const bruto = await buscarBruto(ano);
-  if (!bruto) return null;
-
+/** Empenhos da Camara que precisam de detalhe (pessoas fisicas, exceto folha). */
+export function alvosCamara(bruto: RawEmpenho[]): RawEmpenho[] {
   const vistos = new Set<string>();
   const alvos: RawEmpenho[] = [];
   for (const x of bruto) {
@@ -515,29 +483,7 @@ export async function getDespesasAno(locals: App.Locals, ano: number, limite = 0
     vistos.add(key);
     if ((x.credor_cnpj ?? '').length === 11 && !/FOLHA/i.test(x.credor_nome ?? '')) alvos.push(x);
   }
-  const montar = async (restante: number) => {
-    const orcamento = { restante };
-    const lidos = await emLotes(alvos, SIMULTANEAS, (x) => buscarDetalhe(locals, x.ano, x.numero_empenho, orcamento));
-    const detalhes = new Map<string, Detalhe | null>();
-    alvos.forEach((x, i) => detalhes.set(`${x.ano}/${x.numero_empenho}`, lidos[i]));
-    return resumir(ano, bruto, detalhes);
-  };
-
-  // Caminho rapido: usa so detalhes ja guardados (nenhuma consulta nova ao portal).
-  // O que falta e' completado pelo navegador via /api/transparencia/completar.
-  const resumo = await montar(limite);
-
-  if (cache && resumo.semDetalhe === 0) {
-    try {
-      const res = new Response(JSON.stringify(resumo), {
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${CACHE_TTL}` },
-      }) as unknown as Parameters<typeof cache.put>[1];
-      await cache.put(cacheUrl, res);
-    } catch {
-      /* segue sem cache */
-    }
-  }
-  return resumo;
+  return alvos;
 }
 
 /* -------------------------------------------------------------------------- */

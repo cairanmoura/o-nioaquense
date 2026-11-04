@@ -19,7 +19,7 @@ const arcos = items
   });
 ---
 
-<div class="flex flex-col items-center gap-5 sm:flex-row">
+<div class="flex min-w-0 flex-col items-center gap-5">
   <div class="relative h-44 w-44 shrink-0">
     <svg viewBox="0 0 42 42" class="h-full w-full" role="img" aria-label={`Composição do gasto: ${items.map((i) => `${i.label} ${((i.value / total) * 100).toFixed(0)}%`).join(', ')}`}>
       <circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--color-line)" stroke-width="6"></circle>
@@ -32,13 +32,15 @@ const arcos = items
       {legendaCentro && <span class="text-[11px] text-ink-soft">{legendaCentro}</span>}
     </div>
   </div>
-  <ul class="w-full space-y-2">
+  <ul class="w-full min-w-0 space-y-2.5">
     {items.map((i) => (
-      <li class="flex items-center gap-3 text-sm">
+      <li class="flex min-w-0 items-center gap-3 text-sm">
         <span class="h-3 w-3 shrink-0 rounded-[2px]" style={`background:${i.color}`}></span>
-        <span class="min-w-0 flex-1 text-ink">{i.label}</span>
-        <span class="shrink-0 font-semibold tabular-nums text-ink">{brl(i.value)}</span>
-        <span class="w-10 shrink-0 text-right text-xs tabular-nums text-ink-soft">{((i.value / total) * 100).toFixed(0)}%</span>
+        <span class="min-w-0 flex-1 break-words text-ink">{i.label}</span>
+        <span class="shrink-0 text-right">
+          <span class="block font-semibold tabular-nums text-ink">{brl(i.value)}</span>
+          <span class="block text-xs tabular-nums text-ink-soft">{((i.value / total) * 100).toFixed(0)}%</span>
+        </span>
       </li>
     ))}
   </ul>
