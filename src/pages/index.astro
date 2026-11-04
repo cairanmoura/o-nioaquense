@@ -138,11 +138,11 @@ const transparencia = feed.articles
   <div class="container-editorial pt-4 sm:pt-6">
     <h1 class="sr-only">{activeScope ? SCOPE_LABEL[activeScope] : 'O Nioaquense, notícias de Nioaque (MS)'}</h1>
 
-    {/* Categorias: uma unica linha rolavel no mobile. Ativo = verde/branco; inativo = branco/escuro. */}
+    {/* Categorias: uma unica linha rolavel no mobile. Cada botao leva a /materias com o filtro; nenhum vem marcado na Home. */}
     <nav class="no-scrollbar -mx-4 mt-3 flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 sm:mx-0 sm:px-0" aria-label="Editorias">
       {
         ['nioaque', 'regiao', 'ms', 'brasil', 'mundo'].map((scope) => {
-          const isActive = (activeScope ?? 'nioaque') === scope;
+          const isActive = activeScope === scope;
           return (
             <a
               href={`/materias?local=${scope}`}
@@ -159,16 +159,6 @@ const transparencia = feed.articles
         })
       }
     </nav>
-
-    {/* Filete A1 "Degraus" (sistema de design): logo abaixo das pilulas de editoria */}
-    <div class="filete-degraus mt-3" aria-hidden="true">
-      <svg width="64" height="14" viewBox="0 0 64 14" class="shrink-0">
-        <rect x="0" y="0" width="64" height="4" fill="#166A34" />
-        <rect x="8" y="5" width="48" height="4" fill="#fff" stroke="#BDB6A3" />
-        <rect x="16" y="10" width="32" height="4" fill="#D92323" />
-      </svg>
-      <div class="ln"><i></i><i></i></div>
-    </div>
 
     {/* Primeira dobra: Bento 50% / 25% / 25% (desktop). Mobile: manchete + foto primeiro. */}
     <div class="grid gap-5 pt-4 sm:pt-5 lg:grid-cols-[2fr_1fr_1fr] lg:items-start">
