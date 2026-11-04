@@ -7,6 +7,7 @@ import ChartCalor from '../components/transparencia/ChartCalor.astro';
 import PrefeituraView from '../components/transparencia/PrefeituraView.astro';
 import { createServiceClient } from '../lib/supabase/server';
 import { lerChave } from '../lib/transparencia-store';
+import type { ResumoReceitas } from '../lib/receitas';
 import { chaveResumo, chaveLista, anosPrefeitura } from '../lib/transparencia-job';
 import type { ResumoPref, PrefEmpenho } from '../lib/prefeitura';
 import {
@@ -111,6 +112,7 @@ const slugSel = Astro.url.searchParams.get('vereador') ?? '';
 const sb = createServiceClient(Astro.locals);
 let resumo: ResumoAno | null = null;
 let resumoPref: ResumoPref | null = null;
+let receitas: ResumoReceitas | null = null;
 let atualizadoEm: string | null = null;
 if (sb) {
   if (entidade === 'camara') {
@@ -121,6 +123,7 @@ if (sb) {
     const r = await lerChave<ResumoPref>(sb, chaveResumo('prefeitura', ano));
     resumoPref = r?.valor ?? null;
     atualizadoEm = r?.atualizadoEm ?? null;
+    receitas = (await lerChave<ResumoReceitas>(sb, chaveResumo('receitas', ano)))?.valor ?? null;
   }
 }
 const orgaoSel = Astro.url.searchParams.get('orgao') ?? '';
@@ -248,6 +251,7 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
     {entidade === 'prefeitura' && (
       <PrefeituraView
         resumo={resumoPref}
+        receitas={receitas}
         ano={ano}
         anos={anos}
         q={q}

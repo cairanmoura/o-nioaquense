@@ -1,0 +1,26 @@
+---
+/**
+ * Foto redonda de autoridade, enquadrada no rosto (ver src/lib/foto-foco.ts).
+ * Sem foco cadastrado, cai no recorte padrao (centro, ancorado no topo).
+ */
+import { FOCOS, recorte } from '../../lib/foto-foco';
+
+interface Props {
+  foto: string | null;
+  nome: string;
+  tam?: number;
+}
+const { foto, nome, tam = 72 } = Astro.props;
+const foco = foto ? FOCOS[foto] : null;
+const r = foco ? recorte(foco) : null;
+const estilo = foco && r ? `width:${(foco.w / r.s) * 100}%;height:${(foco.h / r.s) * 100}%;left:${(-r.sx / r.s) * 100}%;top:${(-r.sy / r.s) * 100}%` : '';
+---
+
+<span class="relative block shrink-0 overflow-hidden rounded-full border-2 border-pedra bg-foto-reserva" style={`width:${tam}px;height:${tam}px`}>
+  {
+    foto && foco && (
+      <img src={foto} alt={`Foto de ${nome}`} width={foco.w} height={foco.h} loading="lazy" decoding="async" class="absolute max-w-none" style={estilo} />
+    )
+  }
+  {foto && !foco && <img src={foto} alt={`Foto de ${nome}`} width="72" height="72" loading="lazy" decoding="async" class="h-full w-full object-cover object-top" />}
+</span>

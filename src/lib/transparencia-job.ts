@@ -18,6 +18,7 @@ import {
   type Detalhe,
   type RawEmpenho,
 } from './transparencia';
+import { buscarReceitas } from './receitas';
 import { chaveEmpenho, ENTIDADE_PREFEITURA, montarResumoPref, orgaoDe, ORGAOS_TENTAR } from './prefeitura';
 import { CONFIG_PADRAO, dataLocal, devidaHoje, gravarChave, lerChave, type ConfigAtualizacao } from './transparencia-store';
 
@@ -37,7 +38,7 @@ const LOTE = 20;
 const SIMULTANEAS = 5;
 const MAX_ERROS = 6;
 
-export const chaveResumo = (entidade: 'camara' | 'prefeitura', ano: number) => `resumo:${entidade}:${ano}`;
+export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas', ano: number) => `resumo:${entidade}:${ano}`;
 export const chaveLista = (ano: number) => `lista:prefeitura:${ano}`;
 
 export function anosCamara(): number[] {
@@ -61,12 +62,13 @@ export async function lerConfig(sb: SupabaseClient): Promise<ConfigAtualizacao> 
 /** Comeca uma rodada de atualizacao e enfileira o primeiro passo. */
 export async function iniciarRodada(sb: SupabaseClient, queue: any, origem: Estado['origem'], completa = false): Promise<Estado> {
   const atual = anoAtual();
-  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`];
+  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`];
   const existentes = new Set(
     ((await sb.from('transparencia_cache').select('key').like('key', 'resumo:%')).data ?? []).map((r: { key: string }) => r.key),
   );
   for (const a of anosCamara()) if (a !== atual && (completa || !existentes.has(chaveResumo('camara', a)))) alvos.push(`camara:${a}`);
   for (const a of anosPrefeitura()) if (a !== atual && (completa || !existentes.has(chaveResumo('prefeitura', a)))) alvos.push(`prefeitura:${a}`);
+  for (const a of anosPrefeitura()) if (a !== atual && (completa || !existentes.has(chaveResumo('receitas', a)))) alvos.push(`receitas:${a}`);
   const prev = await lerEstado(sb);
   const est: Estado = {
     pendentes: alvos,
@@ -153,6 +155,19 @@ export async function passoTransparencia(sb: SupabaseClient): Promise<{ continua
     await gravarChave(sb, 'estado', est);
     return { continua: est.pendentes.length > 0, atraso: 300, info: msg };
   };
+
+  // Receitas: vem do Tesouro Nacional (SICONFI), sem detalhes por empenho: um passo so
+  if (nome === 'receitas') {
+    const rec = await buscarReceitas(ano);
+    if (!rec) return falhar('Tesouro Nacional fora do ar');
+    await gravarChave(sb, chaveResumo('receitas', ano), rec);
+    est.pendentes.shift();
+    est.erros = 0;
+    est.ultimoErro = undefined;
+    if (!est.pendentes.length) est.fimEm = new Date().toISOString();
+    await gravarChave(sb, 'estado', est);
+    return { continua: est.pendentes.length > 0, atraso: 1, info: `receitas ${ano}: pronto` };
+  }
 
   const bruto = await buscarBruto(idEnt, ano);
   if (!bruto) return falhar('portal fora do ar');
