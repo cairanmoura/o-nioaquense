@@ -1,7 +1,7 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import MainLayout from '../layouts/MainLayout.astro';
-import { getHomeFeed } from '../lib/content';
+import { getArticleIndex, getArticlesByIds, getHomeFeed } from '../lib/content';
 import { CATEGORIES, norm } from '../lib/categories';
 import { PUBLIC_SCOPES, SCOPE_NAMES } from '../lib/geo';
 import { REGION_CITIES } from '../lib/rss';
@@ -18,29 +18,36 @@ const url = Astro.url;
 const local = url.searchParams.get('local') ?? '';
 const tema = url.searchParams.get('tema') ?? '';
 const tag = (url.searchParams.get('tag') ?? '').trim();
+const busca = (url.searchParams.get('q') ?? '').trim().slice(0, 80);
 const page = Math.max(1, Number(url.searchParams.get('pagina') ?? '1') || 1);
 
-const feed = await getHomeFeed(Astro.locals);
+const [feed, index] = await Promise.all([getHomeFeed(Astro.locals), getArticleIndex(Astro.locals)]);
 const profilesById = new Map<string, Profile>(feed.profiles.map((p) => [p.id, p]));
 const authorOf = (id: string) => profilesById.get(id) ?? null;
 
 const regionSet = new Set(REGION_CITIES.map((c) => norm(c)));
-const isRegiao = (a: (typeof feed.articles)[number]) =>
+const isRegiao = (a: (typeof index)[number]) =>
   a.scope === 'regiao' || a.local_tags.some((t) => regionSet.has(norm(t)));
 
-const matchLocal = (a: (typeof feed.articles)[number], l: string) => (l === 'regiao' ? isRegiao(a) : a.scope === l);
+const matchLocal = (a: (typeof index)[number], l: string) => (l === 'regiao' ? isRegiao(a) : a.scope === l);
 const themeObj = CATEGORIES.find((c) => c.slug === tema) ?? null;
-const matchTema = (a: (typeof feed.articles)[number]) =>
+const matchTema = (a: (typeof index)[number]) =>
   !themeObj || [norm(themeObj.label), ...themeObj.synonyms.map(norm)].includes(norm(a.category_label));
-const matchTag = (a: (typeof feed.articles)[number]) =>
+const qWords = norm(busca).split(/\s+/).filter(Boolean);
+const matchQ = (a: (typeof index)[number]) => {
+  if (!qWords.length) return true;
+  const hay = norm(`${a.title} ${a.subtitle ?? ''} ${a.category_label ?? ''} ${(a.tags ?? []).join(' ')} ${(a.local_tags ?? []).join(' ')}`);
+  return qWords.every((w) => hay.includes(w));
+};
+const matchTag = (a: (typeof index)[number]) =>
   !tag || [...(a.tags ?? []), ...(a.local_tags ?? [])].some((t) => norm(t) === norm(tag));
 
-const base = feed.articles.filter((a) => a.scope !== 'coluna' && a.scope !== 'radar_oficial');
+const base = index.filter((a) => a.scope !== 'coluna' && a.scope !== 'radar_oficial');
 const validLocal = (PUBLIC_SCOPES as string[]).includes(local) ? local : '';
 
 // Contagens para os chips (cada eixo considera o filtro do outro)
-const byTema = base.filter(matchTema).filter(matchTag);
-const byLocal = base.filter((a) => (validLocal ? matchLocal(a, validLocal) : true)).filter(matchTag);
+const byTema = base.filter(matchTema).filter(matchTag).filter(matchQ);
+const byLocal = base.filter((a) => (validLocal ? matchLocal(a, validLocal) : true)).filter(matchTag).filter(matchQ);
 const localCount = (l: string) => byTema.filter((a) => matchLocal(a, l)).length;
 const themeCount = (slug: string) => {
   const c = CATEGORIES.find((x) => x.slug === slug)!;
@@ -51,14 +58,18 @@ const themeCount = (slug: string) => {
 const filtered = base
   .filter((a) => (validLocal ? matchLocal(a, validLocal) : true))
   .filter(matchTema)
-  .filter(matchTag);
+  .filter(matchTag)
+  .filter(matchQ);
 const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 const current = Math.min(page, totalPages);
-const items = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+const items = await getArticlesByIds(
+  Astro.locals,
+  filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE).map((a) => a.id),
+);
 
 const href = (patch: Record<string, string | null>) => {
   const q = new URLSearchParams();
-  const next = { local: validLocal, tema: themeObj?.slug ?? '', tag, ...patch };
+  const next = { local: validLocal, tema: themeObj?.slug ?? '', tag, q: busca, ...patch };
   for (const [k, v] of Object.entries(next)) if (v) q.set(k, v);
   const s = q.toString();
   return s ? `/materias?${s}` : '/materias';
@@ -71,7 +82,7 @@ const pageHref = (n: number) => {
   return s ? `/materias?${s}` : '/materias';
 };
 
-const title = [validLocal && SCOPE_NAMES[validLocal], themeObj?.label, tag && `#${tag}`].filter(Boolean).join(' · ') || 'Matérias';
+const title = [validLocal && SCOPE_NAMES[validLocal], themeObj?.label, tag && `#${tag}`, busca && `“${busca}”`].filter(Boolean).join(' · ') || 'Matérias';
 const chip = (active: boolean) =>
   `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[4px] border px-3 py-1.5 text-xs font-semibold transition-colors ${
     active ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green'
@@ -88,11 +99,20 @@ const chip = (active: boolean) =>
       <h1 class="mt-1 text-headline font-semibold leading-tight text-ink">{title}</h1>
       <p class="mt-2 text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">
         {filtered.length} {filtered.length === 1 ? 'matéria' : 'matérias'}
-        {(validLocal || themeObj || tag) && (
+        {(validLocal || themeObj || tag || busca) && (
           <a href="/materias" class="ml-3 normal-case tracking-normal text-nioaque-red-dark underline-offset-2 hover:underline">Limpar filtros</a>
         )}
       </p>
     </header>
+
+    <form action="/materias" method="get" role="search" class="mt-5 flex max-w-xl items-center gap-2 rounded-[4px] border border-pedra bg-branco px-4 py-1 focus-within:border-nioaque-green">
+      {validLocal && <input type="hidden" name="local" value={validLocal} />}
+      {themeObj && <input type="hidden" name="tema" value={themeObj.slug} />}
+      {tag && <input type="hidden" name="tag" value={tag} />}
+      <label for="materias-busca" class="sr-only">Buscar em todas as matérias</label>
+      <input id="materias-busca" type="search" name="q" value={busca} maxlength="80" placeholder="Buscar em todas as matérias…" class="min-h-[44px] w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/80 focus:outline-none" />
+      <button type="submit" class="min-h-[44px] shrink-0 rounded-[4px] bg-nioaque-green px-4 text-[11px] font-bold uppercase tracking-[0.1em] text-white hover:bg-nioaque-green-dark">Buscar</button>
+    </form>
 
     <section class="mt-5 space-y-4" aria-label="Filtros">
       <div>

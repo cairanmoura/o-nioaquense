@@ -167,6 +167,8 @@ const LIST_COLUMNS =
   'id,title,subtitle,slug,summary_bullets,cover_image_url,cover_image_caption,scope,local_tags,category_label,tags,is_breaking,is_featured,featured_until,author_name,author_id,status,views_count,published_at,created_at,updated_at,source_name,source_url';
 /** Teto de materias nas listas: as mais recentes bastam para home, filtros e busca. */
 const FEED_LIMIT = 200;
+const RARE_SCOPES = ['nioaque', 'regiao', 'ms'] as const;
+const RARE_SCOPE_LIMIT = 20;
 
 export interface HomeFeed {
   articles: Article[];
@@ -254,13 +256,27 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
     // O plantao e' o de hoje no fuso de Nioaque, nao o ultimo cadastrado.
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Campo_Grande' }).format(new Date());
 
-    const [articles, profiles, utilities, ads] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [articlesBase, rareScopes, profiles, utilities, ads] = await Promise.all([
       query(
         supabase,
         'articles',
-        (q) => q.eq('status', 'published').lte('published_at', new Date().toISOString()).order('published_at', { ascending: false }).limit(FEED_LIMIT),
+        (q) => q.eq('status', 'published').lte('published_at', nowIso).order('published_at', { ascending: false }).limit(FEED_LIMIT),
         normalizeArticle,
         LIST_COLUMNS,
+      ),
+      // Editorias com pouco volume (Nioaque, Regiao, MS) somem dos 200 mais recentes quando
+      // Brasil/Mundo publicam muito: garante as mais recentes de cada uma.
+      Promise.all(
+        RARE_SCOPES.map((scope) =>
+          query(
+            supabase,
+            'articles',
+            (q) => q.eq('status', 'published').eq('scope', scope).lte('published_at', nowIso).order('published_at', { ascending: false }).limit(RARE_SCOPE_LIMIT),
+            normalizeArticle,
+            LIST_COLUMNS,
+          ),
+        ),
       ),
       query(supabase, 'profiles', (q) => q.eq('active', true), normalizeProfile),
       query(
@@ -279,6 +295,16 @@ export async function getHomeFeed(locals: App.Locals): Promise<HomeFeed> {
       ),
     ]);
 
+    let articles = articlesBase;
+    if (articles && articles.length > 0) {
+      const have = new Set(articles.map((a) => a.id));
+      const extra = rareScopes.flatMap((rows) => rows ?? []).filter((a) => !have.has(a.id));
+      if (extra.length) {
+        articles = [...articles, ...extra].sort(
+          (a, b) => new Date(b.published_at ?? b.created_at).getTime() - new Date(a.published_at ?? a.created_at).getTime(),
+        );
+      }
+    }
     if (articles && articles.length > 0) {
       const adsBySlot: Partial<Record<AdSlotPosition, LocalAd>> = {};
       for (const ad of ads ?? []) {
@@ -689,4 +715,53 @@ export async function getMarketQuotes(locals: App.Locals): Promise<MarketQuote[]
   }
 
   return mockMarketQuotes;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* /materias: todas as materias publicadas (indice leve + pagina completa)      */
+/* -------------------------------------------------------------------------- */
+
+const INDEX_COLUMNS = 'id,title,subtitle,slug,scope,local_tags,category_label,tags,published_at,created_at';
+
+/**
+ * Indice leve (sem corpo, resumo nem foto) de TODAS as materias publicadas, mais novas primeiro.
+ * Serve para filtrar, contar e buscar sem o teto do feed da home.
+ */
+export async function getArticleIndex(locals: App.Locals): Promise<Article[]> {
+  const supabase = locals.supabase;
+  if (supabase) {
+    const out: Article[] = [];
+    const step = 1000;
+    for (let from = 0; from < 10000; from += step) {
+      const { data, error } = await (supabase as any)
+        .from('articles')
+        .select(INDEX_COLUMNS)
+        .eq('status', 'published')
+        .lte('published_at', new Date().toISOString())
+        .order('published_at', { ascending: false })
+        .range(from, from + step - 1);
+      if (error || !data) break;
+      out.push(...(data as Record<string, unknown>[]).map(normalizeArticle));
+      if (data.length < step) break;
+    }
+    if (out.length) return out;
+  }
+  return (await getHomeFeed(locals)).articles;
+}
+
+/** Materias completas (para os cards) dos ids pedidos, na mesma ordem. */
+export async function getArticlesByIds(locals: App.Locals, ids: string[]): Promise<Article[]> {
+  if (!ids.length) return [];
+  const supabase = locals.supabase;
+  if (supabase) {
+    const rows = await query(supabase, 'articles', (q) => q.in('id', ids), normalizeArticle, LIST_COLUMNS);
+    if (rows) {
+      const byId = new Map(rows.map((a) => [a.id, a]));
+      return ids.map((id) => byId.get(id)).filter((a): a is Article => Boolean(a));
+    }
+  }
+  const feed = await getHomeFeed(locals);
+  const byId = new Map(feed.articles.map((a) => [a.id, a]));
+  return ids.map((id) => byId.get(id)).filter((a): a is Article => Boolean(a));
 }
