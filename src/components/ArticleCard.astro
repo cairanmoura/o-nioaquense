@@ -3,6 +3,7 @@ import ArticlePills from './ArticlePills.astro';
 import CoverArt from './CoverArt.astro';
 import { formatDate, formatRelative } from '../lib/format';
 import { isPhotoCover } from '../lib/rss';
+import { imgSrcset, imgUrl } from '../lib/img';
 import { SCOPE_LABEL } from '../lib/types';
 import type { Article, Profile } from '../lib/types';
 
@@ -94,7 +95,9 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       {photo && (
         <a href={href} class="shrink-0" tabindex="-1" aria-hidden="true">
           <img
-            src={photo}
+            src={imgUrl(photo, 320)}
+            srcset={imgSrcset(photo, [320, 480])}
+            sizes="96px"
             alt=""
             width="112"
             height="78"
@@ -160,11 +163,14 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       >
         {photo ? (
           <img
-            src={photo}
+            src={imgUrl(photo, 800)}
+            srcset={imgSrcset(photo, [480, 640, 800, 1200])}
+            sizes="(min-width: 1024px) 700px, 100vw"
             alt={article.cover_image_caption ?? article.title}
             width="1200"
             height="675"
             loading="eager"
+            fetchpriority="high"
             decoding="async"
             referrerpolicy="no-referrer"
             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22%3E%3Crect width=%2216%22 height=%229%22 fill=%22%2300661E%22/%3E%3C/svg%3E'; this.onerror=null;"
@@ -205,7 +211,9 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       <a href={href} class="block overflow-hidden bg-nioaque-green-50">
         {photo ? (
           <img
-            src={photo}
+            src={imgUrl(photo, 640)}
+            srcset={imgSrcset(photo, [320, 480, 640, 800])}
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
             alt={article.cover_image_caption ?? article.title}
             width="800"
             height="450"

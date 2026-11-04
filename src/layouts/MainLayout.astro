@@ -23,6 +23,8 @@ interface Props {
   image?: string;
   /** Bloqueia a indexação (páginas internas, ex.: /admin). */
   noindex?: boolean;
+  /** Tipo Open Graph (`article` nas matérias). */
+  ogType?: 'website' | 'article';
   /** Remove a barra de serviços (ex.: páginas de campanha). */
   hideServiceBar?: boolean;
 }
@@ -33,9 +35,49 @@ const {
   image,
   noindex = false,
   hideServiceBar = false,
+  ogType = 'website',
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const origin = new URL(Astro.site ?? Astro.url.origin).origin;
+const ogImage = image ?? `${origin}/icons/icon-512.png`;
+const isHome = Astro.url.pathname === '/';
+
+// Identidade do portal para o Google (Organization + WebSite com busca interna): so na Home
+const siteJsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'NewsMediaOrganization',
+      '@id': `${origin}/#organization`,
+      name: 'O Nioaquense',
+      url: origin,
+      logo: { '@type': 'ImageObject', url: `${origin}/icons/icon-512.png`, width: 512, height: 512 },
+      description: 'Portal de notícias hiperlocal de Nioaque (MS), com cobertura de Mato Grosso do Sul e do Brasil.',
+      areaServed: { '@type': 'AdministrativeArea', name: 'Nioaque, Mato Grosso do Sul, Brasil' },
+      email: 'contato@onioaquense.com',
+      telephone: '+55-67-99820-4667',
+      founder: { '@type': 'Person', name: 'Cairan de Oliveira Moura', jobTitle: 'Jornalista responsável' },
+      publishingPrinciples: `${origin}/politica-editorial`,
+      ethicsPolicy: `${origin}/politica-editorial`,
+      masthead: `${origin}/expediente`,
+      sameAs: ['https://instagram.com/onioaquense'],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${origin}/#website`,
+      url: origin,
+      name: 'O Nioaquense',
+      inLanguage: 'pt-BR',
+      publisher: { '@id': `${origin}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${origin}/busca?q={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+});
 
 /**
  * Anuncio do topo do portal (slot "Topo do portal" do painel).
@@ -57,15 +99,20 @@ const billboard = await getHeaderBillboard(Astro.locals);
     <title>{title === 'O Nioaquense' ? title : `${title} | O Nioaquense`}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="O Nioaquense" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {image && <meta property="og:image" content={image} />}
+    <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
+    {isHome && <script type="application/ld+json" set:html={siteJsonLd} />}
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
@@ -89,8 +136,7 @@ const billboard = await getHeaderBillboard(Astro.locals);
         } catch (e) {}
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://ejlnffliojbtgpfeestj.supabase.co" />
 
     {/* Consentimento: se o leitor recusou, o AdSense serve anuncios nao personalizados */}
     <script is:inline>

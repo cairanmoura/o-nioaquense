@@ -44,7 +44,7 @@ export const mockProfiles: Profile[] = [
     column_name: 'Redacao',
     bio: 'Equipe editorial do portal. Publica o dia a dia de Nioaque, do Sul de Mato Grosso do Sul e do Brasil.',
     avatar_url: '/covers/avatar-redacao.svg',
-    social_links: { instagram: 'https://instagram.com/onioaquense', whatsapp: '5567999990000' },
+    social_links: { instagram: 'https://instagram.com/onioaquense', whatsapp: '5567998204667' },
     can_publish_directly: true,
     active: true,
   },

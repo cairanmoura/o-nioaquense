@@ -15,6 +15,7 @@ import { renderEventCards } from '../../lib/events';
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { SCOPE_LABEL } from '../../lib/types';
 import { isPhotoCover } from '../../lib/rss';
+import { imgSrcset, imgUrl } from '../../lib/img';
 import type { Profile } from '../../lib/types';
 
 /**
@@ -104,21 +105,14 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
   title={article.title}
   description={description}
   image={photoCover ?? undefined}
+  ogType="article"
 >
   {/* Metadados e Schema.org NewsArticle */}
   <Fragment slot="head">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-
-    <meta property="og:type" content="article" />
-    <meta property="og:locale" content="pt_BR" />
     <meta property="article:published_time" content={article.published_at ?? ''} />
     <meta property="article:modified_time" content={article.updated_at} />
     <meta property="article:section" content={SCOPE_LABEL[article.scope]} />
     <meta property="article:author" content={bylineName} />
-
-    <meta name="twitter:title" content={article.title} />
-    <meta name="twitter:description" content={description} />
-    {photoCover && <meta name="twitter:image" content={photoCover} />}
 
     {
       article.category_label && (
@@ -259,7 +253,9 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
     <figure class="mx-auto mt-8 max-w-4xl">
       {isPhotoCover(article.cover_image_url) ? (
         <img
-          src={article.cover_image_url}
+          src={imgUrl(article.cover_image_url, 800)}
+          srcset={imgSrcset(article.cover_image_url, [480, 640, 800, 1200])}
+          sizes="(min-width: 896px) 896px, 100vw"
           alt={article.cover_image_caption ?? article.title}
           width="1600"
           height="900"

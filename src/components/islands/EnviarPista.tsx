@@ -201,7 +201,7 @@ export default function EnviarPista() {
 
         {WHATSAPP_ATIVO && (
         <a
-          href="https://wa.me/5567999990000?text=Tenho%20uma%20pista%20para%20o%20O%20Nioaquense"
+          href="https://wa.me/5567998204667?text=Tenho%20uma%20pista%20para%20o%20O%20Nioaquense"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center rounded-[4px] border border-nioaque-green px-6 py-3 text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green transition-colors hover:bg-nioaque-green-50"

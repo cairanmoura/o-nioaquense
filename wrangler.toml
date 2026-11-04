@@ -31,6 +31,10 @@ directory = "./dist"
 [ai]
 binding = "AI"
 
+# Redimensionamento de capas na borda (src/pages/img.ts)
+[images]
+binding = "IMAGES"
+
 [observability]
 enabled = true
 
@@ -72,7 +76,7 @@ dead_letter_queue = "news-scrape-dlq"
 PUBLIC_SITE_URL = "https://onioaquense.com"
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
-PUBLIC_REDACAO_WHATSAPP = "5567999990000"
+PUBLIC_REDACAO_WHATSAPP = "5567998204667"
 
 # -----------------------------------------------------------------------------
 #  Ambiente de producao
@@ -87,10 +91,13 @@ name = "o-nioaquense"
 PUBLIC_SITE_URL = "https://onioaquense.com"
 PUBLIC_GOOGLE_ADSENSE_CLIENT = ""
 PUBLIC_ADSENSE_SLOT_DEFAULT = ""
-PUBLIC_REDACAO_WHATSAPP = "5567999990000"
+PUBLIC_REDACAO_WHATSAPP = "5567998204667"
 
 [env.production.ai]
 binding = "AI"
+
+[env.production.images]
+binding = "IMAGES"
 
 # -----------------------------------------------------------------------------
 #  R2 (imagens em WebP) e KV (cache da borda) - Etapas seguintes

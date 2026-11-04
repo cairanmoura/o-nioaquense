@@ -82,6 +82,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   /* ---------------------------------------------------------------- */
   /*  Cache da borda                                                    */
   /* ---------------------------------------------------------------- */
+  // /img (capas redimensionadas) define o proprio cache de 1 ano
+  if (pathname === '/img') return next();
+
   const policy = policyForPath(pathname);
   const cacheable = isCacheable(context.request);
 

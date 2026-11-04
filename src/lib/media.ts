@@ -70,6 +70,7 @@ export async function mirrorImageToStorage(supabase: any, url: string, referer?:
   const path = `imports/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from('covers').upload(path, img.bytes, {
     contentType: img.mime,
+    cacheControl: '31536000', // nome unico por imagem: cache de 1 ano (PageSpeed: ciclo de vida de cache)
     upsert: false,
   });
   if (error) return null;
