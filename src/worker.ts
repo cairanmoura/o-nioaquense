@@ -54,11 +54,11 @@ export function createExports(manifest: any) {
         if (job.type === 'sweep') {
           const sources = await sweepSources(supabase, !job.backfill);
           const jobs: NewsJob[] = sources.map((s) => ({ type: 'source', sourceId: s.id, backfill: job.backfill }));
-          if (new Date().getUTCMinutes() < 20) jobs.push({ type: 'quotes' });
+          if (new Date().getUTCMinutes() < 10) jobs.push({ type: 'quotes' });
           // Apify cobra por execucao: so 2x ao dia (09h e 21h UTC); a API oficial do X, a cada varredura
           const hr = new Date().getUTCHours();
           const xOn = (await supabase.from('x_columnists').select('id').eq('handle', X_FLAG_HANDLE).eq('active', true).limit(1)).data?.length;
-          if (xOn && (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 20))) jobs.push({ type: 'xposts' });
+          if (xOn && (env.X_BEARER_TOKEN || (env.APIFY_TOKEN && (hr === 9 || hr === 21) && new Date().getUTCMinutes() < 10))) jobs.push({ type: 'xposts' });
           // fontes escalonadas de 8 em 8 s: nao disparam todas juntas
           await enqueueJobs(env.NEWS_QUEUE, jobs, 8);
           try {

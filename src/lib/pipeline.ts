@@ -284,8 +284,8 @@ export function sourcePriority(s: { name?: string | null; default_scope?: string
   if (/nioaque/i.test(s.name ?? '')) return 0;
   return SOURCE_RANK[s.default_scope ?? ''] ?? 2;
 }
-/** Intervalo minimo entre buscas (min): quanto mais local a fonte, mais frequente (cron roda de 20 em 20 min). */
-const SOURCE_INTERVAL_MIN = [15, 35, 55, 55, 55];
+/** Intervalo minimo entre buscas (min): Nioaque a cada ~30 min, as demais a cada ~1 h (cron roda de 10 em 10 min). */
+const SOURCE_INTERVAL_MIN = [25, 55, 55, 55, 55];
 
 export async function sweepSources(supabase: any, onlyDue = false): Promise<{ id: string; name: string }[]> {
   let res = await supabase

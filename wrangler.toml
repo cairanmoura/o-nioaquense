@@ -40,7 +40,7 @@ invocation_logs = true
 
 # Cron: a cada 20 min so enfileira uma mensagem "sweep" (CPU ~0)
 [triggers]
-crons = ["*/20 * * * *"]
+crons = ["*/10 * * * *"]
 
 # -----------------------------------------------------------------------------
 #  Cloudflare Queues - extracao de noticias em tarefas pequenas

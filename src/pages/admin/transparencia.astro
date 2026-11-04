@@ -75,7 +75,7 @@ const sel = 'mt-1 w-full rounded-[4px] border border-pedra bg-branco px-3 py-2.5
       ? `Atualizando agora… faltam ${est.pendentes.length} conjunto(s): ${est.pendentes.join(', ')}.${est.ultimoErro ? ' Último aviso: ' + est.ultimoErro : ''}`
       : est.fimEm
         ? `Última atualização concluída em ${fmt(est.fimEm)}.${est.ultimoErro ? ' Aviso: ' + est.ultimoErro : ''}`
-        : 'Ainda não houve atualização. A primeira acontece sozinha em até 20 minutos, ou use o botão abaixo.';
+        : 'Ainda não houve atualização. A primeira acontece sozinha em até 10 minutos, ou use o botão abaixo.';
     ($('t-atualizar') as HTMLButtonElement).disabled = andamento;
     $('t-resumos').innerHTML = (d.resumos ?? []).map((r: any) => `<li>${r.key.replace('resumo:', '')} · atualizado em ${fmt(r.updated_at)}</li>`).join('');
     const c = d.config;
