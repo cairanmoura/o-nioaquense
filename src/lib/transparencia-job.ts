@@ -33,7 +33,7 @@ export interface Estado {
   ultimoErro?: string;
 }
 
-const LOTE = 40;
+const LOTE = 20;
 const SIMULTANEAS = 5;
 const MAX_ERROS = 6;
 
