@@ -67,7 +67,8 @@ const billboard = await getHeaderBillboard(Astro.locals);
     {image && <meta property="og:image" content={image} />}
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#0D4722" />
     <meta name="color-scheme" content="light dark" />
@@ -90,6 +91,21 @@ const billboard = await getHeaderBillboard(Astro.locals);
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    {/* Consentimento: se o leitor recusou, o AdSense serve anuncios nao personalizados */}
+    <script is:inline>
+      (function () {
+        try {
+          if (localStorage.getItem('cookies') === 'essenciais') {
+            window.adsbygoogle = window.adsbygoogle || [];
+            window.adsbygoogle.requestNonPersonalizedAds = 1;
+          }
+        } catch (e) {}
+      })();
+    </script>
+    {/* Google AdSense (conta do portal): codigo em todas as paginas publicas */}
+    <meta name="google-adsense-account" content="ca-pub-1935033245502339" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1935033245502339" crossorigin="anonymous"></script>
 
     {/* Slot para meta tags e JSON-LD especificos da pagina */}
     <slot name="head" />
@@ -118,10 +134,45 @@ const billboard = await getHeaderBillboard(Astro.locals);
     </main>
 
     <Footer />
+
+    {/* Aviso de cookies (LGPD): fixo no rodape da tela, nao empurra o conteudo (zero CLS) */}
+    <div
+      id="aviso-cookies"
+      hidden
+      role="region"
+      aria-label="Aviso de cookies"
+      class="fixed inset-x-0 bottom-0 z-[70] border-t border-pedra bg-branco p-4 text-ink"
+    >
+      <div class="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+        <p class="flex-1 text-sm leading-relaxed text-ink-soft">
+          Usamos cookies para o portal funcionar e para exibir anúncios do Google. Você pode aceitar os anúncios
+          personalizados ou ficar só com os essenciais.
+          <a href="/privacidade#publicidade" class="font-semibold text-nioaque-green underline">Saiba mais</a>.
+        </p>
+        <div class="flex shrink-0 gap-2">
+          <button type="button" data-cookies="essenciais" class="min-h-11 flex-1 rounded-[4px] border border-pedra px-4 text-sm font-semibold text-ink hover:border-nioaque-green sm:flex-none">Só os essenciais</button>
+          <button type="button" data-cookies="todos" class="min-h-11 flex-1 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-verde-mata sm:flex-none">Aceitar</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
 
 <script>
+  // Aviso de cookies: guarda a escolha; "essenciais" = anuncios nao personalizados.
+  const aviso = document.getElementById('aviso-cookies');
+  try {
+    if (aviso && !localStorage.getItem('cookies')) aviso.hidden = false;
+  } catch {
+    /* sem armazenamento: nao mostra o aviso */
+  }
+  aviso?.querySelectorAll<HTMLButtonElement>('[data-cookies]').forEach((b) =>
+    b.addEventListener('click', () => {
+      try { localStorage.setItem('cookies', b.dataset.cookies!); } catch {}
+      aviso.hidden = true;
+    }),
+  );
+
   // Service worker (PWA) — registra depois que a página carrega.
   if ('serviceWorker' in navigator && window.isSecureContext) {
     window.addEventListener('load', () => {

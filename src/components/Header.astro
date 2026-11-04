@@ -9,7 +9,7 @@ import { getColumnists } from '../lib/colunas';
  * Header.astro
  * -----------------------------------------------------------------------------
  * Header verde-mata (sistema de design) com barra de leitura no topo extremo.
- *   [Logo] Início · Matérias · Utilidade Pública · Anuncie ... [Clima] [Busca] [+ Mande sua notícia] [Seções]
+ *   [Logo] Início · Matérias · Utilidade · Transparência · Anuncie ... [Clima] [Busca] [+ Mande sua notícia] [Seções]
  *
  * "Seções" abre um painel compacto (dropdown ancorado ao botão, não tela cheia):
  * locais, serviços e temas. Em telas pequenas o painel também traz a navegação principal.
@@ -18,7 +18,8 @@ import { getColumnists } from '../lib/colunas';
 const principal = [
   { href: '/', label: 'Início' },
   { href: '/materias', label: 'Matérias' },
-  { href: '/utilidade', label: 'Utilidade Pública' },
+  { href: '/utilidade', label: 'Utilidade' },
+  { href: '/transparencia', label: 'Transparência' },
   { href: '/anuncie', label: 'Anuncie' },
 ];
 

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { looksLikeUrl, mirrorPhotoUrl } from '../../lib/photo-client';
 
 /**
  * QuickPublishWizard.tsx
@@ -172,6 +173,15 @@ export default function QuickPublishWizard({
     caption: article?.cover_image_caption ?? EMPTY.caption,
   }));
 
+  // Tags: texto cru (aceita virgula enquanto digita); vira lista so ao salvar.
+  const [tagsText, setTagsText] = useState(() => (article?.tags ?? []).join(', '));
+  // Capa por link e tempo de capa (so o Editor-Chefe fixa a materia na capa do site)
+  const [photoLink, setPhotoLink] = useState('');
+  const [photoMsg, setPhotoMsg] = useState('');
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [pin, setPin] = useState<'none' | 'featured' | 'breaking'>(article?.is_breaking ? 'breaking' : 'none');
+  const [pinHours, setPinHours] = useState('12');
+
   const [cover, setCover] = useState<Cover | null>(null);
   const [existingCover, setExistingCover] = useState<string | null>(
     article?.cover_image_url ?? null,
@@ -335,6 +345,31 @@ export default function QuickPublishWizard({
     wrapSelection(`<a href="${url}">`, '</a>', 'texto do link');
   }
 
+  async function useLink() {
+    const url = photoLink.trim();
+    if (!looksLikeUrl(url)) return setPhotoMsg('Cole um link que comece com http:// ou https://');
+    setPhotoBusy(true);
+    setPhotoMsg('Baixando a foto...');
+    try {
+      const saved = await mirrorPhotoUrl(url);
+      setCover(null);
+      setExistingCover(saved);
+      setPhotoLink('');
+      setPhotoMsg('Foto adicionada.');
+    } catch (err) {
+      setPhotoMsg(err instanceof Error ? err.message : 'Nao foi possivel baixar essa foto.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  const parsedTags = () =>
+    tagsText
+      .split(/[,;]/)
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+
   /* ------------------------------- submit ------------------------------- */
 
   async function publish(target: 'published' | 'pending_review' | 'draft') {
@@ -374,8 +409,11 @@ export default function QuickPublishWizard({
           cover_image_caption: form.caption,
           scope: form.scope,
           category_label: form.category,
-          tags: form.tags,
-          is_breaking: form.isBreaking,
+          tags: parsedTags(),
+          is_breaking: role === 'admin' && mode === 'create' ? pin === 'breaking' : form.isBreaking,
+          ...(role === 'admin' && mode === 'create' && pin !== 'none'
+            ? { is_featured: true, featured_until: new Date(Date.now() + Number(pinHours) * 3_600_000).toISOString() }
+            : {}),
           status: target,
         }),
       });
@@ -621,6 +659,30 @@ export default function QuickPublishWizard({
               />
             </div>
 
+            <div className="mt-3 flex gap-2">
+              <input
+                type="url"
+                inputMode="url"
+                value={photoLink}
+                onChange={(event) => setPhotoLink(event.target.value)}
+                placeholder="...ou cole o link de uma foto"
+                className="min-h-11 w-full rounded-xl border border-line bg-editorial px-4 text-sm text-ink placeholder:text-ink-muted/60 focus:border-nioaque-green focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => void useLink()}
+                disabled={photoBusy || !photoLink.trim()}
+                className="min-h-11 shrink-0 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:border-nioaque-green disabled:opacity-50"
+              >
+                {photoBusy ? 'Baixando...' : 'Usar'}
+              </button>
+            </div>
+            {photoMsg && (
+              <p className="mt-1.5 text-xs text-ink-muted" role="status" aria-live="polite">
+                {photoMsg}
+              </p>
+            )}
+
             <label className="mt-4 block">
               <span className="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
                 Legenda da foto
@@ -718,20 +780,54 @@ export default function QuickPublishWizard({
               </p>
               <input
                 type="text"
-                value={form.tags.join(', ')}
-                onChange={(event) => {
-                  const next = event.target.value
-                    .split(',')
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                    .slice(0, 10);
-                  setForm((previous) => ({ ...previous, tags: next }));
-                }}
+                value={tagsText}
+                onChange={(event) => setTagsText(event.target.value)}
+                onBlur={() => setTagsText(parsedTags().join(', '))}
                 placeholder="Saude, Obra, Enchente"
                 className="mt-1.5 w-full rounded-xl border border-line bg-editorial px-4 py-3 text-sm text-ink focus:border-nioaque-green focus:outline-none"
               />
             </label>
 
+            {role === 'admin' && mode === 'create' ? (
+              <div className="rounded-xl bg-editorial p-4">
+                <span className="font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                  Capa do site
+                </span>
+                <p className="mt-0.5 text-[11px] text-ink-muted">
+                  Fixa a materia no topo da home por um tempo. Depois do prazo, a capa volta ao rodizio automatico.
+                </p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-xs font-bold text-ink">
+                    Posicao
+                    <select
+                      value={pin}
+                      onChange={(event) => setPin(event.target.value as 'none' | 'featured' | 'breaking')}
+                      className="mt-1 min-h-11 w-full rounded-xl border border-line bg-branco px-3 text-sm font-normal text-ink"
+                    >
+                      <option value="none">Automatico (sem fixar)</option>
+                      <option value="featured">Destaque na capa</option>
+                      <option value="breaking">Urgente (capa + faixa "Ultima hora")</option>
+                    </select>
+                  </label>
+                  <label className="block text-xs font-bold text-ink">
+                    Por quanto tempo
+                    <select
+                      value={pinHours}
+                      onChange={(event) => setPinHours(event.target.value)}
+                      disabled={pin === 'none'}
+                      className="mt-1 min-h-11 w-full rounded-xl border border-line bg-branco px-3 text-sm font-normal text-ink disabled:opacity-50"
+                    >
+                      <option value="6">6 horas</option>
+                      <option value="12">12 horas</option>
+                      <option value="24">24 horas</option>
+                      <option value="48">2 dias</option>
+                      <option value="72">3 dias</option>
+                      <option value="168">7 dias</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            ) : (
             <label className="flex items-center gap-3 rounded-xl bg-editorial px-4 py-3">
               <input
                 type="checkbox"
@@ -748,6 +844,7 @@ export default function QuickPublishWizard({
                 </span>
               </span>
             </label>
+            )}
           </section>
 
           {/* Avançar no desktop: a barra fixa com "Continuar" é só mobile (lg:hidden). */}

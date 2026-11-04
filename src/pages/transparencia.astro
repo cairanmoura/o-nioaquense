@@ -1,0 +1,172 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+/**
+ * Transparência da Câmara Municipal de Nioaque.
+ * Hub visual que organiza os serviços do portal oficial (Quality Sistemas)
+ * por assunto, com linguagem simples e link direto para cada consulta.
+ */
+const BASE = 'https://web.qualitysistemas.com.br';
+const ID = '164';
+
+type Item = { titulo: string; pergunta: string; href: string; icone: string };
+type Grupo = { id: string; titulo: string; resumo: string; itens: Item[] };
+
+const ICONES: Record<string, string> = {
+  predio: 'M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M9 11h.01M15 11h.01',
+  mapa: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+  entrada: 'M12 3v12m0 0-4-4m4 4 4-4M5 21h14',
+  saida: 'M12 15V3m0 0L8 7m4-4 4 4M5 21h14',
+  contrato: 'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6',
+  aviso: 'M4 11v3a1 1 0 0 0 1 1h2l5 4V6L7 10H5a1 1 0 0 0-1 1zM16 9a4 4 0 0 1 0 6',
+  martelo: 'M14 4l6 6-3 3-6-6zM11 7 4 14l3 3 7-7M3 21h10',
+  aviao: 'M2 16l20-8-8 20-3-9zM11 12l11-4',
+  pessoas: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-2a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8',
+  dinheiro: 'M3 7h18v10H3zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM7 10v.01M17 14v.01',
+  balanco: 'M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z',
+  grafico: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  carro: 'M5 17h14M5 17a2 2 0 1 0 4 0m6 0a2 2 0 1 0 4 0M3 13l2-6h14l2 6v4H3zM3 13h18',
+  info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 11v5M12 8v.01',
+  doc: 'M7 3h8l4 4v14H7zM15 3v4h4',
+  chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
+  cadeira: 'M6 4h12v6H6zM4 10h16v3H4zM7 13v7M17 13v7',
+};
+
+const grupos: Grupo[] = [
+  {
+    id: 'dinheiro',
+    titulo: 'Para onde vai o dinheiro',
+    resumo: 'O que a Câmara arrecada, o que gasta e quanto foi planejado para o ano.',
+    itens: [
+      { titulo: 'Receitas', pergunta: 'De onde vem o dinheiro?', href: `${BASE}/receitas/${ID}`, icone: 'entrada' },
+      { titulo: 'Despesas', pergunta: 'No que o dinheiro foi gasto?', href: `${BASE}/despesas/${ID}`, icone: 'saida' },
+      { titulo: 'Planejamento orçamentário', pergunta: 'Qual é o plano do ano? PPA, LDO e LOA.', href: `${BASE}/planejamento-orcamentario/${ID}`, icone: 'grafico' },
+      { titulo: 'Contas públicas', pergunta: 'Balancetes e relatórios do Tribunal de Contas.', href: `${BASE}/balanco-anual/${ID}`, icone: 'balanco' },
+      { titulo: 'RGF e RREO', pergunta: 'Relatórios fiscais e pareceres do TCE.', href: `${BASE}/rgf-rreo/${ID}`, icone: 'doc' },
+    ],
+  },
+  {
+    id: 'compras',
+    titulo: 'Compras e contratos',
+    resumo: 'Quem vende para a Câmara, por quanto e em quais condições.',
+    itens: [
+      { titulo: 'Avisos de licitações', pergunta: 'Que disputas estão abertas agora?', href: `${BASE}/aviso-de-licitacoes/${ID}`, icone: 'aviso' },
+      { titulo: 'Licitações', pergunta: 'Editais, propostas e resultados.', href: `${BASE}/licitacoes/${ID}`, icone: 'martelo' },
+      { titulo: 'Contratos', pergunta: 'Quem foi contratado e por quanto.', href: `${BASE}/contratos/${ID}`, icone: 'contrato' },
+      { titulo: 'Controle patrimonial', pergunta: 'Bens, frota e inventário.', href: `${BASE}/controle-patrimonial/${ID}`, icone: 'carro' },
+    ],
+  },
+  {
+    id: 'pessoal',
+    titulo: 'Servidores e salários',
+    resumo: 'Quanto custa a equipe e quanto os servidores recebem.',
+    itens: [
+      { titulo: 'Folha de pagamento', pergunta: 'Quanto cada servidor recebe por mês.', href: `${BASE}/folha-de-pagamento/${ID}`, icone: 'dinheiro' },
+      { titulo: 'Cargos e salários', pergunta: 'Quais são os cargos e as faixas salariais.', href: `${BASE}/cargos-e-salarios/${ID}`, icone: 'cadeira' },
+      { titulo: 'Diárias e passagens', pergunta: 'Gastos com viagens a serviço.', href: `${BASE}/diarias-e-passagens/${ID}`, icone: 'aviao' },
+    ],
+  },
+  {
+    id: 'instituicao',
+    titulo: 'Conheça a Câmara',
+    resumo: 'Quem é quem, onde fica e como funciona.',
+    itens: [
+      { titulo: 'Dados da entidade', pergunta: 'Gestor, unidades e horário de funcionamento.', href: `${BASE}/dados-entidade/${ID}`, icone: 'predio' },
+      { titulo: 'Legislação', pergunta: 'Leis e normas do município.', href: `${BASE}/legislacao`, icone: 'doc' },
+      { titulo: 'Dados abertos', pergunta: 'Baixe os dados para analisar.', href: `${BASE}/dados-abertos`, icone: 'grafico' },
+      { titulo: 'Mapa do portal', pergunta: 'Veja tudo o que existe no portal oficial.', href: `${BASE}/mapa_portal/${ID}`, icone: 'mapa' },
+    ],
+  },
+];
+
+const atalhos = [
+  { titulo: 'Licitações abertas', href: `${BASE}/aviso-de-licitacoes/${ID}`, icone: 'aviso' },
+  { titulo: 'Folha de pagamento', href: `${BASE}/folha-de-pagamento/${ID}`, icone: 'dinheiro' },
+  { titulo: 'Despesas', href: `${BASE}/despesas/${ID}`, icone: 'saida' },
+  { titulo: 'Contratos', href: `${BASE}/contratos/${ID}`, icone: 'contrato' },
+];
+
+const total = grupos.reduce((n, g) => n + g.itens.length, 0);
+---
+
+<MainLayout
+  title="Transparência da Câmara de Nioaque"
+  description="Receitas, despesas, licitações, contratos e folha de pagamento da Câmara Municipal de Nioaque, organizados por assunto e com link direto para cada consulta."
+>
+  <div class="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
+    <header class="mt-8 mb-6 border-b-2 border-nioaque-green pb-6">
+      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">Câmara Municipal de Nioaque</p>
+      <h1 class="mt-1 font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">Transparência</h1>
+      <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-soft">
+        O dinheiro público é de todos. Aqui você encontra, por assunto, as contas da Câmara de Nioaque: o que entra, o que sai, quem foi contratado e quanto recebem os servidores.
+      </p>
+    </header>
+
+    <section aria-labelledby="atalhos" class="mb-10">
+      <h2 id="atalhos" class="mb-3 font-editorial text-xl font-extrabold text-ink">Mais procurados</h2>
+      <ul class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {atalhos.map((a) => (
+          <li>
+            <a href={a.href} target="_blank" rel="noopener noreferrer" class="flex min-h-[72px] items-center gap-3 rounded-[4px] border border-pedra bg-branco px-3 py-3 font-semibold text-ink transition-colors hover:border-nioaque-green hover:text-nioaque-green-dark">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green text-white">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONES[a.icone]} /></svg>
+              </span>
+              <span class="text-sm leading-tight">{a.titulo}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <nav aria-label="Assuntos" class="mb-8 flex flex-wrap gap-2">
+      {grupos.map((g) => (
+        <a href={`#${g.id}`} class="inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green hover:text-nioaque-green-dark">{g.titulo}</a>
+      ))}
+    </nav>
+
+    {grupos.map((g) => (
+      <section id={g.id} aria-labelledby={`h-${g.id}`} class="mb-10 scroll-mt-24">
+        <div class="mb-3 border-l-4 border-nioaque-red pl-3">
+          <h2 id={`h-${g.id}`} class="font-editorial text-2xl font-extrabold text-ink">{g.titulo}</h2>
+          <p class="text-sm text-ink-soft">{g.resumo}</p>
+        </div>
+        <ul class="grid gap-3 sm:grid-cols-2">
+          {g.itens.map((i) => (
+            <li>
+              <a href={i.href} target="_blank" rel="noopener noreferrer" class="group flex h-full min-h-[88px] items-start gap-4 rounded-[4px] border border-pedra bg-branco p-4 transition-colors hover:border-nioaque-green">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green-50 text-nioaque-green-dark">
+                  <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONES[i.icone]} /></svg>
+                </span>
+                <span class="min-w-0">
+                  <span class="block font-editorial text-lg font-extrabold leading-tight text-ink group-hover:text-nioaque-green-dark">{i.titulo}</span>
+                  <span class="mt-1 block text-sm leading-snug text-ink-soft">{i.pergunta}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+
+    <section aria-labelledby="esic" class="rounded-[4px] bg-verde-mata p-5 text-white sm:p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="max-w-xl">
+          <h2 id="esic" class="font-editorial text-2xl font-extrabold">Não achou o que procurava?</h2>
+          <p class="mt-1 text-sm leading-relaxed text-white/90">
+            Peça a informação pelo e-SIC, o Serviço de Informação ao Cidadão. É um direito garantido pela Lei de Acesso à Informação, e a Câmara tem prazo para responder.
+          </p>
+        </div>
+        <a href={`https://esic.qualitysistemas.com.br/login/${ID}`} target="_blank" rel="noopener noreferrer" class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-[4px] bg-nioaque-red px-5 font-semibold text-white hover:bg-nioaque-red-dark">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONES.chat} /></svg>
+          Fazer um pedido (e-SIC)
+        </a>
+      </div>
+    </section>
+
+    <p class="mt-6 text-xs leading-relaxed text-ink-soft">
+      {total} consultas organizadas por O Nioaquense. Os dados são publicados e mantidos pela própria Câmara no
+      <a class="underline hover:text-nioaque-green-dark" href={`${BASE}/${ID}`} target="_blank" rel="noopener noreferrer">Portal da Transparência oficial</a>
+      (Quality Sistemas); ao clicar, você sai deste site.
+    </p>
+  </div>
+</MainLayout>

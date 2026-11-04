@@ -1,4 +1,5 @@
 ---
+import { WHATSAPP_ATIVO } from '../lib/site';
 import EnviarPistaForm from '../components/leitores/EnviarPistaForm.tsx';
 import Icon from '../components/admin/Icon.astro';
 import MainLayout from '../layouts/MainLayout.astro';
@@ -71,7 +72,8 @@ const contatoWhatsapp = `https://wa.me/${redaWhatsapp.replace(/\D/g, '')}?text=$
           }
         </ul>
 
-        {/* WhatsApp direto */}
+        {WHATSAPP_ATIVO && (
+          <>
         <div class="mt-6 rounded-[4px] bg-ink p-5">
           <p class="font-sans text-[10px] font-bold uppercase tracking-[0.16em] text-white/60">
             Prefere o WhatsApp?
@@ -91,6 +93,9 @@ const contatoWhatsapp = `https://wa.me/${redaWhatsapp.replace(/\D/g, '')}?text=$
             Chamar a redação
           </a>
         </div>
+
+          </>
+        )}
 
         {/* Exemplos */}
         <div class="mt-6">

@@ -1,3 +1,4 @@
+import { WHATSAPP_ATIVO } from '../../lib/site';
 import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '../../lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -198,6 +199,7 @@ export default function EnviarPista() {
           {status === 'sending' ? 'Enviando...' : 'Enviar pista'}
         </button>
 
+        {WHATSAPP_ATIVO && (
         <a
           href="https://wa.me/5567999990000?text=Tenho%20uma%20pista%20para%20o%20O%20Nioaquense"
           target="_blank"
@@ -206,6 +208,7 @@ export default function EnviarPista() {
         >
           Enviar pelo WhatsApp
         </a>
+        )}
       </div>
     </form>
   );

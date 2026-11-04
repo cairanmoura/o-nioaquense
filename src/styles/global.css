@@ -18,6 +18,7 @@
      para os novos valores, para as classes existentes seguirem funcionando. */
   --color-editorial: #f7f5f0; /* papel */
   --color-nioaque-white: #ffffff; /* branco (cards) */
+  --color-branco: #ffffff; /* idem: usado como bg-branco (troca no tema escuro) */
   --color-line: #e5e0d5; /* pedra */
   --color-line-strong: #bdb6a3; /* pedra-escura */
   --color-ink: #1b1f1c; /* tinta */

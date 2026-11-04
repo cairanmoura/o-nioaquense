@@ -44,6 +44,21 @@ import MainLayout from '../layouts/MainLayout.astro';
       </p>
     </section>
 
+    <section class="mb-8" id="publicidade">
+      <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Publicidade e Google AdSense</h2>
+      <p class="text-ink-soft leading-relaxed">
+        O portal exibe anúncios do Google AdSense. O Google e seus parceiros podem usar cookies para
+        veicular anúncios com base em visitas anteriores a este e a outros sites. Se você escolher
+        "Só os essenciais" no aviso de cookies, os anúncios exibidos não usam dados pessoais para
+        personalização (anúncios não personalizados). Você também pode gerenciar a personalização em
+        <a class="underline" href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>
+        e saber mais em
+        <a class="underline" href="https://policies.google.com/technologies/ads?hl=pt-BR" target="_blank" rel="noopener noreferrer">como o Google usa dados de sites parceiros</a>.
+        Você pode rever sua escolha a qualquer momento:
+        <button type="button" id="rever-cookies" class="font-semibold text-nioaque-green underline">alterar preferência de cookies</button>.
+      </p>
+    </section>
+
     <section>
       <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green mb-3">Contato</h2>
       <p class="text-ink-soft">
@@ -52,3 +67,10 @@ import MainLayout from '../layouts/MainLayout.astro';
     </section>
   </div>
 </MainLayout>
+
+<script>
+  document.getElementById('rever-cookies')?.addEventListener('click', () => {
+    try { localStorage.removeItem('cookies'); } catch {}
+    location.reload();
+  });
+</script>
