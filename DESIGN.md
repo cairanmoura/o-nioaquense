@@ -1,79 +1,34 @@
 ---
 name: O Nioaquense
-description: Design system do portal de noticias hiperlocal de Nioaque (MS)
+description: Design system do portal de noticias hiperlocal de Nioaque (MS). Fonte de verdade em design-system/project/ (README.md, tokens.json).
 colors:
-  nioaque-green: "#008026"
-  nioaque-red: "#e60000"
-  nioaque-white: "#ffffff"
-  editorial: "#faf9f6"
-  ink: "#1e293b"
-  nioaque-green-dark: "#006020"
-  nioaque-green-light: "#00a233"
-  nioaque-green-50: "#eaf6ee"
-  nioaque-green-100: "#c9e9d4"
-  nioaque-red-dark: "#b30000"
-  nioaque-red-light: "#ff2a2a"
-  nioaque-red-50: "#fdeaea"
-  ink-soft: "#475569"
-  ink-muted: "#64748b"
-  line: "#e4e2dc"
-  line-strong: "#d3d0c8"
+  papel: "#f7f5f0"
+  branco: "#ffffff"
+  pedra: "#e5e0d5"
+  pedra-escura: "#bdb6a3"
+  tinta: "#1b1f1c"
+  tinta-suave: "#4a4f4a"
+  tinta-muda: "#5c615c"
+  verde-mata: "#0d4722"
+  verde-institucional: "#166a34"
+  vermelho: "#d92323"
+  vermelho-texto: "#b01e1e"
+  mercado-fundo: "#0f291e"
+  ocre: "#d97706"
 typography:
   display:
-    fontFamily: "Newsreader, Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif"
-    fontWeight: 400
+    fontFamily: "Bitter, Georgia, 'Times New Roman', serif"
+    fontWeight: 800
   body:
-    fontFamily: "Plus Jakarta Sans, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+    fontFamily: "Chivo, 'Helvetica Neue', Arial, sans-serif"
     fontWeight: 400
 rounded:
-  card: "1rem"
+  card: "4px"
+  small: "2px"
   pill: "999px"
-icons:
-  favicon: "/icons/03-icone-bandeira-on.svg"
-  logo: "/icons/01-logo-horizontal-bandeira.svg"
-  pauta:
-    educacao: "/icons/13-pauta-educacao-livro.svg"
-    saude: "/icons/23-pauta-saude-ambulancia.svg"
-    "meio ambiente": "/icons/10-icone-serra-nioaque.svg"
-    infraestrutura: "/icons/28-pauta-obras-infraestrutura.svg"
-    cultura: "/icons/12-pauta-cultura-violao.svg"
-    economia: "/icons/21-pauta-financas-saco-dinheiro.svg"
-    estado: "/icons/25-pauta-poder-politica.svg"
-    prefeitura: "/icons/25-pauta-poder-politica.svg"
-    camara: "/icons/25-pauta-poder-politica.svg"
-    "diario oficial": "/icons/25-pauta-poder-politica.svg"
-    concursos: "/icons/27-pauta-financas-grafico.svg"
-    turismo: "/icons/11-icone-nascer-do-sol.svg"
-    cidade: "/icons/29-pauta-alerta-utilidade.svg"
-    esportes: "/icons/18-pauta-esporte-trofeu.svg"
-    default: "/icons/03-icone-bandeira-on.svg"
-components:
-  button-primary:
-    backgroundColor: "{colors.nioaque-red}"
-    textColor: "{colors.nioaque-white}"
-    rounded: "{rounded.pill}"
-    padding: "0.25rem 0.75rem"
-  button-primary-hover:
-    backgroundColor: "{colors.nioaque-red-dark}"
-  button-secondary:
-    backgroundColor: "{colors.nioaque-green}"
-    textColor: "{colors.nioaque-white}"
-    rounded: "{rounded.pill}"
-    padding: "0.25rem 0.75rem"
-  chip-pill:
-    backgroundColor: "{colors.nioaque-green}"
-    textColor: "{colors.nioaque-white}"
-    rounded: "{rounded.pill}"
-    padding: "0.25rem 0.7rem"
-  card-article:
-    backgroundColor: "{colors.nioaque-white}"
-    rounded: "{rounded.card}"
-  input-search:
-    backgroundColor: "{colors.editorial}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.pill}"
-    padding: "0.25rem 1rem"
 ---
+
+> **Atualizado em 04/11/2026:** o sistema de design oficial (Claude Design) foi importado para `design-system/project/` e aplicado ao site. As secoes abaixo sao historicas: em caso de divergencia, vale `design-system/project/README.md` e o `AGENTS.md`.
 
 # Design System: O Nioaquense
 

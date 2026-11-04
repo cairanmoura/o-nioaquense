@@ -68,9 +68,9 @@ function pickIcon(categoryLabel: string | null, scope: string): string | null {
   return icons[h % icons.length] ?? null;
 }
 
-const BG_COLORS = ['#00661E', '#008026', '#1E293B'];
+const BG_COLORS = ['#166A34', '#166A34', '#1B1F1C'];
 const bg = BG_COLORS[h % BG_COLORS.length];
-const bandColor = bg === '#1E293B' ? '#008026' : '#1E293B';
+const bandColor = bg === '#1B1F1C' ? '#166A34' : '#1B1F1C';
 
 const rotulo = label.trim();
 const EDITORIAS = new Set([
@@ -100,7 +100,7 @@ const iconPath = pickIcon(label, scope);
 >
   <rect width="1200" height="675" fill={bg} />
   <rect y="615" width="1200" height="60" fill={bandColor} />
-  <rect y="615" width="1200" height="8" fill="#E60000" />
+  <rect y="615" width="1200" height="8" fill="#D92323" />
 
   {/* Cruz latina da bandeira, em branco */}
   <g fill="#FFFFFF" opacity="0.18">

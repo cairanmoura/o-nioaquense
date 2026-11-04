@@ -7,13 +7,13 @@ const session = Astro.locals.adminUser;
 if (!session) return Astro.redirect('/admin/login');
 if (!isAdmin(session)) return Astro.redirect('/admin');
 
-const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm';
+const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 text-sm';
 const lbl = 'block text-xs font-bold text-ink';
 ---
 
 <AdminLayout title="Importar por link" subtitle="Cole links, reescreva com IA e publique">
   <div class="mx-auto max-w-4xl space-y-6">
-    <section class="rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section class="rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
       <header class="mb-3">
         <h2 class="text-sm font-extrabold text-ink">Colar links de notícias</h2>
         <p class="mt-1 text-xs leading-relaxed text-ink-muted">
@@ -23,7 +23,7 @@ const lbl = 'block text-xs font-bold text-ink';
       </header>
 
       <form id="curate" class="space-y-3">
-        <textarea id="urls" rows="5" placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...'} class="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm leading-relaxed" required></textarea>
+        <textarea id="urls" rows="5" placeholder={'https://fato67.com/interior/...\nhttps://www.campograndenews.com.br/...'} class="w-full rounded-[4px] border border-pedra bg-white px-4 py-3 text-sm leading-relaxed" required></textarea>
 
         <label id="batch-opt" class="hidden items-start gap-2 text-sm text-ink">
           <input id="batch-publish" type="checkbox" class="mt-1 h-4 w-4" />
@@ -32,15 +32,15 @@ const lbl = 'block text-xs font-bold text-ink';
 
         <div class="flex flex-wrap items-center gap-3">
           <button id="go" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Extrair e reescrever</button>
-          <button id="stop" type="button" class="hidden rounded-[4px] border border-slate-300 px-4 py-3 text-sm font-semibold text-ink hover:border-nioaque-red hover:text-nioaque-red-dark">Parar fila</button>
+          <button id="stop" type="button" class="hidden rounded-[4px] border border-pedra px-4 py-3 text-sm font-semibold text-ink hover:border-nioaque-red hover:text-nioaque-red-dark">Parar fila</button>
           <span id="count" class="text-xs text-ink-muted"></span>
         </div>
       </form>
       <p id="status" class="mt-3 hidden text-sm text-ink-muted" role="status" aria-live="polite"></p>
-      <ul id="queue" class="mt-4 hidden divide-y divide-slate-200 rounded-[4px] border border-slate-200 text-sm"></ul>
+      <ul id="queue" class="mt-4 hidden divide-y divide-pedra rounded-[4px] border border-pedra text-sm"></ul>
     </section>
 
-    <section id="result" class="hidden space-y-5 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section id="result" class="hidden space-y-5 rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
       <p id="meta" class="text-[11px] font-bold uppercase tracking-wider text-nioaque-green"></p>
 
       <div class="space-y-3">
@@ -78,18 +78,18 @@ const lbl = 'block text-xs font-bold text-ink';
         <div id="photos" class="grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
         <p id="no-photos" class="hidden text-xs text-nioaque-red-dark">Nenhuma foto encontrada. Adicione uma abaixo.</p>
         <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-          <label class="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-slate-300 px-4 py-2.5 text-sm font-semibold text-ink hover:border-nioaque-green">
+          <label class="inline-flex cursor-pointer items-center justify-center rounded-[4px] border border-pedra px-4 py-2.5 text-sm font-semibold text-ink hover:border-nioaque-green">
             Enviar foto do aparelho<input id="r-file" type="file" accept="image/*" class="sr-only" />
           </label>
-          <input id="r-photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-slate-300 px-3 py-2 text-sm" />
-          <button id="r-photo-use" type="button" class="shrink-0 rounded-[4px] border border-slate-300 px-4 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
+          <input id="r-photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-pedra px-3 py-2 text-sm" />
+          <button id="r-photo-use" type="button" class="shrink-0 rounded-[4px] border border-pedra px-4 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
         </div>
         <label class={lbl}>Legenda / crédito<input id="r-caption" class={inp} /></label>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+      <div class="flex flex-wrap items-center gap-3 border-t border-pedra pt-4">
         <button id="publish" type="button" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Publicar agora</button>
-        <button id="save" type="button" class="rounded-[4px] border border-slate-300 px-5 py-3 text-sm font-semibold text-ink hover:border-nioaque-green disabled:opacity-60">Salvar como rascunho</button>
+        <button id="save" type="button" class="rounded-[4px] border border-pedra px-5 py-3 text-sm font-semibold text-ink hover:border-nioaque-green disabled:opacity-60">Salvar como rascunho</button>
         <span id="save-msg" class="min-w-0 text-sm text-ink-muted" role="status" aria-live="polite"></span>
       </div>
     </section>
@@ -190,7 +190,7 @@ const lbl = 'block text-xs font-bold text-ink';
     for (const p of photos) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'overflow-hidden rounded-[4px] border-2 border-slate-200 bg-white text-left hover:border-nioaque-green';
+      b.className = 'overflow-hidden rounded-[4px] border-2 border-pedra bg-white text-left hover:border-nioaque-green';
       const img = document.createElement('img');
       img.src = p.preview;
       img.alt = p.caption ?? '';
@@ -205,9 +205,9 @@ const lbl = 'block text-xs font-bold text-ink';
         $('r-caption').value = p.caption ?? '';
         grid.querySelectorAll('button').forEach((x) => {
           x.classList.remove('border-nioaque-green');
-          x.classList.add('border-slate-200');
+          x.classList.add('border-pedra');
         });
-        b.classList.remove('border-slate-200');
+        b.classList.remove('border-pedra');
         b.classList.add('border-nioaque-green');
       });
       grid.appendChild(b);
@@ -350,7 +350,7 @@ const lbl = 'block text-xs font-bold text-ink';
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.textContent = 'Tentar de novo';
-      retry.className = 'ml-3 rounded-[4px] border border-slate-300 px-2 py-0.5 text-xs font-semibold text-ink hover:border-nioaque-green';
+      retry.className = 'ml-3 rounded-[4px] border border-pedra px-2 py-0.5 text-xs font-semibold text-ink hover:border-nioaque-green';
       retry.addEventListener('click', async () => {
         retry.remove();
         await processRow(r, publishDirect);

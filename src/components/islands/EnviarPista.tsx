@@ -101,7 +101,7 @@ export default function EnviarPista() {
   if (status === 'sent') {
     return (
       <div className="rounded-[4px] border border-nioaque-green-100 bg-nioaque-green-50 p-6 text-center">
-        <p className="font-editorial text-lg font-semibold text-nioaque-green-dark">
+        <p className="font-editorial text-lg font-extrabold text-nioaque-green-dark">
           Obrigado pela pista!
         </p>
         <p className="mt-2 text-sm text-ink-soft">{message}</p>

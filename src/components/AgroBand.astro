@@ -23,28 +23,29 @@ const blocks = [
 const fmt = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 ---
 
-<section aria-label="Cotação Agro de Nioaque" class="w-full bg-[#00661E] text-white">
-  <div class="container-editorial py-4">
-    <p class="text-xs font-bold uppercase tracking-wider text-white/80">Cotação Agro de Nioaque</p>
-    <dl class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+<section aria-label="Cotação Agro de Nioaque" class="w-full border-t-4 border-ocre bg-mercado text-[#F7F5F0]">
+  <div class="container-editorial py-7 sm:py-8">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ocre">Mercado</p>
+    <h2 class="mt-1 font-serif text-2xl font-bold leading-tight text-[#F7F5F0] sm:text-[30px] sm:leading-[34px]">Cotação Agro de Nioaque</h2>
+    <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-10">
       {
         blocks.map(({ label, sub, quote, prefix }) => {
           const up = (quote?.change_percent ?? 0) >= 0;
           return (
-            <div class="rounded-[4px] border border-white/20 bg-[#005018] px-4 py-3">
-              <dt class="text-sm font-semibold">{label}</dt>
+            <div>
+              <dt class="text-sm font-semibold text-mercado-rotulo">{label}</dt>
               <dd class="mt-1 flex items-baseline gap-2">
-                <span class="text-2xl font-extrabold tabular-nums">
+                <span class="text-[30px] font-semibold leading-[34px] tabular-nums text-[#F7F5F0]">
                   {quote ? `${prefix}${fmt(quote.value)}` : '--'}
                 </span>
                 {quote && (
-                  <span class:list={['text-xs font-bold', up ? 'text-green-300' : 'text-red-300']}>
+                  <span class:list={['text-xs font-bold tabular-nums', up ? 'text-[#6FCB8B]' : 'text-nioaque-red-light']}>
                     {up ? '▲ +' : '▼ '}
                     {fmt(quote.change_percent)}%
                   </span>
                 )}
               </dd>
-              <p class="mt-0.5 text-xs text-white/70">{sub}</p>
+              <p class="mt-0.5 text-xs text-mercado-rotulo">{sub}</p>
             </div>
           );
         })

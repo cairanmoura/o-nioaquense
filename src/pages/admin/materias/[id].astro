@@ -52,7 +52,7 @@ const SCOPES = [
   ['coluna', 'Coluna (opinião)'],
   ['radar_oficial', 'Radar Oficial'],
 ];
-const inp = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2.5 text-sm';
+const inp = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2.5 text-sm';
 const lbl = 'block text-xs font-bold text-ink';
 ---
 
@@ -65,7 +65,7 @@ const lbl = 'block text-xs font-bold text-ink';
       {article.status === 'published' ? (
         <span class="ml-auto flex items-center gap-2">
           <a href={`/noticia/${article.slug}`} target="_blank" rel="noopener" class="rounded-[4px] border border-nioaque-green px-3 py-1.5 font-semibold text-nioaque-green-dark hover:bg-nioaque-green-50">Abrir no site ↗</a>
-          <button type="button" id="copy-link" data-url={`/noticia/${article.slug}`} class="rounded-[4px] border border-slate-300 px-3 py-1.5 font-semibold text-ink hover:border-nioaque-green">Copiar link</button>
+          <button type="button" id="copy-link" data-url={`/noticia/${article.slug}`} class="rounded-[4px] border border-pedra px-3 py-1.5 font-semibold text-ink hover:border-nioaque-green">Copiar link</button>
         </span>
       ) : (
         <span class="ml-auto text-ink-muted">Link público disponível após publicar</span>
@@ -74,7 +74,7 @@ const lbl = 'block text-xs font-bold text-ink';
 
     {pinText && <p class="rounded-[4px] border border-nioaque-red bg-nioaque-red-50 p-3 text-sm font-semibold text-nioaque-red-dark">{pinText}</p>}
 
-    <section class="space-y-4 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section class="space-y-4 rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
       <label class={lbl}>Título<input id="title" class={inp} maxlength="200" required /></label>
       <label class={lbl}>Subtítulo (linha fina)<input id="subtitle" class={inp} maxlength="240" /></label>
       <fieldset>
@@ -90,18 +90,18 @@ const lbl = 'block text-xs font-bold text-ink';
       </div>
     </section>
 
-    <section class="space-y-3 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section class="space-y-3 rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
       <h2 class="text-sm font-extrabold text-ink">Foto de capa</h2>
       <div class="flex flex-col gap-3 sm:flex-row">
-        <div id="photo-box" class="flex h-40 w-full shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-slate-100 text-xs text-ink-muted sm:w-64">Sem foto</div>
+        <div id="photo-box" class="flex h-40 w-full shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-foto-reserva text-xs text-ink-muted sm:w-64">Sem foto</div>
         <div class="min-w-0 flex-1 space-y-2">
           <label class="inline-flex cursor-pointer items-center rounded-[4px] bg-nioaque-green px-4 py-2.5 text-sm font-semibold text-white hover:bg-nioaque-green-dark">
             Enviar do celular / computador
             <input id="file" type="file" accept="image/*" class="sr-only" />
           </label>
           <div class="flex gap-2">
-            <input id="photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-slate-300 px-3 py-2 text-sm" />
-            <button id="photo-use" type="button" class="shrink-0 rounded-[4px] border border-slate-300 px-3 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
+            <input id="photo-url" type="url" inputmode="url" placeholder="…ou cole o link de uma foto" class="w-full rounded-[4px] border border-pedra px-3 py-2 text-sm" />
+            <button id="photo-use" type="button" class="shrink-0 rounded-[4px] border border-pedra px-3 py-2 text-sm font-semibold text-ink hover:border-nioaque-green">Usar</button>
           </div>
           <button id="photo-remove" type="button" class="text-xs font-semibold text-nioaque-red-dark underline">Remover foto</button>
           <p id="photo-msg" class="text-xs text-ink-muted" role="status" aria-live="polite"></p>
@@ -110,7 +110,7 @@ const lbl = 'block text-xs font-bold text-ink';
       </div>
     </section>
 
-    <section class="grid gap-4 rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+    <section class="grid gap-4 rounded-[4px] border border-pedra bg-white p-4 sm:grid-cols-2 sm:p-5">
       <label class={lbl}>Seção (onde aparece)
         <select id="scope" class={inp}>{SCOPES.map(([v, l]) => <option value={v}>{l}</option>)}</select>
       </label>
@@ -135,7 +135,7 @@ const lbl = 'block text-xs font-bold text-ink';
       <label class={lbl}>Link da matéria original<input id="source_url" type="url" inputmode="url" class={inp} placeholder="https://…" /></label>
     </section>
 
-    <section class="rounded-[4px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section class="rounded-[4px] border border-pedra bg-white p-4 sm:p-5">
       <h2 class="text-sm font-extrabold text-ink">Capa do site</h2>
       <p class="mt-1 text-xs text-ink-muted">Fixa a matéria no topo da home por um tempo. Depois do prazo, a capa volta ao rodízio automático (que prioriza Nioaque).</p>
       <div class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -160,7 +160,7 @@ const lbl = 'block text-xs font-bold text-ink';
       </div>
     </section>
 
-    <div class="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] lg:bottom-0 lg:left-64 lg:pb-3">
+    <div class="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-pedra bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] lg:bottom-0 lg:left-64 lg:pb-3">
       <div class="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
         <button id="save" type="submit" class="rounded-[4px] bg-nioaque-green px-5 py-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60">Salvar alterações</button>
         <button id="delete" type="button" class="rounded-[4px] border border-nioaque-red px-4 py-3 text-sm font-semibold text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>

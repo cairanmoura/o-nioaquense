@@ -52,7 +52,7 @@ const details = [
 
     <div class="min-w-0 flex-1">
       <p class="flex items-baseline gap-2">
-        <span class="font-editorial text-4xl font-semibold leading-none text-ink">
+        <span class="font-editorial text-4xl font-extrabold leading-none text-ink">
           {weather.temperature}°C
         </span>
         <span class="truncate text-sm font-medium text-ink-soft">{weather.label}</span>
@@ -70,7 +70,7 @@ const details = [
       details.map((detail) => (
         <div class="px-2 py-3 text-center">
           <dt class="text-xs font-medium text-ink-muted">{detail.label}</dt>
-          <dd class="mt-0.5 font-editorial text-base font-semibold text-ink">{detail.value}</dd>
+          <dd class="mt-0.5 font-editorial text-base font-extrabold text-ink">{detail.value}</dd>
         </div>
       ))
     }
@@ -103,7 +103,7 @@ const details = [
             <p class="text-xs font-medium text-ink-muted">
               {day.weekday} {day.day}
             </p>
-            <p class="mt-1 font-editorial text-base font-semibold text-ink">
+            <p class="mt-1 font-editorial text-base font-extrabold text-ink">
               <span class="text-nioaque-red-dark">{day.tempMax}°</span>
               <span class="text-ink-muted"> / {day.tempMin}°</span>
             </p>

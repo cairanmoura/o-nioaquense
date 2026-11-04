@@ -63,7 +63,7 @@ const isActive = (href: string) =>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#1E293B" />
+    <meta name="theme-color" content="#1B1F1C" />
 
     <title>{title ? `${title} | Painel O Nioaquense` : 'Painel O Nioaquense'}</title>
 
@@ -146,7 +146,7 @@ const isActive = (href: string) =>
             <div class="min-w-0 flex-1">
               {
                 title && (
-                  <h1 class="truncate font-editorial text-lg font-semibold leading-tight text-ink sm:text-xl">
+                  <h1 class="truncate font-editorial text-lg font-extrabold leading-tight text-ink sm:text-xl">
                     {title}
                   </h1>
                 )
@@ -188,7 +188,7 @@ const isActive = (href: string) =>
                     class="h-9 w-9 rounded-sm object-cover ring-2 ring-nioaque-green"
                   />
                 ) : (
-                  <span class="flex h-9 w-9 items-center justify-center rounded-sm bg-nioaque-green font-editorial text-sm font-semibold text-white">
+                  <span class="flex h-9 w-9 items-center justify-center rounded-sm bg-nioaque-green font-editorial text-sm font-extrabold text-white">
                     {user.profile.full_name.charAt(0)}
                   </span>
                 )}

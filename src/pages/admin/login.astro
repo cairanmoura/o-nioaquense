@@ -30,7 +30,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#1E293B" />
+    <meta name="theme-color" content="#1B1F1C" />
     <title>Entrar | Painel O Nioaquense</title>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -51,7 +51,7 @@ const erro = erros[Astro.url.searchParams.get('erro') ?? ''] ?? '';
           Painel da redação
         </p>
 
-        <div class="mt-8 rounded-3xl bg-nioaque-white p-6 shadow-lift sm:p-8">
+        <div class="mt-8 rounded-3xl bg-nioaque-white p-6 sm:p-8">
           {
             supabaseReady ? (
               <form method="POST" action="/api/auth/login" class="space-y-4">

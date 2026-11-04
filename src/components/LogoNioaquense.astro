@@ -2,64 +2,36 @@
 /**
  * LogoNioaquense.astro
  * -----------------------------------------------------------------------------
- * Marca do portal "O Nioaquense", inspirada na bandeira do municipio de Nioaque (MS).
+ * Logo oficial "O NIOAQUENSE" com o cavaleiro (sistema de design, public/brand/).
+ * Nunca redesenhe nem redigite a logo com uma fonte: use sempre a imagem.
  *
- * Usa o lockup oficial em SVG externo (public/icons/01-logo-horizontal-bandeira.svg):
- *  - faixa superior VERDE  #008026
- *  - faixa central BRANCA #FFFFFF
- *  - faixa inferior VERMELHA #E60000
- *  - cruz latina VERMELHA na faixa central
- *  - wordmark "O NIOAQUENSE" em vermelho e preto, com "PORTAL" acima
- *
- * O componente mantém a mesma interface de antes (variant, textColor, invertBand,
- * class, title) para nao quebrar usos existentes. O SVG externo ja contem as cores
- * da marca embutidas, entao textColor e invertBand sao mantidos por compatibilidade
- * mas nao alteram o desenho externo.
+ * Escolha a tinta pela cor do fundo:
+ *  - `branca`   : sobre verde-mata (header)
+ *  - `verde`    : sobre papel e branco (padrao)
+ *  - `preta`    : impressos / um so tom
+ *  - `vermelha` : so usos de destaque sobre fundo claro
  */
 interface Props {
-  /** Classes CSS adicionais (ex.: "h-10 w-auto" ou "w-40"). */
   class?: string;
-  /** Rotulo acessivel do logo. */
   title?: string;
-  /**
-   * - `full`     : lockup completo (SVG externo com grafico + texto)
-   * - `mark`     : apenas o simbolo (mesmo SVG externo, escalado pequeno pelo pai)
-   * - `wordmark` : apenas o texto (o SVG externo ja traz o texto junto)
-   */
+  tone?: 'branca' | 'verde' | 'preta' | 'vermelha';
+  /** Compatibilidade com usos antigos (ignorados). */
   variant?: 'full' | 'mark' | 'wordmark';
-  /** Versao da marca: '01' (horizontal, default) ou '02' (empilhada editorial). */
   version?: '01' | '02';
-  /** Cor do wordmark (mantida por compatibilidade; o SVG externo ja tem cores fixas). */
   textColor?: string;
-  /** Desenha a moldura da faixa central em branco puro (mantido por compatibilidade). */
   invertBand?: boolean;
 }
 
-const {
-  class: className = '',
-  title = 'O Nioaquense',
-  variant = 'full',
-  version = '01',
-} = Astro.props;
-
-const LOGO_SRC = '/icons/01-logo-horizontal-bandeira.svg';
-
-const LOGO_DIM = { width: 470, height: 100 };
-
+const { class: className = '', title = 'O Nioaquense', tone = 'verde' } = Astro.props;
+const SRC = { branca: 'logo-branca', verde: 'logo-verde', preta: 'logo-preta', vermelha: 'logo-vermelha' }[tone];
 ---
-{/* Sem style inline de width/height: as classes do chamador (ex.: h-8 w-auto
-    max-w-[190px]) precisam governar o tamanho. O style inline antigo forçava
-    width:100%, fazendo a logo renderizar com 470px (largura intrínseca do SVG)
-    e vazando para fora da viewport no mobile. */}
+
 <img
-  src={LOGO_SRC}
-  alt={variant === 'mark' ? 'Marca O Nioaquense' : title}
+  src={`/brand/${SRC}.svg`}
+  alt={title}
   class:list={['block', className]}
   loading="eager"
   decoding="async"
-  width={LOGO_DIM.width}
-  height={LOGO_DIM.height}
-  aria-hidden={variant === 'mark' ? 'true' : undefined}
-  role={variant === 'mark' ? undefined : 'img'}
-  aria-label={variant === 'mark' ? undefined : title}
+  width="608"
+  height="150"
 />

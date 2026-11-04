@@ -20,10 +20,10 @@ const clampClass = clamp <= 4 ? 'line-clamp-4' : clamp <= 6 ? 'line-clamp-6' : '
 
 <a
   href={`/coluna/${post.id}`}
-  class:list={['group flex h-full flex-col gap-3 rounded-[10px] border p-4 transition-colors', dark ? 'border-[#2f3336] bg-black hover:bg-[#080808]' : 'border-slate-200 bg-white shadow-sm hover:shadow-md', className]}
+  class:list={['group flex h-full flex-col gap-3 rounded-[10px] border p-4 transition-colors', dark ? 'border-[#2f3336] bg-black hover:bg-[#080808]' : 'border-pedra bg-white', className]}
 >
   <span class="flex items-center gap-3">
-    <img src={avatarOf(c)} alt="" width="44" height="44" loading="lazy" referrerpolicy="no-referrer" class="h-11 w-11 shrink-0 rounded-full bg-slate-100 object-cover" />
+    <img src={avatarOf(c)} alt="" width="44" height="44" loading="lazy" referrerpolicy="no-referrer" class="h-11 w-11 shrink-0 rounded-full bg-foto-reserva object-cover" />
     <span class="min-w-0 leading-tight">
       <span class:list={['block truncate font-sans text-sm font-extrabold', dark ? 'text-[#e7e9ea]' : 'text-ink']}>{c.name}</span>
       <span class:list={['block truncate font-sans text-xs', dark ? 'text-[#71767b]' : 'text-ink-muted']}>@{c.handle} · {formatRelative(post.posted_at)}</span>

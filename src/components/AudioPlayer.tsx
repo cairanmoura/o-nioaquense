@@ -217,7 +217,7 @@ export default function AudioPlayer({ title, bullets = [], html }: AudioPlayerPr
               aria-pressed={speed === value}
               className={`rounded-[4px] px-3 py-1.5 text-[11px] font-bold transition-colors ${
                 speed === value
-                  ? 'bg-nioaque-white text-nioaque-green shadow-sm'
+                  ? 'bg-nioaque-white text-nioaque-green'
                   : 'text-ink-muted hover:text-ink'
               }`}
             >

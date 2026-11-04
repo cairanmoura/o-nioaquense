@@ -1,0 +1,98 @@
+/* O Nioaquense — estilos dos componentes. Todo valor vem de tokens.css. */
+.nq{font-family:var(--font-sans);color:var(--tinta)}
+.nq *,.nq *::before,.nq *::after{box-sizing:border-box}
+.nq h1,.nq h2,.nq h3,.nq h4,.nq p{margin:0}
+.nq-up{text-transform:uppercase}
+.nq-muda{color:var(--tinta-muda)}
+.nq-suave{color:var(--tinta-suave)}
+.nq-vt{color:var(--vermelho-texto)}
+.nq-vi{color:var(--verde-texto)}
+
+/* Barra de leitura */
+.nq-bar{height:var(--barra-leitura);background:var(--pedra)}
+.nq-bar>i{display:block;height:100%;width:35%;background:linear-gradient(90deg,var(--verde-institucional),var(--vermelho))}
+
+/* Header */
+.nq-hw{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px var(--space-5);padding:var(--space-4) var(--space-5);background:var(--verde-mata);color:var(--on-verde)}
+.nq-hw img{display:block;height:var(--logo-web);width:auto}
+.nq-nav{display:flex;flex:1 1 auto;flex-wrap:wrap;justify-content:center;gap:4px var(--space-5)}
+.nq-nav span{padding:6px 0;border-bottom:3px solid transparent}
+.nq-nav .on{font-weight:600;border-bottom-color:var(--vermelho)}
+.nq-tools{display:flex;align-items:center;gap:var(--space-2)}
+.nq-btn{min-height:var(--toque-min);padding:0 20px;border:0;border-radius:var(--radius-md);background:var(--vermelho);color:var(--on-vermelho);font:600 15px/20px var(--font-sans)}
+.nq-ib{display:inline-flex;align-items:center;justify-content:center;width:var(--toque-min);height:var(--toque-min);padding:0;border:0;background:transparent}
+.nq-ib svg{fill:none;stroke:var(--on-verde);stroke-width:2;stroke-linecap:round}
+.nq-hm{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:64px;padding:8px 4px 8px var(--space-4);background:var(--verde-mata);color:var(--on-verde)}
+.nq-hm img{display:block;height:var(--logo-mobile);width:auto}
+.nq-hm .r{display:flex;justify-content:flex-end}
+
+/* Pílulas e filete (Elemento A1, Degraus) */
+.nq-pills{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.nq-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 var(--space-4);border:1px solid var(--pedra);border-radius:var(--radius-md);background:var(--branco);color:var(--tinta);white-space:nowrap}
+.nq-pill.on{background:var(--verde-institucional);border-color:var(--verde-institucional);color:var(--on-verde);font-weight:600}
+.nq-filete{display:flex;align-items:center;gap:10px}
+.nq-filete .ln{flex:1}
+.nq-filete .ln i{display:block;background:var(--verde-institucional)}
+.nq-filete .ln i:first-child{height:3px}
+.nq-filete .ln i:last-child{height:1px;margin-top:2px}
+.nq-d-g{fill:var(--verde-institucional)}
+.nq-d-w{fill:var(--branco);stroke:var(--pedra-escura);stroke-width:1}
+.nq-d-r{fill:var(--vermelho)}
+
+/* Notícias */
+.nq-card{background:var(--branco);border:1px solid var(--pedra);border-radius:var(--radius-md);overflow:hidden}
+.nq-foto{display:flex;align-items:center;justify-content:center;background:var(--foto-reserva);color:var(--tinta-suave)}
+.nq-foto-43{aspect-ratio:4/3;width:100%}
+.nq-chapeu{display:flex;align-items:center;gap:6px}
+.nq-chapeu::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--verde-institucional))}
+.nq-manchete{padding-top:var(--space-3);border-top:3px solid var(--verde-institucional)}
+.nq-card-v .nq-foto{height:150px}
+.nq-card-v .corpo{padding:14px var(--space-4) var(--space-4)}
+.nq-card-c{display:flex;flex-direction:row-reverse;align-items:flex-start;gap:var(--space-3);padding:var(--space-3)}
+.nq-card-c .nq-foto{flex:none;width:96px;height:96px;border-radius:var(--radius-xs)}
+.nq-card-c .corpo{flex:1;min-width:0}
+
+/* Plantão e Loterias */
+.nq-sec-h{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--verde-institucional);color:var(--on-verde)}
+.nq-pl-i{display:flex;gap:10px;padding:var(--space-3) 14px;border-top:1px solid var(--pedra)}
+.nq-pl-i .t{flex:1;min-width:0}
+.nq-thumb{flex:none;width:48px;height:48px;border-radius:var(--radius-xs);background:var(--foto-reserva)}
+.nq-lot{padding:var(--space-3) 14px;border-top:1px solid var(--pedra)}
+.nq-lot .dz{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-2)}
+.nq-dz{min-width:18px;padding:4px 6px;border-radius:var(--radius-xs);background:var(--verde-institucional);color:var(--on-verde);text-align:center;font-variant-numeric:tabular-nums}
+
+/* Cotação Agro (Elemento D1) */
+.nq-mk{padding:28px var(--space-5) 32px;background:var(--mercado-fundo);color:var(--mercado-texto);border-top:4px solid var(--ocre)}
+.nq-mk .in{display:flex;flex-wrap:wrap;align-items:center;gap:20px 40px;max-width:var(--container-max);margin:0 auto}
+.nq-mk .cell{display:flex;flex:1 1 200px;align-items:center;gap:14px;padding-right:var(--space-2)}
+.nq-mk .rot{color:var(--ocre)}
+.nq-mk .lab{color:var(--mercado-rotulo)}
+.nq-mk .val{font-variant-numeric:tabular-nums}
+.nq-ico-m{fill:none;stroke:var(--ocre);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* Boca no Trombone (Elemento C1) */
+.nq-boca{position:relative;overflow:hidden;padding:28px var(--space-5) 32px;border-radius:var(--radius-md);background:var(--verde-mata);color:var(--on-verde)}
+.nq-boca .wm{position:absolute;right:-14px;bottom:-14px;width:230px;height:150px;opacity:.08;pointer-events:none;fill:none;stroke:var(--on-verde);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.nq-boca .z{position:relative}
+.nq-boca .nq-btn{min-height:48px;padding:0 24px}
+
+/* Radar Oficial (Elemento B2) e selo de apuração */
+.nq-radar{position:relative;overflow:hidden;padding:var(--space-5);border:1px solid var(--pedra);border-radius:var(--radius-md);background:var(--branco)}
+.nq-radar .wm{position:absolute;top:8px;right:14px;height:120px;width:auto;opacity:.09;pointer-events:none}
+.nq-radar .rel{position:relative}
+.nq-ico{fill:none;stroke:var(--verde-contorno);stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.nq-duplo i{display:block}
+.nq-duplo i:first-child{height:1px;background:var(--vermelho)}
+.nq-duplo i:last-child{height:3px;margin-top:2px;background:var(--verde-institucional)}
+.nq-row{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;border-top:1px solid var(--pedra)}
+.nq-caps{display:inline-flex;flex:none;align-items:center;justify-content:center;gap:6px;min-width:84px;padding:6px 12px 6px 10px;border:1px solid var(--pedra-escura);border-radius:var(--radius-pill);color:var(--tinta);text-transform:uppercase}
+.nq-caps::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c,var(--verde-institucional))}
+.nq-selo{display:flex;align-items:center;gap:var(--space-3)}
+.nq-selo .c{display:flex;flex:none;align-items:center;justify-content:center;width:48px;height:48px;border:1.5px solid var(--verde-contorno);border-radius:50%;background:var(--branco)}
+.nq-selo .c img{display:block;height:34px;width:auto}
+.selo-tag{text-transform:uppercase}
+
+/* Troca de imagem por tema: t-l (verde, para o claro) e t-d (branca, para o escuro) */
+.nq img.t-d{display:none}
+[data-theme="dark"] .nq img.t-l{display:none}
+[data-theme="dark"] .nq img.t-d{display:block}

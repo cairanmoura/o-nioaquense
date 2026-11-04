@@ -1,0 +1,39 @@
+<!-- @dsCard height=300 -->
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Bitter:wght@700;800&family=Chivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{background:var(--papel)}
+.cv{position:relative;width:960px;height:300px;overflow:hidden;background:var(--papel)}
+.cv .txt{position:absolute;left:32px;bottom:32px;width:440px}
+.cv h1{margin:0;font-family:var(--font-serif);font-weight:800;font-size:72px;line-height:.95;letter-spacing:-0.012em;color:var(--tinta)}
+.cv p{margin:12px 0 0;font:400 14px/20px var(--font-sans);color:var(--tinta-muda)}
+.cv svg{position:absolute;left:480px;top:0}
+.blk{rx:var(--radius-md)}
+.vm{fill:var(--verde-mata)} .vi{fill:var(--verde-institucional)} .vr{fill:var(--vermelho)} .oc{fill:var(--ocre)} .pe{fill:var(--pedra)}
+.cut{fill:var(--papel)}
+</style></head>
+<body>
+<div class="cv">
+<div class="txt"><h1>O<br>Nioaquense</h1><p>Notícias de Nioaque, MS.</p></div>
+<svg width="480" height="300" viewBox="0 0 480 300" aria-hidden="true">
+<!--
+Blocos: verde-mata 240x192, verde-institucional 224x112, vermelho 160x96, ocre 96x96, pedra 128x96 (múltiplos de space-4 e space-5; cantos radius-md).
+Arranjo: laje alta de verde-mata sangrando no topo, verde-institucional sangrando no topo e na direita, vermelho abaixo dele, ocre e pedra sangrando na base.
+Padrão: Degraus, as três faixas horizontais de comprimento decrescente do filete A1, recortadas em papel dentro do verde-mata e do vermelho; escolhido por ser o elemento gráfico próprio do portal.
+Passos: 16, 24, 32 e 48 para posições; radius-md em todos os blocos; faixas de 12 e 8 px.
+-->
+<rect class="blk vm" x="0" y="0" width="240" height="192"/>
+<rect class="blk vi" x="256" y="0" width="224" height="112"/>
+<rect class="blk vr" x="256" y="128" width="160" height="96"/>
+<rect class="blk oc" x="0" y="208" width="96" height="96"/>
+<rect class="blk pe" x="112" y="208" width="128" height="96"/>
+<rect class="cut" x="24" y="48" width="192" height="12"/>
+<rect class="cut" x="24" y="72" width="144" height="12"/>
+<rect class="cut" x="24" y="96" width="96" height="12"/>
+<rect class="cut" x="280" y="152" width="112" height="8"/>
+<rect class="cut" x="280" y="172" width="80" height="8"/>
+<rect class="cut" x="280" y="192" width="48" height="8"/>
+</svg>
+</div>
+</body></html>

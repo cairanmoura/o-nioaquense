@@ -1,0 +1,178 @@
+/* O Nioaquense — generated from tokens.json */
+:root, [data-theme="light"] {
+  --papel: #f7f5f0; /* Fundo geral da página (papel jornal). Texto sobre ele: tinta, tinta-suave, tinta-muda, verde-institucional e vermelho-texto. */
+  --branco: #ffffff; /* Cards e blocos de destaque, sempre com borda pedra. Mesmos textos de papel. */
+  --pedra: #e5e0d5; /* Bordas finas de cards e pílulas, divisores de lista e trilho da barra de leitura. Decorativa: nunca é a única marca de um controle. */
+  --pedra-escura: #bdb6a3; /* Contorno de cápsulas (tags) e da faixa branca do filete. Decorativa (2:1 sobre branco); o rótulo de texto identifica o elemento. */
+  --tinta: #1b1f1c; /* Texto principal sobre papel e branco (16:1). */
+  --tinta-suave: #4a4f4a; /* Linha-fina e resumos sobre papel, branco e foto-reserva. */
+  --tinta-muda: #5c615c; /* Metadados (fonte, "há 4h", rodada de loteria) sobre papel e branco (5,6:1 no papel). */
+  --foto-reserva: #d9d5c8; /* Reserva de imagem enquanto não há foto. Texto sobre ela: tinta-suave. */
+  --verde-mata: #0d4722; /* Verde da logo. Fundo do header e do card Boca no Trombone; contorno do selo de apuração. Texto sobre ele: on-verde, verde-texto-forte, verde-texto-suave. */
+  --verde-institucional: #166a34; /* Verde de interface: pílula ativa, títulos Plantão e Loterias, chapéus de Saúde, dezenas, filete. Texto sobre ele: on-verde (6,7:1). Como texto em papel e branco: 5,9:1 e 6,7:1. */
+  --vermelho: #d92323; /* Vermelho da logo: botões de ação, bolinhas de chapéu, fio dos filetes, sublinhado do menu ativo. Texto sobre ele: on-vermelho (5:1). Não use como texto pequeno sobre papel: use vermelho-texto. */
+  --vermelho-texto: #b01e1e; /* Chapéus e rótulos vermelhos pequenos sobre papel e branco (6,3:1 no papel). */
+  --vermelho-claro: #fca5a5; /* Bolinha do título Plantão sobre verde-institucional (3,5:1, marca gráfica). */
+  --verde-texto-forte: #e8f0ea; /* Subtítulo sobre verde-mata (8:1). */
+  --verde-texto-suave: #cfe0d3; /* Texto corrido e legendas sobre verde-mata (7,8:1). */
+  --mercado-fundo: #0f291e; /* Fundo da faixa Cotação Agro. Texto sobre ele: papel, mercado-rotulo, ocre. */
+  --mercado-rotulo: #d9d5c8; /* Rótulos das cotações sobre mercado-fundo. */
+  --ocre: #d97706; /* Ocre soja: rótulo MERCADO, filete superior e ícones sobre mercado-fundo (4,9:1). */
+  --on-verde: var(--branco); /* Texto e ícones sobre verde-mata e verde-institucional. */
+  --on-vermelho: var(--branco); /* Texto sobre vermelho. */
+}
+:root {
+  --space-1: 4px; /* Folga mínima entre ícone e texto. */
+  --space-2: 8px; /* Intervalo entre pílulas e itens de menu. */
+  --space-3: 12px; /* Padding vertical de itens de lista. */
+  --space-4: 16px; /* Margem lateral no mobile e padding de card compacto. */
+  --space-5: 24px; /* Margem lateral no desktop e padding de card. */
+  --space-6: 32px; /* Respiro entre blocos da Home. */
+  --space-7: 48px; /* Respiro antes de seções especiais. */
+  --container-max: 1200px; /* Largura máxima do conteúdo no desktop. */
+  --toque-min: 44px; /* Altura mínima de qualquer botão ou ícone tocável. */
+  --barra-leitura: 4px; /* Altura da barra de leitura, fixa no topo extremo. */
+  --logo-web: 68px; /* Altura da logo no header desktop. */
+  --logo-mobile: 38px; /* Altura da logo no header mobile (centralizada). */
+  --radius-xs: 2px; /* Miniaturas, dezenas e tarjas pequenas. */
+  --radius-md: 4px; /* Cards, botões e pílulas. */
+  --radius-pill: 999px; /* Cápsulas de tag do Radar Oficial. */
+  --font-serif: "Bitter", Georgia, "Times New Roman", serif;
+  --font-sans: "Chivo", "Helvetica Neue", Arial, sans-serif;
+  --text-manchete-web: 800 46px/50px var(--font-serif); /* Manchete principal da Home no desktop. */
+  --text-manchete-mobile: 800 27px/30px var(--font-serif); /* Manchete principal no mobile (390 px). */
+  --text-titulo-card: 800 23px/26px var(--font-serif); /* Título de card de notícia no desktop. */
+  --text-titulo-card-mobile: 800 17px/21px var(--font-serif); /* Título de card compacto com miniatura à direita (máximo 4 linhas). */
+  --text-titulo-secao: 700 30px/34px var(--font-serif); /* Títulos de seção especial: Boca no Trombone, Radar Oficial, Cotação Agro. */
+  --text-rotulo-secao: 700 17px/20px var(--font-serif); /* Título das barras verdes Plantão e Loterias. */
+  --text-linha-fina: 400 17px/26px var(--font-sans); /* Linha-fina da manchete; no mobile limite de 2 linhas. */
+  --text-resumo: 400 14px/21px var(--font-sans); /* Resumo de card; some no card compacto. */
+  --text-plantao-titulo: 600 13px/18px var(--font-sans); /* Título de item do Plantão. */
+  --text-meta: 400 12px/16px var(--font-sans); /* Fonte e horário. */
+  --text-chapeu: 700 11px/14px var(--font-sans); /* Chapéu da notícia, com bolinha colorida. */
+  --text-selo-tag: 600 11px/11px var(--font-sans); /* Tags técnicas do Radar Oficial e rótulo MERCADO. Escreva em caixa alta. */
+  --text-nav: 500 15px/20px var(--font-sans); /* Menu do header desktop. */
+  --text-botao: 600 15px/20px var(--font-sans); /* Botões de ação. */
+  --text-pilula: 500 13px/16px var(--font-sans); /* Pílulas de editoria. */
+  --text-dado-destaque: 600 30px/34px var(--font-sans); /* Valores da Cotação Agro. Use números tabulares. */
+  --text-dezena: 600 12px/12px var(--font-sans); /* Dezenas das loterias. Use números tabulares. */
+}
+.manchete-web {
+  font-family: var(--font-serif);
+  font-size: 46px;
+  line-height: 50px;
+  font-weight: 800;
+  letter-spacing: -0.012em;
+}
+.manchete-mobile {
+  font-family: var(--font-serif);
+  font-size: 27px;
+  line-height: 30px;
+  font-weight: 800;
+  letter-spacing: -0.012em;
+}
+.titulo-card {
+  font-family: var(--font-serif);
+  font-size: 23px;
+  line-height: 26px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.titulo-card-mobile {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 21px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.titulo-secao {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.rotulo-secao {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.linha-fina {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.resumo {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.plantao-titulo {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.chapeu {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.selo-tag {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.nav {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.botao {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.pilula {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.dado-destaque {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.dezena {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}

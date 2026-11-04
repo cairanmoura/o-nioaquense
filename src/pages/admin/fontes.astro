@@ -167,13 +167,13 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
     }
   }
 
-  const inputCls = 'mt-1 w-full rounded-[4px] border border-slate-300 bg-white px-3 py-2 text-sm';
+  const inputCls = 'mt-1 w-full rounded-[4px] border border-pedra bg-white px-3 py-2 text-sm';
   const labelCls = 'block text-xs font-bold text-ink';
 
   function toggleHtml(id: string, field: string, checked: boolean, label: string, hint: string) {
     return `
-      <label class="flex cursor-pointer items-start gap-2 rounded-[4px] border border-slate-200 bg-white px-3 py-2 text-xs">
-        <input type="checkbox" data-toggle="${field}" data-id="${id}" ${checked ? 'checked' : ''} class="mt-0.5 h-4 w-4 accent-[#008026]" />
+      <label class="flex cursor-pointer items-start gap-2 rounded-[4px] border border-pedra bg-white px-3 py-2 text-xs">
+        <input type="checkbox" data-toggle="${field}" data-id="${id}" ${checked ? 'checked' : ''} class="mt-0.5 h-4 w-4 accent-[#166A34]" />
         <span><span class="block font-bold text-ink">${label}</span><span class="text-ink-muted">${hint}</span></span>
       </label>`;
   }
@@ -204,7 +204,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
                   ? 'bg-nioaque-red-50 text-nioaque-red-dark'
                   : 'bg-nioaque-green-50 text-nioaque-green-dark'
               }">${s.source_type === 'html_scraper' ? 'Scraper' : 'RSS'}</span>
-              <span class="ml-1 inline-block rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">${s.ownership === 'public' ? 'Fonte pública' : 'Portal privado'}</span>
+              <span class="ml-1 inline-block rounded-full bg-pedra px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">${s.ownership === 'public' ? 'Fonte pública' : 'Portal privado'}</span>
             </p>
             <p class="truncate text-xs text-ink-muted">${escapeHtml(s.rss_url)}</p>
             <p class="mt-1 text-xs text-ink-muted">
@@ -214,7 +214,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
             ${s.last_message ? `<p class="mt-1 text-xs ${s.last_status === 'erro' ? 'text-nioaque-red-dark' : 'text-ink-muted'}">${escapeHtml(s.last_message)}</p>` : ''}
           </div>
           <div class="flex shrink-0 gap-2 text-xs font-semibold">
-            <button type="button" data-edit="${s.id}" class="rounded-[4px] border border-slate-300 bg-white px-3 py-1.5 text-ink hover:border-nioaque-green">Editar</button>
+            <button type="button" data-edit="${s.id}" class="rounded-[4px] border border-pedra bg-white px-3 py-1.5 text-ink hover:border-nioaque-green">Editar</button>
             <button type="button" data-del="${s.id}" data-name="${escapeHtml(s.name)}" class="rounded-[4px] border border-nioaque-red px-3 py-1.5 text-nioaque-red-dark hover:bg-nioaque-red hover:text-white">Excluir</button>
           </div>
         </div>
@@ -250,7 +250,7 @@ if (!isAdmin(session)) return Astro.redirect('/admin');
           </label>
           <div class="flex items-end gap-2 sm:col-span-2">
             <button type="submit" class="rounded-[4px] bg-nioaque-green px-4 py-2 text-sm font-semibold text-white hover:bg-nioaque-green-dark">Salvar alterações</button>
-            <button type="button" data-cancel="${s.id}" class="rounded-[4px] border border-slate-300 px-4 py-2 text-sm font-semibold text-ink">Cancelar</button>
+            <button type="button" data-cancel="${s.id}" class="rounded-[4px] border border-pedra px-4 py-2 text-sm font-semibold text-ink">Cancelar</button>
             <span data-msg="${s.id}" class="text-xs text-ink-muted" role="status"></span>
           </div>
         </form>

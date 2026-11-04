@@ -27,7 +27,7 @@ const {
   article,
   author = null,
   variant = 'standard',
-  showSummary = variant === 'lead',
+  showSummary = false, // "Direto ao Ponto" so existe na materia aberta (sistema de design): nunca na Home
   showEditor = false,
   class: className = '',
 } = Astro.props;
@@ -60,7 +60,7 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       <div class="pl-3">
         <ArticlePills article={article} showEditor={showEditor} />
       </div>
-      <h3 class="mt-2.5 pl-3 font-editorial text-lg font-semibold leading-snug">
+      <h3 class="mt-2.5 pl-3 font-editorial text-lg font-extrabold leading-snug">
         <a href={href} class="transition-colors group-hover:text-nioaque-green">
           {article.title}
         </a>
@@ -105,7 +105,7 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       )}
       <div class="min-w-0 flex-1">
         <ArticlePills article={article} showEditor={showEditor} />
-        <h3 class="mt-1.5 font-editorial text-base font-semibold leading-snug">
+        <h3 class="mt-1.5 font-editorial text-base font-extrabold leading-snug">
           <a href={href} class="transition-colors group-hover:text-nioaque-green">
             {article.title}
           </a>
@@ -224,7 +224,7 @@ const readingMinutes = words ? Math.max(1, Math.round(words / 200)) : 0;
       </a>
       <div class="flex flex-1 flex-col p-5">
         <ArticlePills article={article} showEditor={showEditor} />
-        <h3 class="mt-2.5 font-editorial text-lg font-semibold leading-snug">
+        <h3 class="mt-2.5 font-editorial text-lg font-extrabold leading-snug">
           <a href={href} class="transition-colors group-hover:text-nioaque-green">
             {article.title}
           </a>

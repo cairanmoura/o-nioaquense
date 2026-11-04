@@ -14,11 +14,11 @@ const visible = results.slice(0, 3);
 
 {
   visible.length > 0 && (
-    <section class:list={['w-full overflow-hidden rounded-[4px] border border-slate-200 bg-white shadow-sm', className]} aria-label="Resultados das loterias">
-      <header class="bg-[#00661E] px-3 py-2">
-        <h2 class="text-sm font-extrabold text-white">Loterias</h2>
+    <section class:list={['w-full overflow-hidden rounded-[4px] border border-pedra bg-white', className]} aria-label="Resultados das loterias">
+      <header class="bg-nioaque-green px-3 py-2.5">
+        <h2 class="font-serif text-[17px] font-bold leading-5 text-white">Loterias</h2>
       </header>
-      <ul class="divide-y divide-slate-200">
+      <ul class="divide-y divide-pedra">
         {visible.map((result) => (
           <li class="px-3 py-2.5">
             <p class="flex items-baseline justify-between gap-2 text-xs">
@@ -27,7 +27,7 @@ const visible = results.slice(0, 3);
             </p>
             <ul class="mt-1.5 grid grid-cols-[repeat(auto-fill,1.75rem)] gap-1">
               {result.numbers.map((number) => (
-                <li class="flex h-7 w-7 items-center justify-center rounded-[4px] bg-nioaque-green text-xs font-bold text-white">
+                <li class="flex h-7 w-7 items-center justify-center rounded-[2px] bg-nioaque-green text-xs font-semibold tabular-nums text-white">
                   {number}
                 </li>
               ))}

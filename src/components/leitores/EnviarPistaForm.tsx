@@ -135,7 +135,7 @@ export default function EnviarPistaForm() {
             <path d="M20 6 9 17l-5-5" />
           </svg>
         </span>
-        <p className="mt-4 font-editorial text-xl font-semibold text-nioaque-green-dark">
+        <p className="mt-4 font-editorial text-xl font-extrabold text-nioaque-green-dark">
           Recebemos a sua dica!
         </p>
         <p className="mt-2 text-sm leading-relaxed text-ink-soft">

@@ -5,37 +5,47 @@
    oficiais da bandeira de Nioaque + tipografia editorial.
    ============================================================================= */
 
-/* 1) Fontes do Google (Plus Jakarta Sans) ------------------------ */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap');
+/* 1) Fontes do Google (Bitter + Chivo, sistema de design O Nioaquense) ------------------------ */
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@700;800&family=Chivo:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 /* 2) Tailwind --------------------------------------------------------------- */
 @import 'tailwindcss';
 
 /* 3) Tokens do tema --------------------------------------------------------- */
 @theme {
-  /* --- Cores oficiais da bandeira de Nioaque --- */
-  --color-nioaque-green: #008026; /* Verde Nioaque (primaria) */
-  --color-nioaque-red: #d40000; /* Vermelho Nioaque (ajustado p/ contraste AA com texto branco; a bandeira no logo segue #E60000) */
-  --color-nioaque-white: #ffffff; /* Branco puro (cards / faixa central) */
-  --color-editorial: #f1f4f1; /* Fundo editorial */
-  --color-ink: #1e293b; /* Texto principal */
+  /* --- Sistema de design "O Nioaquense" (ver design-system/) ---
+     Os nomes antigos (nioaque-green, ink, line...) foram mantidos e apontam
+     para os novos valores, para as classes existentes seguirem funcionando. */
+  --color-editorial: #f7f5f0; /* papel */
+  --color-nioaque-white: #ffffff; /* branco (cards) */
+  --color-line: #e5e0d5; /* pedra */
+  --color-line-strong: #bdb6a3; /* pedra-escura */
+  --color-ink: #1b1f1c; /* tinta */
+  --color-ink-soft: #4a4f4a; /* tinta-suave */
+  --color-ink-muted: #5c615c; /* tinta-muda */
 
-  /* --- Derivados uteis (mesma familia cromatica) --- */
-  --color-nioaque-green-dark: #006020;
-  --color-nioaque-green-light: #00a233;
-  --color-nioaque-green-50: #eaf6ee;
-  --color-nioaque-green-100: #c9e9d4;
-  --color-nioaque-red-dark: #b30000;
-  --color-nioaque-red-light: #ff2a2a;
-  --color-nioaque-red-50: #fdeaea;
-  --color-ink-soft: #475569;
-  --color-ink-muted: #526071;
-  --color-line: #e4e2dc;
-  --color-line-strong: #d3d0c8;
+  --color-verde-mata: #0d4722; /* verde da logo: header, Boca no Trombone */
+  --color-nioaque-green: #166a34; /* verde-institucional: pilula ativa, Plantao, Loterias, dezenas */
+  --color-nioaque-green-dark: #0d4722;
+  --color-nioaque-green-light: #6fcb8b;
+  --color-nioaque-green-50: #eaf3ec;
+  --color-nioaque-green-100: #cfe0d3;
+  --color-nioaque-red: #d92323; /* vermelho da logo: acao, bolinhas, filetes */
+  --color-nioaque-red-dark: #b01e1e; /* vermelho-texto: texto pequeno sobre papel/branco */
+  --color-nioaque-red-light: #fca5a5;
+  --color-nioaque-red-50: #fbeaea;
+  --color-pedra: #e5e0d5;
+  --color-pedra-escura: #bdb6a3;
+  --color-foto-reserva: #d9d5c8;
+  --color-mercado: #0f291e; /* faixa Cotacao Agro */
+  --color-ocre: #d97706;
+  --color-mercado-rotulo: #d9d5c8;
+  --color-verde-texto-forte: #e8f0ea;
+  --color-verde-texto-suave: #cfe0d3;
 
-  /* --- Tipografia --- */
-  --font-serif: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* --- Tipografia: Bitter (manchetes) + Chivo (interface e texto) --- */
+  --font-serif: 'Bitter', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Chivo', 'Helvetica Neue', Arial, sans-serif;
 
   /* --- Tipografia em escala fluida (mobile-first) --- */
   --text-xs: 0.8125rem;
@@ -59,10 +69,10 @@
 
   /* --- Raios / sombras --- */
   --radius-card: 4px;
-  --radius-pill: 0.25rem; /* tags retangulares secas, sem pílulas */
+  --radius-pill: 0.25rem; /* tags retangulares secas */
 
-  --shadow-card: 0 1px 2px rgb(30 41 59 / 0.04), 0 8px 24px -12px rgb(30 41 59 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(30 41 59 / 0.05), 0 18px 40px -18px rgb(30 41 59 / 0.22);
+  --: none; /* o sistema nao usa sombras: separacao por borda pedra e filetes */
+  --: none;
 }
 
 /* 4) Camada base ----------------------------------------------------------- */
@@ -94,12 +104,12 @@
   h4,
   .font-editorial {
     font-family: var(--font-serif);
-    font-optical-sizing: auto;
+    font-weight: 800;
   }
 
   /* Foco visivel e consistente (acessibilidade) */
   :focus-visible {
-    outline: 2px solid var(--color-nioaque-green);
+    outline: 2px solid var(--color-verde-mata);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -163,7 +173,7 @@
 
   /* Caixa "Direto ao Ponto" - retilinea */
   .box-resumo {
-    border-left: 4px solid var(--color-nioaque-green);
+    border-left: 4px solid var(--color-nioaque-green); /* Direto ao Ponto: so na materia aberta, nunca na Home */
     background-color: var(--color-nioaque-white);
     border-radius: 0 0.25rem 0.25rem 0;
   }
@@ -240,7 +250,7 @@
   .prose-editorial h3 {
     margin-top: 2rem;
     font-family: var(--font-serif);
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.01em;
   }
 }
@@ -279,3 +289,63 @@
 
 /* Titulos sem vi\u00favas (guideline: text-wrap balance) */
 h1, h2, h3 { text-wrap: balance; }
+
+/* 7) Elementos do sistema de design --------------------------------------- */
+
+/* Barra de leitura: 4px, fixa no topo extremo (progresso de rolagem). */
+.barra-leitura {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: 4px;
+  background: var(--color-pedra);
+  pointer-events: none;
+}
+.barra-leitura > i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--color-nioaque-green), var(--color-nioaque-red));
+}
+
+/* Filete A1 "Degraus": tres faixas decrescentes + linha dupla verde. */
+.filete-degraus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.filete-degraus .ln {
+  flex: 1;
+}
+.filete-degraus .ln i {
+  display: block;
+  background: var(--color-nioaque-green);
+}
+.filete-degraus .ln i:first-child {
+  height: 3px;
+}
+.filete-degraus .ln i:last-child {
+  height: 1px;
+  margin-top: 2px;
+}
+
+/* Filete duplo verde e vermelho (rodape especial). */
+.filete-duplo i {
+  display: block;
+}
+.filete-duplo i:first-child {
+  height: 1px;
+  background: var(--color-nioaque-red);
+}
+.filete-duplo i:last-child {
+  height: 3px;
+  margin-top: 2px;
+  background: var(--color-nioaque-green);
+}
+
+/* Numeros tabulares em horarios, dezenas e valores. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

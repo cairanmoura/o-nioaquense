@@ -1,0 +1,126 @@
+{
+  "v": 3,
+  "assetGroups": {
+    "Cavaleiro": {
+      "files": {
+        "Emblema~20Cavaleiro~20Oficial~20Branco~20-~20Chapado~20-~20O~20Nioaquense.svg": {
+          "blob": "7d84c7d4b654ac405297c50cc62d7cf8",
+          "name": "Emblema Cavaleiro Oficial Branco - Chapado - O Nioaquense.svg",
+          "sha256": "4970dff47ddb8633d2beb83210c20ceb767f95753998f42f2045ad7381d7ce54",
+          "size": 69896,
+          "type": "image/svg+xml"
+        },
+        "Emblema~20Cavaleiro~20Oficial~20Preto~20-~20Chapado~20-~20O~20Nioaquense.svg": {
+          "blob": "7ea821d4e1102ad1c820dd7f019f84f8",
+          "name": "Emblema Cavaleiro Oficial Preto - Chapado - O Nioaquense.svg",
+          "sha256": "c1170be6439927f48af46dc80f11ef7e35fb07d53bf6b3d8ecb33ab651b05a4e",
+          "size": 69896,
+          "type": "image/svg+xml"
+        },
+        "Emblema~20Cavaleiro~20Oficial~20Verde~20-~20Chapado~20-~20O~20Nioaquense.svg": {
+          "blob": "a335ed1d99ad6ab78035157d1d629953",
+          "name": "Emblema Cavaleiro Oficial Verde - Chapado - O Nioaquense.svg",
+          "sha256": "280525c9e2da8cdd01b04c796bdc3dae1094a88355df053b8b0e9a2b73215580",
+          "size": 69896,
+          "type": "image/svg+xml"
+        },
+        "Emblema~20Cavaleiro~20Oficial~20Vermelho~20-~20Chapado~20-~20O~20Nioaquense.svg": {
+          "blob": "2e46c55ff93ee6f8bd04ba7172e7a6f9",
+          "name": "Emblema Cavaleiro Oficial Vermelho - Chapado - O Nioaquense.svg",
+          "sha256": "8ee439d3f01206f53d183697a9da172767860fb545f4fbd254d5aa86bc96f9af",
+          "size": 69896,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "Cavaleiro",
+      "order": []
+    },
+    "Logos": {
+      "files": {
+        "LOGO~20O~20NIOAQUENSE~20BRANCO.svg": {
+          "blob": "506cb66746df8fb07d05c243752a9ec5",
+          "name": "LOGO O NIOAQUENSE BRANCO.svg",
+          "sha256": "05f61b732402ec263fb27caf30f03ec5223865f12e1218e15c24552767dccb5e",
+          "size": 67591,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20BRANCO~20-~20Cavalo~20direita.svg": {
+          "blob": "25c20afa11fd4e15b4595be7acf105a9",
+          "name": "LOGO O NIOAQUENSE BRANCO - Cavalo direita.svg",
+          "sha256": "a003ad72ad85339b52b0fe5e27a052fc2a241ff0988bb3fe13e9ec98c52b5e07",
+          "size": 70945,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20PRETO.svg": {
+          "blob": "9bd08e1136e4156406947a20e21b9b07",
+          "name": "LOGO O NIOAQUENSE PRETO.svg",
+          "sha256": "7bba4e55d9ea4689ca5a171d3ff328c3426b8b3978ab4ae5f81289debece9c15",
+          "size": 67591,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20PRETO~20-~20Cavalo~20direita.svg": {
+          "blob": "c7f301f4f4ce226dee10bf7e704f99cb",
+          "name": "LOGO O NIOAQUENSE PRETO - Cavalo direita.svg",
+          "sha256": "e74056892a5d1b45abb731efd48a3cf0404b118cb8bd0c4b9e2ba01005b09043",
+          "size": 70945,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20VERDE.svg": {
+          "blob": "df6d10b4242805d58e67ebf879dabd75",
+          "name": "LOGO O NIOAQUENSE VERDE.svg",
+          "sha256": "33bd0b50019e8c32940fdfb27a0c628e818bc5d389dba9e91c198c2c08a995a7",
+          "size": 67591,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20VERDE~20-~20Cavalo~20direita.svg": {
+          "blob": "45840d29b9d27b46445ec805ccd99c57",
+          "name": "LOGO O NIOAQUENSE VERDE - Cavalo direita.svg",
+          "sha256": "02434a5380101f2476f882112537e5fe65a80cb890034511a40c56dd5fd34039",
+          "size": 70945,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20VERMELHO.svg": {
+          "blob": "e24ab93aee7b5654aaefdbc5268338d6",
+          "name": "LOGO O NIOAQUENSE VERMELHO.svg",
+          "sha256": "6a808c72b7928fc6be5d8c365803467e3e665229b9be4fee7482c0fb39b4feac",
+          "size": 67591,
+          "type": "image/svg+xml"
+        },
+        "LOGO~20O~20NIOAQUENSE~20VERMELHO~20-~20Cavalo~20direita.svg": {
+          "blob": "68e76f81bb97577922e62e99efdbecfb",
+          "name": "LOGO O NIOAQUENSE VERMELHO - Cavalo direita.svg",
+          "sha256": "37538db47c6e88c4aba3b7adb7c19f01b126f041aeca4394d95b946597de49f0",
+          "size": 70945,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "Logos",
+      "order": [],
+      "tile": "l"
+    }
+  },
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-11-04T03:30:00Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "groups": [
+    "Logos",
+    "Cavaleiro"
+  ],
+  "lastChange": {
+    "at": "2026-11-04T03:30:00Z",
+    "by": "Cairan",
+    "note": "Sistema criado a partir do protótipo do portal",
+    "via": "Claude (Cowork)"
+  },
+  "layout": "files",
+  "libraries": [],
+  "namespace": "Nioaquense",
+  "sections": {},
+  "title": "O Nioaquense"
+}
