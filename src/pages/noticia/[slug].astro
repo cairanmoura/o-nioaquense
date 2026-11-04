@@ -1,5 +1,6 @@
 ---
 import ArticleCard from '../../components/ArticleCard.astro';
+import Comments from '../../components/Comments.astro';
 import AudioPlayer from '../../components/AudioPlayer.tsx';
 import CategoryPill from '../../components/CategoryPill.astro';
 import CoverArt from '../../components/CoverArt.astro';
@@ -94,6 +95,13 @@ const sourceInitials = sourceName
   : '';
 // Arte geometrica nao e' foto: nao vale como imagem de compartilhamento.
 const photoCover = isPhotoCover(article.cover_image_url) ? article.cover_image_url : null;
+
+// "Atualizado em": so quando a materia foi alterada de verdade depois de publicada (> 30 min)
+const updatedLabel =
+  article.published_at && article.updated_at &&
+  new Date(article.updated_at).getTime() - new Date(article.published_at).getTime() > 30 * 60_000
+    ? formatDateTime(article.updated_at)
+    : null;
 
 const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
 const telegramShare = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
@@ -192,6 +200,14 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
             </time>
             <span aria-hidden="true"> · </span>
             {readingMinutes} min de leitura
+            {
+              updatedLabel && (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  <time datetime={article.updated_at}>Atualizado em {updatedLabel}</time>
+                </>
+              )
+            }
           </p>
 
           {/* Compartilhamento rapido */}
@@ -274,9 +290,9 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           class="aspect-[16/9] w-full rounded-[4px]"
         />
       )}
-      {article.cover_image_caption && (
+      {isPhotoCover(article.cover_image_url) && (
         <figcaption class="mt-2 px-1 text-xs leading-relaxed text-ink-muted">
-          {article.cover_image_caption}
+          {article.cover_image_caption ?? `Foto: Reprodução${article.source_name ? ` / ${article.source_name}` : ''}`}
         </figcaption>
       )}
     </figure>
@@ -424,6 +440,8 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
             </section>
           )
         }
+
+        <Comments slug={article.slug} />
       </div>
 
       {/* Lateral */}

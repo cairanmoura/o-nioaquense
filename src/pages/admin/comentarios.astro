@@ -1,0 +1,86 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/auth';
+import { formatDateTime } from '../../lib/format';
+import { createServiceClient } from '../../lib/supabase/server';
+
+const session = Astro.locals.adminUser;
+if (!session) return Astro.redirect('/admin/login');
+if (!isAdmin(session)) return Astro.redirect('/admin');
+
+let rows: any[] = [];
+let error = '';
+const sb = createServiceClient(Astro.locals);
+if (sb) {
+  const { data, error: err } = await sb
+    .from('article_comments')
+    .select('id,author_name,body,status,flag_reason,created_at, article:articles!article_id(title,slug)')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  rows = data ?? [];
+  if (err) error = err.message + ' (rode a migração 023)';
+}
+const pending = rows.filter((r) => r.status === 'pending');
+const others = rows.filter((r) => r.status !== 'pending');
+const LABEL: Record<string, string> = { approved: 'Publicado', pending: 'Aguardando', rejected: 'Oculto' };
+---
+
+<AdminLayout title="Comentários" subtitle={`${pending.length} aguardando revisão`}>
+  <div class="mx-auto max-w-3xl space-y-8">
+    <p class="text-sm text-ink-soft">
+      Comentários limpos são publicados na hora. Ofensas, links e propaganda são recusados automaticamente.
+      Aqui ficam os que o filtro deixou em dúvida (ex.: texto todo em maiúsculas) e os já publicados, que você pode ocultar.
+    </p>
+    {error && <p class="text-sm text-nioaque-red-dark">{error}</p>}
+
+    {
+      [
+        { titulo: 'Aguardando revisão', itens: pending },
+        { titulo: 'Já tratados (mais recentes)', itens: others },
+      ].map((g) => (
+        <section>
+          <h2 class="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">{g.titulo} ({g.itens.length})</h2>
+          <ul class="mt-3 space-y-3">
+            {g.itens.map((r) => (
+              <li class="rounded-[4px] border border-pedra bg-branco p-3" data-row>
+                <p class="text-xs font-bold text-ink-muted">
+                  {r.author_name} · {formatDateTime(r.created_at)} · {LABEL[r.status]}
+                  {r.flag_reason ? ` · ${r.flag_reason}` : ''}
+                </p>
+                <p class="mt-1 whitespace-pre-line text-sm text-ink">{r.body}</p>
+                {r.article && (
+                  <p class="mt-1 text-xs text-ink-muted">
+                    Em: <a class="underline" href={`/noticia/${r.article.slug}#comentarios`} target="_blank">{r.article.title}</a>
+                  </p>
+                )}
+                <div class="mt-2 flex gap-4 text-xs font-semibold">
+                  {r.status !== 'approved' && <button type="button" data-set="approved" data-id={r.id} class="text-nioaque-green underline">Publicar</button>}
+                  {r.status !== 'rejected' && <button type="button" data-set="rejected" data-id={r.id} class="text-ink-soft underline">Ocultar</button>}
+                  <button type="button" data-del={r.id} class="text-nioaque-red-dark underline">Excluir</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</AdminLayout>
+
+<script>
+  document.addEventListener('click', async (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-set],[data-del]');
+    if (!t) return;
+    if (t.dataset.del) {
+      if (!confirm('Excluir este comentário de vez?')) return;
+      await fetch(`/api/admin/comentarios?id=${t.dataset.del}`, { method: 'DELETE' });
+    } else {
+      await fetch('/api/admin/comentarios', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: t.dataset.id, status: t.dataset.set }),
+      });
+    }
+    location.reload();
+  });
+</script>
