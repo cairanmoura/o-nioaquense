@@ -236,7 +236,8 @@ async function buscarBruto(ano: number): Promise<RawEmpenho[] | null> {
 const memoriaDetalhes = new Map<string, Detalhe | null>();
 
 /** Teto de consultas novas ao portal por visita; o resto e' concluido nas proximas (detalhes ficam em cache). */
-const REQUISICOES_POR_VISITA = 90;
+const REQUISICOES_POR_VISITA = 45;
+const preenchendo = new Set<number>();
 const SIMULTANEAS = 5;
 
 async function buscarDetalhe(locals: App.Locals, ano: string, numero: string, orcamento: { restante: number }): Promise<Detalhe | null> {
@@ -516,22 +517,46 @@ export async function getDespesasAno(locals: App.Locals, ano: number): Promise<R
     vistos.add(key);
     if ((x.credor_cnpj ?? '').length === 11 && !/FOLHA/i.test(x.credor_nome ?? '')) alvos.push(x);
   }
-  const orcamento = { restante: REQUISICOES_POR_VISITA };
-  const lidos = await emLotes(alvos, SIMULTANEAS, (x) => buscarDetalhe(locals, x.ano, x.numero_empenho, orcamento));
-  const detalhes = new Map<string, Detalhe | null>();
-  alvos.forEach((x, i) => detalhes.set(`${x.ano}/${x.numero_empenho}`, lidos[i]));
-
-  const resumo = resumir(ano, bruto, detalhes);
-
-  // So guarda o resumo se a classificacao estiver completa (senao tenta de novo na proxima visita)
-  if (cache && resumo.semDetalhe === 0) {
+  const montar = async (restante: number) => {
+    const orcamento = { restante };
+    const lidos = await emLotes(alvos, SIMULTANEAS, (x) => buscarDetalhe(locals, x.ano, x.numero_empenho, orcamento));
+    const detalhes = new Map<string, Detalhe | null>();
+    alvos.forEach((x, i) => detalhes.set(`${x.ano}/${x.numero_empenho}`, lidos[i]));
+    return resumir(ano, bruto, detalhes);
+  };
+  const guardar = async (r: ResumoAno, ttl: number) => {
+    if (!cache) return;
     try {
-      const res = new Response(JSON.stringify(resumo), {
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${CACHE_TTL}` },
+      const res = new Response(JSON.stringify(r), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${ttl}` },
       }) as unknown as Parameters<typeof cache.put>[1];
       await cache.put(cacheUrl, res);
     } catch {
       /* segue sem cache */
+    }
+  };
+
+  // Caminho rapido: so usa detalhes que ja estao em cache (nenhuma consulta nova ao portal)
+  const resumo = await montar(0);
+
+  if (resumo.semDetalhe === 0) {
+    await guardar(resumo, CACHE_TTL);
+  } else {
+    // Mostra agora o que existe (guarda 2 min) e completa em segundo plano
+    await guardar(resumo, 120);
+    const ctx = (locals.runtime as { ctx?: { waitUntil?: (p: Promise<unknown>) => void } } | undefined)?.ctx;
+    if (ctx?.waitUntil && !preenchendo.has(ano)) {
+      preenchendo.add(ano);
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const completo = await montar(REQUISICOES_POR_VISITA);
+            await guardar(completo, completo.semDetalhe === 0 ? CACHE_TTL : 120);
+          } finally {
+            preenchendo.delete(ano);
+          }
+        })(),
+      );
     }
   }
   return resumo;
