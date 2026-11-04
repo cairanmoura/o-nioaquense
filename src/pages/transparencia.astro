@@ -495,7 +495,7 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
           </div>
           <p class="mt-2 text-xs text-ink-soft">
             Fonte: API de Dados Abertos da Câmara (Quality Sistemas), atualizada a cada hora. Empenhos repetidos pela fonte são contados uma só vez. Diárias identificadas pela natureza da despesa (3.3.90.14) no detalhe do empenho; o nome do vereador é associado ao nome do favorecido.
-            {resumo.semDetalhe > 0 && ` Atenção: ainda estamos lendo o detalhe de ${resumo.semDetalhe} despesas de pessoas físicas; por enquanto elas aparecem em "Fornecedores e serviços". Atualize a página em alguns instantes para o resultado completo.`}
+            {resumo.semDetalhe > 0 && ` Atenção: ainda estamos lendo o detalhe de ${resumo.semDetalhe} despesas de pessoas físicas; por enquanto elas aparecem em "Fornecedores e serviços". A página completa isso sozinha em alguns segundos.`}
           </p>
         </section>
       </>
@@ -552,4 +552,16 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
   <script>
     import '../scripts/transparencia-export';
   </script>
+  {resumo && resumo.semDetalhe > 0 && <script is:inline define:vars={{ anoAtual: ano }}>
+    (async () => {
+      for (let i = 0; i < 15; i++) {
+        try {
+          const r = await fetch('/api/transparencia/completar?ano=' + anoAtual);
+          const j = await r.json();
+          if (!j.faltam) { location.reload(); return; }
+        } catch { return; }
+      }
+      location.reload();
+    })();
+  </script>}
 </MainLayout>

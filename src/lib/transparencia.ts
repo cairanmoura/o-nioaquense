@@ -236,8 +236,6 @@ async function buscarBruto(ano: number): Promise<RawEmpenho[] | null> {
 const memoriaDetalhes = new Map<string, Detalhe | null>();
 
 /** Teto de consultas novas ao portal por visita; o resto e' concluido nas proximas (detalhes ficam em cache). */
-const REQUISICOES_POR_VISITA = 45;
-const preenchendo = new Set<number>();
 const SIMULTANEAS = 5;
 
 async function buscarDetalhe(locals: App.Locals, ano: string, numero: string, orcamento: { restante: number }): Promise<Detalhe | null> {
@@ -493,7 +491,7 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
 }
 
 /** Resumo das despesas de um ano. Devolve null se o portal estiver fora do ar. */
-export async function getDespesasAno(locals: App.Locals, ano: number): Promise<ResumoAno | null> {
+export async function getDespesasAno(locals: App.Locals, ano: number, limite = 0): Promise<ResumoAno | null> {
   const cache = locals.runtime?.caches?.default;
   const cacheUrl = `https://cache.onioaquense.com/transparencia/despesas/${CACHE_VERSION}/${ENTIDADE}/${ano}`;
 
@@ -524,39 +522,19 @@ export async function getDespesasAno(locals: App.Locals, ano: number): Promise<R
     alvos.forEach((x, i) => detalhes.set(`${x.ano}/${x.numero_empenho}`, lidos[i]));
     return resumir(ano, bruto, detalhes);
   };
-  const guardar = async (r: ResumoAno, ttl: number) => {
-    if (!cache) return;
+
+  // Caminho rapido: usa so detalhes ja guardados (nenhuma consulta nova ao portal).
+  // O que falta e' completado pelo navegador via /api/transparencia/completar.
+  const resumo = await montar(limite);
+
+  if (cache && resumo.semDetalhe === 0) {
     try {
-      const res = new Response(JSON.stringify(r), {
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${ttl}` },
+      const res = new Response(JSON.stringify(resumo), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${CACHE_TTL}` },
       }) as unknown as Parameters<typeof cache.put>[1];
       await cache.put(cacheUrl, res);
     } catch {
       /* segue sem cache */
-    }
-  };
-
-  // Caminho rapido: so usa detalhes que ja estao em cache (nenhuma consulta nova ao portal)
-  const resumo = await montar(0);
-
-  if (resumo.semDetalhe === 0) {
-    await guardar(resumo, CACHE_TTL);
-  } else {
-    // Mostra agora o que existe (guarda 2 min) e completa em segundo plano
-    await guardar(resumo, 120);
-    const ctx = (locals.runtime as { ctx?: { waitUntil?: (p: Promise<unknown>) => void } } | undefined)?.ctx;
-    if (ctx?.waitUntil && !preenchendo.has(ano)) {
-      preenchendo.add(ano);
-      ctx.waitUntil(
-        (async () => {
-          try {
-            const completo = await montar(REQUISICOES_POR_VISITA);
-            await guardar(completo, completo.semDetalhe === 0 ? CACHE_TTL : 120);
-          } finally {
-            preenchendo.delete(ano);
-          }
-        })(),
-      );
     }
   }
   return resumo;
