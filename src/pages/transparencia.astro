@@ -9,6 +9,7 @@ import ExternasView from '../components/transparencia/ExternasView.astro';
 import { createServiceClient } from '../lib/supabase/server';
 import { lerChave } from '../lib/transparencia-store';
 import type { ResumoReceitas } from '../lib/receitas';
+import type { ResumoFolha } from '../lib/folha';
 import { chaveResumo, chaveLista, anosPrefeitura, chaveEstado, chaveFederal, chaveIbge } from '../lib/transparencia-job';
 import type { ResumoEstado, ResumoFederal, ResumoIbge } from '../lib/externas';
 import type { ResumoPref, PrefEmpenho } from '../lib/prefeitura';
@@ -115,6 +116,7 @@ const sb = createServiceClient(Astro.locals);
 let resumo: ResumoAno | null = null;
 let resumoPref: ResumoPref | null = null;
 let receitas: ResumoReceitas | null = null;
+let folha: ResumoFolha | null = null;
 let estadoExt: ResumoEstado | null = null;
 let federalExt: ResumoFederal | null = null;
 let ibgeExt: ResumoIbge | null = null;
@@ -129,6 +131,7 @@ if (sb) {
     resumoPref = r?.valor ?? null;
     atualizadoEm = r?.atualizadoEm ?? null;
     receitas = (await lerChave<ResumoReceitas>(sb, chaveResumo('receitas', ano)))?.valor ?? null;
+    folha = (await lerChave<ResumoFolha>(sb, chaveResumo('folha', ano)))?.valor ?? null;
     [estadoExt, federalExt, ibgeExt] = await Promise.all([
       lerChave<ResumoEstado>(sb, chaveEstado(ano)).then((r) => r?.valor ?? null),
       lerChave<ResumoFederal>(sb, chaveFederal(ano)).then((r) => r?.valor ?? null),
@@ -262,6 +265,7 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
       <PrefeituraView
         resumo={resumoPref}
         receitas={receitas}
+        folha={folha}
         ano={ano}
         anos={anos}
         q={q}

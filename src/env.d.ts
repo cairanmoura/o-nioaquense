@@ -37,6 +37,8 @@ interface Env {
   APIFY_TOKEN?: string;
   /** chave da API de Dados do Portal da Transparencia (CGU), gratuita */
   CGU_API_KEY?: string;
+  /** chave da Google Weather API (opcional; sem ela o clima usa o Open-Meteo) */
+  GOOGLE_WEATHER_API_KEY?: string;
   [key: string]: unknown;
 }
 

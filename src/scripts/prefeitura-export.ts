@@ -53,6 +53,7 @@ interface AutoridadeExp {
   total: number;
   qtd: number;
   diarias: number;
+  folha: { base: number; bruto: number; descontos: number; liquido: number; admissao: string } | null;
   lista: { d: string; valor: number; tipo: string; secretaria: string }[];
 }
 interface ReceitasExp {
@@ -81,12 +82,13 @@ interface PrefExport {
   areas: Item[];
   fornecedores: { nome: string; valor: number; qtd: number }[];
   receitas: ReceitasExp | null;
+  refFolha: string;
 }
 
 const dataBr = (iso: string) => iso.split('-').reverse().join('/');
 const FONTE_DESPESAS = (d: PrefExport) =>
   `Fonte: Portal da Transparência da Prefeitura de Nioaque (Quality Sistemas) · dados de ${new Date(d.atualizadoEm).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' })}`;
-const NOTA_SALARIO = 'Salários não entram aqui: a folha de pagamento é paga em bloco. Veja o valor por cargo na Folha de pagamento do portal oficial.';
+const notaFolha = (d: PrefExport) => (d.refFolha ? 'Salário: folha de pagamento de ' + d.refFolha + ' (líquido = o que cai na conta). Diárias e reembolsos: no ano.' : 'Salário não carregado. Diárias e reembolsos: no ano.');
 
 function tresCaixas(ctx: Ctx, y: number, itens: [string, string, boolean][]) {
   const bw = (W - 108 - 40) / 3;
@@ -202,7 +204,7 @@ function desenharReceitas(ctx: Ctx, d: PrefExport, r: ReceitasExp, logo: HTMLIma
 
 function desenharEscalao(ctx: Ctx, d: PrefExport, logo: HTMLImageElement | null, imgs: Map<string, HTMLImageElement | null>) {
   cabecalho(ctx, logo, 'Transparência');
-  titulo(ctx, 'Primeiro escalão da Prefeitura', `Pagamentos em nome de cada autoridade em ${d.ano} (diárias, reembolsos e similares)`, 180);
+  titulo(ctx, 'Primeiro escalão da Prefeitura', `Pagamentos em nome de cada autoridade em ${d.ano} (salário e diárias)`, 180);
 
   const cols = 3;
   const gap = 16;
@@ -222,13 +224,22 @@ function desenharEscalao(ctx: Ctx, d: PrefExport, logo: HTMLImageElement | null,
     ctx.fillStyle = SUAVE;
     fonte(ctx, 500, 16);
     quebrar(ctx, a.cargoCurto, cw - 28, 2).forEach((l, k) => ctx.fillText(l, bx + cw / 2, by + 158 + k * 18));
-    ctx.fillStyle = a.total > 0 ? VERMELHO_TEXTO : SUAVE;
-    const txt = a.total > 0 ? brl(a.total) : 'R$ 0,00';
-    ajustar(ctx, txt, 800, 32, cw - 24, SERIF);
-    ctx.fillText(txt, bx + cw / 2, by + 208);
-    ctx.fillStyle = SUAVE;
-    fonte(ctx, 600, 17);
-    ctx.fillText(a.qtd === 0 ? 'nenhum pagamento individual' : `${a.qtd} ${a.qtd === 1 ? 'pagamento' : 'pagamentos'}${a.diarias > 0 ? ' · diárias' : ''}`, bx + cw / 2, by + 230);
+    if (a.folha) {
+      ctx.fillStyle = MATA;
+      ajustar(ctx, 'Líquido ' + brl(a.folha.liquido), 800, 28, cw - 24, SERIF);
+      ctx.fillText('Líquido ' + brl(a.folha.liquido), bx + cw / 2, by + 202);
+      ctx.fillStyle = SUAVE;
+      ajustar(ctx, 'bruto ' + brl(a.folha.bruto) + ' · diárias ' + brl(a.total), 600, 16, cw - 20);
+      ctx.fillText('bruto ' + brl(a.folha.bruto) + ' · diárias ' + brl(a.total), bx + cw / 2, by + 226);
+    } else {
+      ctx.fillStyle = a.total > 0 ? VERMELHO_TEXTO : SUAVE;
+      const txt = a.total > 0 ? brl(a.total) : 'R$ 0,00';
+      ajustar(ctx, txt, 800, 32, cw - 24, SERIF);
+      ctx.fillText(txt, bx + cw / 2, by + 208);
+      ctx.fillStyle = SUAVE;
+      fonte(ctx, 600, 17);
+      ctx.fillText(a.qtd === 0 ? 'nenhum pagamento individual' : 'diárias e reembolsos', bx + cw / 2, by + 230);
+    }
     ctx.textAlign = 'left';
   });
 
@@ -241,15 +252,17 @@ function desenharEscalao(ctx: Ctx, d: PrefExport, logo: HTMLImageElement | null,
   const lw = W - 54 - bx;
   caixaVerde(ctx, bx, by, lw, ch);
   const total = d.escalao.reduce((s, a) => s + a.total, 0);
+  const totalLiquido = d.escalao.reduce((s, a) => s + (a.folha?.liquido ?? 0), 0);
   ctx.fillStyle = '#CFE0D3';
   fonte(ctx, 700, 19);
-  ctx.fillText('TOTAL EM NOME DO PRIMEIRO ESCALÃO', bx + 22, by + 40);
+  const temFolha = totalLiquido > 0;
+  ctx.fillText(temFolha ? 'SALÁRIOS LÍQUIDOS POR MÊS (SOMA)' : 'DIÁRIAS E REEMBOLSOS NO ANO', bx + 22, by + 40);
   ctx.fillStyle = '#fff';
-  ajustar(ctx, brl(total), 800, 44, lw - 44, SERIF);
-  ctx.fillText(brl(total), bx + 22, by + 92);
+  ajustar(ctx, brl(temFolha ? totalLiquido : total), 800, 44, lw - 44, SERIF);
+  ctx.fillText(brl(temFolha ? totalLiquido : total), bx + 22, by + 92);
   ctx.fillStyle = '#CFE0D3';
   fonte(ctx, 500, 18);
-  quebrar(ctx, NOTA_SALARIO, lw - 44, 4).forEach((l, k) => ctx.fillText(l, bx + 22, by + 130 + k * 24));
+  quebrar(ctx, notaFolha(d) + (temFolha ? ' Diárias e reembolsos somam ' + brl(total) + '.' : ''), lw - 44, 4).forEach((l, k) => ctx.fillText(l, bx + 22, by + 130 + k * 24));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -267,20 +280,35 @@ function desenharAutoridade(ctx: Ctx, d: PrefExport, a: AutoridadeExp, logo: HTM
   fonte(ctx, 500, 26);
   quebrar(ctx, `${a.cargoCurto} · ${d.periodo}`, W - 354, 2).forEach((l, k) => ctx.fillText(l, 300, 350 + k * 32));
 
-  tresCaixas(ctx, 440, [
-    ['Pago em nome', brl(a.total), true],
-    ['Pagamentos', String(a.qtd), false],
-    ['Diárias', a.diarias > 0 ? brl(a.diarias) : 'R$ 0,00', false],
-  ]);
+  tresCaixas(
+    ctx,
+    440,
+    a.folha
+      ? [
+          ['Salário líquido', brl(a.folha.liquido), true],
+          ['Salário bruto', brl(a.folha.bruto), false],
+          ['Diárias e reembolsos', brl(a.total), false],
+        ]
+      : [
+          ['Pago em nome', brl(a.total), true],
+          ['Pagamentos', String(a.qtd), false],
+          ['Diárias', a.diarias > 0 ? brl(a.diarias) : 'R$ 0,00', false],
+        ],
+  );
+  if (a.folha) {
+    ctx.fillStyle = SUAVE;
+    fonte(ctx, 500, 20);
+    ctx.fillText('Folha de ' + d.refFolha + ' · salário base ' + brl(a.folha.base) + ' · descontos ' + brl(a.folha.descontos) + (a.folha.admissao ? ' · admissão ' + a.folha.admissao : ''), 54, 574);
+  }
 
-  secao(ctx, 'Pagamentos mais recentes', 578);
+  secao(ctx, 'Diárias e reembolsos mais recentes', 596);
   if (a.lista.length === 0) {
     ctx.fillStyle = SUAVE;
     fonte(ctx, 500, 26);
-    ctx.fillText(`Nenhum pagamento individual registrado em ${d.ano}.`, 54, 650);
+    ctx.fillText(`Nenhuma diária ou reembolso em ${d.ano}.`, 54, 700);
   }
   a.lista.slice(0, 12).forEach((l, i) => {
-    const y = 630 + i * 46;
+    const y = 648 + i * 46;
     if (i % 2 === 0) {
       ctx.fillStyle = '#EFEBE1';
       ctx.fillRect(54, y - 4, W - 108, 44);
@@ -301,7 +329,7 @@ function desenharAutoridade(ctx: Ctx, d: PrefExport, a: AutoridadeExp, logo: HTM
   caixa(ctx, 54, 1214, W - 108, 92);
   ctx.fillStyle = SUAVE;
   fonte(ctx, 500, 20);
-  quebrar(ctx, `${NOTA_SALARIO} Os pagamentos acima são os feitos em nome da própria pessoa (diárias e reembolsos).`, W - 148, 3).forEach((l, k) => ctx.fillText(l, 74, 1246 + k * 25));
+  quebrar(ctx, notaFolha(d) + ' Os pagamentos listados são os feitos em nome da própria pessoa.', W - 148, 3).forEach((l, k) => ctx.fillText(l, 74, 1246 + k * 25));
 }
 
 /* -------------------------------------------------------------------------- */

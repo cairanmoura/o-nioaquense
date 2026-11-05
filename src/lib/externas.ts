@@ -7,6 +7,8 @@
  * para o job tentar de novo depois sem apagar o ultimo resumo bom.
  */
 
+import { AUTORES_EMENDAS } from './bancada';
+
 export const IBGE_MUNICIPIO = '5005806';
 /** CNPJ da Prefeitura Municipal de Nioaque (Tesouro Nacional / Receita Federal). */
 export const CNPJ_PREFEITURA = '03073699000108';
@@ -301,8 +303,30 @@ export interface ResumoFederal {
     porMinisterio: { nome: string; total: number; orgaos: { nome: string; total: number }[] }[];
     ultimoMes: number;
   };
+  /** emendas individuais "Pix" (transferencia especial), do Transferegov */
+  especiais: EmendaEspecial[];
+  /** emendas da lista oficial com destino Nioaque, de parlamentares de MS (so aparece se houver) */
+  emendas: EmendaFederal[];
   /** programas pagos direto as familias de Nioaque, por mes */
   programas: { nome: string; porMes: { mes: number; valor: number; beneficiarios: number }[]; ultimo: { mes: number; valor: number; beneficiarios: number } | null; totalAno: number }[];
+}
+
+export interface EmendaEspecial {
+  parlamentar: string;
+  /** valor empenhado (o que o Tesouro reservou/pagou para a Prefeitura) */
+  valor: number;
+  dataEmpenho: string;
+  /** investimento ou custeio, conforme o plano de acao */
+  destino: string;
+}
+export interface EmendaFederal {
+  codigo: string;
+  autor: string;
+  tipo: string;
+  funcao: string;
+  subfuncao: string;
+  empenhado: number;
+  pago: number;
 }
 
 type RecursoRecebido = { anoMes: number; nomeOrgaoSuperior: string; nomeOrgao: string; valor: number };
@@ -366,6 +390,70 @@ async function programa(nome: string, rota: string, ano: number, chave: string):
   return { nome, porMes, ultimo: porMes[porMes.length - 1] ?? null, totalAno: porMes.reduce((s, x) => s + x.valor, 0) };
 }
 
+const TRANSFEREGOV = 'https://api.transferegov.gestao.gov.br/transferenciasespeciais';
+
+/** Emendas Pix (transferencia especial) cujo beneficiario e' a Prefeitura. Planos impedidos (refeitos) ficam de fora. */
+async function emendasEspeciais(ano: number): Promise<EmendaEspecial[] | null> {
+  const planos = await getJson<
+    { id_plano_acao: number; situacao_plano_acao: string; nome_parlamentar_emenda_plano_acao: string; valor_custeio_plano_acao: number; valor_investimento_plano_acao: number }[]
+  >(
+    `${TRANSFEREGOV}/plano_acao_especial?cnpj_beneficiario_plano_acao=eq.${CNPJ_PREFEITURA}&ano_plano_acao=eq.${ano}&select=id_plano_acao,situacao_plano_acao,nome_parlamentar_emenda_plano_acao,valor_custeio_plano_acao,valor_investimento_plano_acao`,
+  );
+  if (!planos) return null;
+  const validos = planos.filter((p) => !/IMPEDIDO/i.test(p.situacao_plano_acao));
+  if (!validos.length) return [];
+  const ids = validos.map((p) => p.id_plano_acao).join(',');
+  const emp = await getJson<{ id_plano_acao: number; valor_empenho: number; data_emissao_empenho: string }[]>(
+    `${TRANSFEREGOV}/empenho_especial?id_plano_acao=in.(${ids})&select=id_plano_acao,valor_empenho,data_emissao_empenho&order=data_emissao_empenho.asc`,
+  );
+  if (!emp) return null;
+  const out: EmendaEspecial[] = [];
+  for (const p of validos) {
+    const e = emp.filter((x) => x.id_plano_acao === p.id_plano_acao);
+    // sem empenho ainda: o plano existe, mas o dinheiro nao foi reservado, entao nao entra na conta
+    if (!e.length) continue;
+    out.push({
+      parlamentar: p.nome_parlamentar_emenda_plano_acao,
+      valor: e.reduce((s, x) => s + Number(x.valor_empenho), 0),
+      dataEmpenho: e[e.length - 1].data_emissao_empenho,
+      destino: p.valor_investimento_plano_acao > 0 && p.valor_custeio_plano_acao === 0 ? 'Investimento' : p.valor_custeio_plano_acao > 0 && p.valor_investimento_plano_acao === 0 ? 'Custeio' : 'Investimento e custeio',
+    });
+  }
+  return out.sort((a, b) => b.valor - a.valor);
+}
+
+/**
+ * Emendas da lista oficial (API de Dados) de parlamentares de MS cujo destino e' Nioaque.
+ * A API nao filtra por municipio, entao consulta autor por autor e filtra aqui.
+ * Falha de um autor nao derruba o resto.
+ */
+async function emendasPorAutores(ano: number, chave: string): Promise<EmendaFederal[]> {
+  const h = { 'chave-api-dados': chave };
+  const out = new Map<string, EmendaFederal>();
+  for (const autor of AUTORES_EMENDAS) {
+    for (let pagina = 1; pagina <= 8; pagina++) {
+      const r = await getJson<
+        { codigoEmenda: string; autor: string; tipoEmenda: string; funcao: string; subfuncao: string; localidadeDoGasto: string; valorEmpenhado: string; valorPago: string }[]
+      >(`${CGU}/emendas?ano=${ano}&nomeAutor=${encodeURIComponent(autor)}&pagina=${pagina}`, h);
+      await new Promise((ok) => setTimeout(ok, 700));
+      if (!r || !r.length) break;
+      for (const x of r) {
+        if (!semAcento(x.localidadeDoGasto ?? '').includes('NIOAQUE')) continue;
+        out.set(x.codigoEmenda, {
+          codigo: x.codigoEmenda,
+          autor: x.autor,
+          tipo: x.tipoEmenda,
+          funcao: x.funcao,
+          subfuncao: x.subfuncao,
+          empenhado: numeroBr(x.valorEmpenhado),
+          pago: numeroBr(x.valorPago),
+        });
+      }
+    }
+  }
+  return [...out.values()].sort((a, b) => b.empenhado - a.empenhado);
+}
+
 export async function buscarFederal(ano: number, chave: string | undefined): Promise<ResumoFederal | null> {
   if (!chave) return null;
   const trf = await transferencias(ano, chave);
@@ -378,5 +466,8 @@ export async function buscarFederal(ano: number, chave: string | undefined): Pro
     const p = await programa(nome, rota, ano, chave);
     if (p) programas.push(p);
   }
-  return { ano, geradoEm: new Date().toISOString(), transferencias: trf, programas };
+  const especiais = await emendasEspeciais(ano);
+  if (!especiais) return null;
+  const emendas = await emendasPorAutores(ano, chave);
+  return { ano, geradoEm: new Date().toISOString(), transferencias: trf, especiais, emendas, programas };
 }

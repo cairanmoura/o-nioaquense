@@ -10,10 +10,12 @@ import FotoAutoridade from './FotoAutoridade.astro';
 import { brl, brlCurto, MESES_LONGOS, semAcento } from '../../lib/transparencia';
 import { CATEGORIAS_PREF, slugDe, type CategoriaPref, type PrefEmpenho, type ResumoPref } from '../../lib/prefeitura';
 import type { ResumoReceitas } from '../../lib/receitas';
+import type { ResumoFolha } from '../../lib/folha';
 
 interface Props {
   resumo: ResumoPref | null;
   receitas: ResumoReceitas | null;
+  folha: ResumoFolha | null;
   ano: number;
   anos: number[];
   q: string;
@@ -28,7 +30,7 @@ interface Props {
   ID: string;
   BASE: string;
 }
-const { resumo, receitas, ano, anos, q, orgaoSel, areaSel, catSel, escSel, autSel, pag, listaPref, atualizadoEm, ID, BASE } = Astro.props;
+const { resumo, receitas, folha, ano, anos, q, orgaoSel, areaSel, catSel, escSel, autSel, pag, listaPref, atualizadoEm, ID, BASE } = Astro.props;
 
 const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
 const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
@@ -80,6 +82,11 @@ const atual = atualizadoEm ? new Date(atualizadoEm).toLocaleDateString('pt-BR', 
 const ICONE_PNG = 'M4 5h16v14H4z M4 15l4-4 4 4 3-3 5 5 M15.5 9.5h.01';
 const botaoPng = 'inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border border-nioaque-green bg-branco px-4 text-sm font-semibold text-nioaque-green-dark hover:bg-nioaque-green-50 disabled:opacity-60 print:hidden';
 const ICONE_PDF = 'M7 3h7l5 5v13H7z M14 3v5h5 M9.5 13h5 M9.5 17h5';
+const folhaDe = (slug: string) => {
+  const f = folha?.itens[slug];
+  return f && f.nome ? f : null;
+};
+const refFolhaTxt = folha ? folha.ref.slice(5) + '/' + folha.ref.slice(0, 4) : '';
 const cargoCurto = (c: string) => c.replace(/^Secret[áa]ri[oa] Municipal d[aeo]s? /i, 'Secretaria de ');
 const exportData = resumo
   ? {
@@ -100,12 +107,14 @@ const exportData = resumo
         total: a.total,
         qtd: a.qtd,
         diarias: a.diarias,
+        folha: folhaDe(a.slug),
         lista: a.lista.slice(0, 12).map((l) => ({ d: l.d, valor: l.valor, tipo: l.tipo, secretaria: l.secretaria })),
       })),
       secretarias: resumo.porSecretaria.slice(0, 12).map((x) => ({ nome: x.nome, valor: x.valor, qtd: x.qtd })),
       areas: resumo.porFuncao.slice(0, 12).map((x) => ({ nome: x.nome, valor: x.valor, qtd: x.qtd })),
       fornecedores: resumo.credores.slice(0, 12).map((c) => ({ nome: c.nome, valor: c.pago, qtd: c.empenhos })),
       receitas,
+      refFolha: refFolhaTxt,
     }
   : null;
 const NOMES_MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -374,7 +383,13 @@ const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
                 <span class="min-w-0">
                   <span class="block font-editorial text-lg font-extrabold leading-tight text-ink">{a.nome}</span>
                   <span class="block text-xs text-ink-soft">{a.cargo}</span>
-                  <span class="mt-1 block text-base font-bold tabular-nums text-nioaque-red-dark">{brl(a.total)}</span>
+                  {folhaDe(a.slug) && (
+                    <>
+                      <span class="mt-1 block text-base font-bold tabular-nums text-ink">Salário líquido {brl(folhaDe(a.slug)!.liquido)}</span>
+                      <span class="block text-xs text-ink-soft">bruto {brl(folhaDe(a.slug)!.bruto)} · folha de {refFolhaTxt}</span>
+                    </>
+                  )}
+                  <span class="mt-1 block text-sm text-ink-soft">Diárias e reembolsos: <strong class="tabular-nums text-nioaque-red-dark">{brl(a.total)}</strong></span>
                   <span class="block text-xs text-ink-soft">{a.qtd === 0 ? 'nenhum pagamento individual' : `${a.qtd} ${a.qtd === 1 ? 'pagamento' : 'pagamentos'}${a.diarias > 0 ? ` · diárias ${brl(a.diarias)}` : ''}`}</span>
                 </span>
               </a>
@@ -386,14 +401,21 @@ const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
           ))}
         </ul>
         <p class="mt-3 text-xs text-ink-soft">
-          Aqui aparecem os pagamentos feitos em nome de cada autoridade (diárias, reembolsos e similares): {brl(totalEscalao)} no total. O salário vem da folha, que o portal agrupa em bloco; para o valor por cargo, veja
-          <a class="underline" href={`${BASE}/folha-de-pagamento/${ID}`} target="_blank" rel="noopener noreferrer">Folha de pagamento</a> e
-          <a class="underline" href={`${BASE}/cargos-e-salarios/${ID}`} target="_blank" rel="noopener noreferrer">Cargos e salários</a> no portal oficial.
+          {folha
+            ? 'Salário: folha de pagamento de ' + refFolhaTxt + ' (bruto = antes dos descontos; líquido = o que cai na conta). '
+            : 'O salário vem da folha de pagamento, que ainda não foi carregada. '}
+          Diárias e reembolsos: pagamentos feitos em nome de cada autoridade em {ano}, {brl(totalEscalao)} no total. Fonte: Portal da Transparência da Prefeitura (
+          <a class="underline" href={BASE + '/folha-de-pagamento/' + ID} target="_blank" rel="noopener noreferrer">Folha de pagamento</a>).
         </p>
 
         {selecionada && (
           <div id="p-autoridade" class={`${cartao} mt-4 scroll-mt-24`}>
             <h3 class="font-editorial text-xl font-extrabold text-ink">{selecionada.nome} <span class="text-sm font-semibold text-ink-soft">· {selecionada.cargo}</span></h3>
+            {folhaDe(selecionada.slug) && (
+              <p class="mt-2 text-sm text-ink">
+                Folha de {refFolhaTxt}: salário base <strong class="tabular-nums">{brl(folhaDe(selecionada.slug)!.base)}</strong> · bruto <strong class="tabular-nums">{brl(folhaDe(selecionada.slug)!.bruto)}</strong> · descontos <strong class="tabular-nums">{brl(folhaDe(selecionada.slug)!.descontos)}</strong> · líquido <strong class="tabular-nums">{brl(folhaDe(selecionada.slug)!.liquido)}</strong>
+              </p>
+            )}
             {selecionada.lista.length === 0 ? (
               <p class="mt-2 text-sm text-ink-soft">Nenhum pagamento individual registrado em {ano}.</p>
             ) : (

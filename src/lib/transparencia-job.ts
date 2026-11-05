@@ -19,6 +19,7 @@ import {
   type RawEmpenho,
 } from './transparencia';
 import { buscarReceitas } from './receitas';
+import { buscarFolha, type ResumoFolha } from './folha';
 import { buscarEstado, buscarFederal, buscarIbge } from './externas';
 import { chaveEmpenho, ENTIDADE_PREFEITURA, montarResumoPref, orgaoDe, ORGAOS_TENTAR } from './prefeitura';
 import { CONFIG_PADRAO, dataLocal, devidaHoje, gravarChave, lerChave, type ConfigAtualizacao } from './transparencia-store';
@@ -39,7 +40,7 @@ const LOTE = 20;
 const SIMULTANEAS = 5;
 const MAX_ERROS = 6;
 
-export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas', ano: number) => `resumo:${entidade}:${ano}`;
+export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas' | 'folha', ano: number) => `resumo:${entidade}:${ano}`;
 export const chaveLista = (ano: number) => `lista:prefeitura:${ano}`;
 /** fontes de fora (IBGE, Governo de MS, Governo Federal) */
 export const chaveIbge = 'ext:ibge';
@@ -67,7 +68,7 @@ export async function lerConfig(sb: SupabaseClient): Promise<ConfigAtualizacao> 
 /** Comeca uma rodada de atualizacao e enfileira o primeiro passo. */
 export async function iniciarRodada(sb: SupabaseClient, queue: any, origem: Estado['origem'], completa = false): Promise<Estado> {
   const atual = anoAtual();
-  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`, 'ibge:0', `estado:${atual}`, `federal:${atual}`];
+  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`, `folha:${atual}`, 'ibge:0', `estado:${atual}`, `federal:${atual}`];
   const existentes = new Set(
     ((await sb.from('transparencia_cache').select('key').like('key', 'resumo:%')).data ?? []).map((r: { key: string }) => r.key),
   );
@@ -167,6 +168,28 @@ export async function passoTransparencia(sb: SupabaseClient, chaveFederalApi?: s
     return { continua: est.pendentes.length > 0, atraso: 300, info: msg };
   };
 
+  // Folha do primeiro escalao: portal lento, poucas consultas por passo; continua ate completar
+  if (nome === 'folha') {
+    const chave = chaveResumo('folha', ano);
+    const prev = (await lerChave<ResumoFolha>(sb, chave))?.valor;
+    const emCurso = prev && prev.faltam > 0 && Date.now() - Date.parse(prev.atualizadoEm) < 3 * 3600_000 ? prev : null;
+    const antes = emCurso ? Object.keys(emCurso.itens).length : 0;
+    const f = await buscarFolha(ano, dataLocal().m, emCurso);
+    if (!f) return falhar('folha de pagamento: portal sem resposta');
+    await gravarChave(sb, chave, f);
+    if (f.faltam > 0) {
+      if (Object.keys(f.itens).length <= antes) return falhar('folha de pagamento: consultas sem resposta');
+      est.erros = 0;
+      await gravarChave(sb, 'estado', est);
+      return { continua: true, atraso: 2, info: 'folha ' + ano + ': faltam ' + f.faltam };
+    }
+    est.pendentes.shift();
+    est.erros = 0;
+    est.ultimoErro = undefined;
+    if (!est.pendentes.length) est.fimEm = new Date().toISOString();
+    await gravarChave(sb, 'estado', est);
+    return { continua: est.pendentes.length > 0, atraso: 1, info: 'folha ' + ano + ': pronta' };
+  }
   // Receitas: vem do Tesouro Nacional (SICONFI), sem detalhes por empenho: um passo so
   if (nome === 'receitas') {
     const rec = await buscarReceitas(ano);
