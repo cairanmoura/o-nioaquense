@@ -90,7 +90,7 @@ export function createExports(manifest: any) {
           console.log(`xposts: ${r.inserted} novo(s)`, r.errors.join(' | '));
           msg.ack();
         } else if (job.type === 'transparencia') {
-          const r = await passoTransparencia(supabase);
+          const r = await passoTransparencia(supabase, (env as any).CGU_API_KEY);
           console.log('transparencia:', r.info);
           if (r.continua) await env.NEWS_QUEUE.send({ type: 'transparencia' } satisfies NewsJob, { delaySeconds: r.atraso });
           msg.ack();

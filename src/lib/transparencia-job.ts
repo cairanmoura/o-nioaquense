@@ -19,6 +19,7 @@ import {
   type RawEmpenho,
 } from './transparencia';
 import { buscarReceitas } from './receitas';
+import { buscarEstado, buscarFederal, buscarIbge } from './externas';
 import { chaveEmpenho, ENTIDADE_PREFEITURA, montarResumoPref, orgaoDe, ORGAOS_TENTAR } from './prefeitura';
 import { CONFIG_PADRAO, dataLocal, devidaHoje, gravarChave, lerChave, type ConfigAtualizacao } from './transparencia-store';
 
@@ -40,6 +41,10 @@ const MAX_ERROS = 6;
 
 export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas', ano: number) => `resumo:${entidade}:${ano}`;
 export const chaveLista = (ano: number) => `lista:prefeitura:${ano}`;
+/** fontes de fora (IBGE, Governo de MS, Governo Federal) */
+export const chaveIbge = 'ext:ibge';
+export const chaveEstado = (ano: number) => `ext:estado:${ano}`;
+export const chaveFederal = (ano: number) => `ext:federal:${ano}`;
 
 export function anosCamara(): number[] {
   const atual = anoAtual();
@@ -62,13 +67,19 @@ export async function lerConfig(sb: SupabaseClient): Promise<ConfigAtualizacao> 
 /** Comeca uma rodada de atualizacao e enfileira o primeiro passo. */
 export async function iniciarRodada(sb: SupabaseClient, queue: any, origem: Estado['origem'], completa = false): Promise<Estado> {
   const atual = anoAtual();
-  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`];
+  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`, 'ibge:0', `estado:${atual}`, `federal:${atual}`];
   const existentes = new Set(
     ((await sb.from('transparencia_cache').select('key').like('key', 'resumo:%')).data ?? []).map((r: { key: string }) => r.key),
   );
   for (const a of anosCamara()) if (a !== atual && (completa || !existentes.has(chaveResumo('camara', a)))) alvos.push(`camara:${a}`);
   for (const a of anosPrefeitura()) if (a !== atual && (completa || !existentes.has(chaveResumo('prefeitura', a)))) alvos.push(`prefeitura:${a}`);
   for (const a of anosPrefeitura()) if (a !== atual && (completa || !existentes.has(chaveResumo('receitas', a)))) alvos.push(`receitas:${a}`);
+  const extras = new Set(((await sb.from('transparencia_cache').select('key').like('key', 'ext:%')).data ?? []).map((r: { key: string }) => r.key));
+  for (const a of anosPrefeitura()) {
+    if (a === atual) continue;
+    if (completa || !extras.has(chaveEstado(a))) alvos.push(`estado:${a}`);
+    if (completa || !extras.has(chaveFederal(a))) alvos.push(`federal:${a}`);
+  }
   const prev = await lerEstado(sb);
   const est: Estado = {
     pendentes: alvos,
@@ -134,7 +145,7 @@ function compactar(d: Detalhe, guardarHistorico: boolean): Detalhe {
 }
 
 /** Faz um lote de trabalho. Devolve se ainda ha o que fazer e em quantos segundos reenfileirar. */
-export async function passoTransparencia(sb: SupabaseClient): Promise<{ continua: boolean; atraso: number; info: string }> {
+export async function passoTransparencia(sb: SupabaseClient, chaveFederalApi?: string): Promise<{ continua: boolean; atraso: number; info: string }> {
   const est = await lerEstado(sb);
   if (!est.pendentes.length) return { continua: false, atraso: 0, info: 'nada pendente' };
 
@@ -167,6 +178,25 @@ export async function passoTransparencia(sb: SupabaseClient): Promise<{ continua
     if (!est.pendentes.length) est.fimEm = new Date().toISOString();
     await gravarChave(sb, 'estado', est);
     return { continua: est.pendentes.length > 0, atraso: 1, info: `receitas ${ano}: pronto` };
+  }
+
+  // Fontes de fora: IBGE, Governo de MS e Governo Federal (um passo cada)
+  if (nome === 'ibge' || nome === 'estado' || nome === 'federal') {
+    if (nome === 'federal' && !chaveFederalApi) {
+      est.pendentes.shift();
+      if (!est.pendentes.length) est.fimEm = new Date().toISOString();
+      await gravarChave(sb, 'estado', est);
+      return { continua: est.pendentes.length > 0, atraso: 1, info: 'federal: sem chave da API (CGU_API_KEY), pulado' };
+    }
+    const dado = nome === 'ibge' ? await buscarIbge() : nome === 'estado' ? await buscarEstado(ano) : await buscarFederal(ano, chaveFederalApi);
+    if (!dado) return falhar(`${nome}: fonte fora do ar`);
+    await gravarChave(sb, nome === 'ibge' ? chaveIbge : nome === 'estado' ? chaveEstado(ano) : chaveFederal(ano), dado);
+    est.pendentes.shift();
+    est.erros = 0;
+    est.ultimoErro = undefined;
+    if (!est.pendentes.length) est.fimEm = new Date().toISOString();
+    await gravarChave(sb, 'estado', est);
+    return { continua: est.pendentes.length > 0, atraso: 1, info: `${nome} ${ano}: pronto` };
   }
 
   const bruto = await buscarBruto(idEnt, ano);

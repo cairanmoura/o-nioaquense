@@ -1,0 +1,231 @@
+---
+/**
+ * Dinheiro e dados de fora da Prefeitura sobre Nioaque: repasses e emendas do
+ * Governo de MS, recursos dos ministerios e programas do Governo Federal, e o
+ * retrato do municipio segundo o IBGE. Tudo vem da tabela transparencia_cache.
+ */
+import ChartMeses from './ChartMeses.astro';
+import { brl, brlCurto } from '../../lib/transparencia';
+import type { ResumoEstado, ResumoFederal, ResumoIbge } from '../../lib/externas';
+
+interface Props {
+  ano: number;
+  estado: ResumoEstado | null;
+  federal: ResumoFederal | null;
+  ibge: ResumoIbge | null;
+}
+const { ano, estado, federal, ibge } = Astro.props;
+
+const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
+const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
+const pill =
+  'inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green hover:text-nioaque-green-dark';
+const rotulo = 'text-xs font-bold uppercase tracking-[0.12em] text-ink-soft';
+const valorGrande = 'mt-1 font-editorial text-2xl font-extrabold tabular-nums text-ink';
+const NOMES_MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const n = (v: number) => v.toLocaleString('pt-BR');
+const mesAno = (mes: number) => `${NOMES_MES[mes - 1]} de ${ano}`;
+const bonito = (t: string) => t.charAt(0) + t.slice(1).toLowerCase();
+const SIGLAS = /(icms|ipva|ipi|cide|iss|iptu|fpm|fundeb|sus|ses|suas)/gi;
+const tipoBonito = (t: string) => bonito(t).replace(SIGLAS, (m) => m.toUpperCase());
+const lista = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}` : (xs[0] ?? ''));
+
+const temEstado = !!estado && (estado.repasses.total > 0 || estado.emendas.quantidade > 0);
+const temFederal = !!federal && (federal.transferencias.total > 0 || federal.programas.length > 0);
+const semIcms = estado?.repasses.mesesSemIcms ?? [];
+const maxTipo = estado?.repasses.porTipo[0]?.total || 1;
+const maxMin = federal?.transferencias.porMinisterio[0]?.total || 1;
+const estimativaRecente = ibge?.estimativas[ibge.estimativas.length - 1] ?? null;
+const pibPerCapita = ibge?.pibMilReais && estimativaRecente ? (ibge.pibMilReais.valor * 1000) / (ibge.populacaoCenso?.valor ?? estimativaRecente.valor) : null;
+---
+
+{(temEstado || temFederal || ibge) && (
+  <>
+    <div class="mb-6 mt-2 border-t-2 border-nioaque-green pt-8 print:hidden">
+      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">Além da Prefeitura</p>
+      <h2 class="font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Quem mais põe dinheiro em Nioaque</h2>
+      <p class="mt-2 max-w-2xl text-base leading-relaxed text-ink-soft">
+        Repasses e emendas do Governo de Mato Grosso do Sul, recursos dos ministérios do Governo Federal e o retrato do município segundo o IBGE.
+      </p>
+      <nav aria-label="Atalhos de fontes externas" class="mt-4 flex flex-wrap gap-2">
+        {temEstado && <a href="#x-estado" class={pill}>Governo de MS</a>}
+        {temFederal && <a href="#x-federal" class={pill}>Governo Federal</a>}
+        {ibge && <a href="#x-ibge" class={pill}>Nioaque segundo o IBGE</a>}
+      </nav>
+    </div>
+
+    {temEstado && estado && (
+      <section id="x-estado" class="mb-10 scroll-mt-24">
+        <div class="mb-4 border-l-4 border-nioaque-red pl-3">
+          <h3 class={tituloSecao}>Governo de Mato Grosso do Sul</h3>
+          <p class="text-sm text-ink-soft">Repasses do Estado à Prefeitura e emendas de deputados estaduais, de {ano}. Fonte: Portal de Dados Abertos de MS.</p>
+        </div>
+
+        <dl class="grid gap-3 sm:grid-cols-3">
+          <div class={cartao}>
+            <dt class={rotulo}>Repassado pelo Estado</dt>
+            <dd class={valorGrande}>{brl(estado.repasses.total)}</dd>
+          </div>
+          <div class={cartao}>
+            <dt class={rotulo}>Em emendas estaduais</dt>
+            <dd class={valorGrande}>{brl(estado.emendas.total)}</dd>
+          </div>
+          <div class={cartao}>
+            <dt class={rotulo}>Emendas</dt>
+            <dd class={valorGrande}>{estado.emendas.quantidade}</dd>
+          </div>
+        </dl>
+
+        {estado.repasses.total > 0 && (
+          <div class={`${cartao} mt-3`}>
+            <h4 class="font-editorial text-lg font-extrabold text-ink">Repasses mês a mês</h4>
+            <p class="mb-3 text-sm text-ink-soft">ICMS, IPVA e outras transferências que o Estado manda para a Prefeitura.</p>
+            <ChartMeses series={[{ label: 'Repasses do Estado', cor: '#166A34', valores: estado.repasses.porMes }]} ultimoMes={estado.repasses.ultimoMes} brl={brl} descricao={`Repasses do Estado a Nioaque por mês em ${ano}`} />
+            {semIcms.length > 0 && (
+              <p class="mt-3 rounded-[4px] bg-editorial p-3 text-sm text-ink-soft">
+                <strong class="text-ink">Atenção:</strong> o Estado não publicou o ICMS de {lista(semIcms.map((m) => NOMES_MES[m]))} nos dados abertos (vale para todos os municípios). Nesses meses o valor aparece menor porque falta esse repasse, não porque caiu.
+              </p>
+            )}
+            <ul class="mt-4 space-y-2">
+              {estado.repasses.porTipo.map((t) => (
+                <li>
+                  <div class="flex items-baseline justify-between gap-3 text-sm">
+                    <span class="min-w-0 font-semibold text-ink">{tipoBonito(t.tipo)}</span>
+                    <span class="shrink-0 font-semibold tabular-nums text-ink">{brl(t.total)}</span>
+                  </div>
+                  <div class="mt-1 h-2 rounded-[2px] bg-editorial" aria-hidden="true"><div class="h-2 rounded-[2px] bg-nioaque-green" style={`width:${Math.max(2, (t.total / maxTipo) * 100)}%`}></div></div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {estado.emendas.quantidade > 0 && (
+          <div class={`${cartao} mt-3`}>
+            <h4 class="font-editorial text-lg font-extrabold text-ink">Emendas de deputados estaduais</h4>
+            <p class="mb-3 text-sm text-ink-soft">Quem destinou, para quê e em que pé está cada emenda.</p>
+            <ul class="divide-y divide-pedra">
+              {estado.emendas.lista.map((e) => (
+                <li class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-3">
+                  <div class="min-w-0 flex-1 basis-64">
+                    <p class="font-semibold text-ink">{e.deputado || 'Deputado não informado'}</p>
+                    <p class="text-sm text-ink-soft">{e.objeto}</p>
+                    <p class="mt-0.5 text-xs text-ink-soft">{e.beneficiario} · {e.orgao}{e.status ? ` · ${bonito(e.status)}` : ''}</p>
+                  </div>
+                  <p class="shrink-0 font-semibold tabular-nums text-ink">{brl(e.valor)}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    )}
+
+    {temFederal && federal && (
+      <section id="x-federal" class="mb-10 scroll-mt-24">
+        <div class="mb-4 border-l-4 border-nioaque-red pl-3">
+          <h3 class={tituloSecao}>Governo Federal</h3>
+          <p class="text-sm text-ink-soft">Dinheiro dos ministérios pago diretamente à Prefeitura e programas pagos às famílias de Nioaque, de {ano}. Fonte: Portal da Transparência (CGU).</p>
+        </div>
+
+        <dl class="grid gap-3 sm:grid-cols-3">
+          <div class={cartao}>
+            <dt class={rotulo}>Recebido pela Prefeitura</dt>
+            <dd class={valorGrande}>{brl(federal.transferencias.total)}</dd>
+          </div>
+          {federal.programas.map((p) => (
+            <div class={cartao}>
+              <dt class={rotulo}>{p.nome}</dt>
+              <dd class={valorGrande}>{brl(p.totalAno)}</dd>
+              {p.ultimo && <p class="mt-0.5 text-xs text-ink-soft">{n(p.ultimo.beneficiarios)} {p.ultimo.beneficiarios === 1 ? 'beneficiário' : 'beneficiários'} em {NOMES_MES[p.ultimo.mes - 1]}</p>}
+            </div>
+          ))}
+        </dl>
+
+        {federal.transferencias.total > 0 && (
+          <div class={`${cartao} mt-3`}>
+            <h4 class="font-editorial text-lg font-extrabold text-ink">Quais ministérios mandaram dinheiro</h4>
+            <p class="mb-3 text-sm text-ink-soft">Pagamentos feitos à Prefeitura de Nioaque (CNPJ da Prefeitura). Repasses a fundos municipais, como saúde, têm CNPJ próprio e não entram nesta conta.</p>
+            <ul class="space-y-3">
+              {federal.transferencias.porMinisterio.map((m) => (
+                <li>
+                  <div class="flex items-baseline justify-between gap-3 text-sm">
+                    <span class="min-w-0 font-semibold text-ink">{m.nome}</span>
+                    <span class="shrink-0 font-semibold tabular-nums text-ink">{brl(m.total)}</span>
+                  </div>
+                  <div class="mt-1 h-2 rounded-[2px] bg-editorial" aria-hidden="true"><div class="h-2 rounded-[2px] bg-nioaque-green" style={`width:${Math.max(2, (m.total / maxMin) * 100)}%`}></div></div>
+                  <p class="mt-1 text-xs text-ink-soft">{m.orgaos.slice(0, 3).map((o) => `${o.nome}: ${brlCurto(o.total)}`).join(' · ')}</p>
+                </li>
+              ))}
+            </ul>
+            <h4 class="mb-2 mt-6 font-editorial text-lg font-extrabold text-ink">Mês a mês</h4>
+            <ChartMeses series={[{ label: 'Governo Federal', cor: '#0D4722', valores: federal.transferencias.porMes }]} ultimoMes={federal.transferencias.ultimoMes} brl={brl} descricao={`Recursos federais pagos à Prefeitura por mês em ${ano}`} />
+          </div>
+        )}
+        <p class="mt-3 text-xs text-ink-soft">Emendas federais para Nioaque ainda não aparecem aqui: o Portal da Transparência não permite filtrar as emendas por município.</p>
+      </section>
+    )}
+
+    {ibge && (
+      <section id="x-ibge" class="mb-10 scroll-mt-24">
+        <div class="mb-4 border-l-4 border-nioaque-red pl-3">
+          <h3 class={tituloSecao}>Nioaque segundo o IBGE</h3>
+          <p class="text-sm text-ink-soft">Retrato do município com os números oficiais mais recentes. Fonte: IBGE (Censo, estimativas e pesquisas anuais).</p>
+        </div>
+        <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {ibge.populacaoCenso && (
+            <div class={cartao}>
+              <dt class={rotulo}>População (Censo {ibge.populacaoCenso.ano})</dt>
+              <dd class={valorGrande}>{n(ibge.populacaoCenso.valor)}</dd>
+              {estimativaRecente && <p class="mt-0.5 text-xs text-ink-soft">Estimativa {estimativaRecente.ano}: {n(estimativaRecente.valor)}</p>}
+            </div>
+          )}
+          {ibge.area && (
+            <div class={cartao}>
+              <dt class={rotulo}>Área</dt>
+              <dd class={valorGrande}>{n(Math.round(ibge.area))} km²</dd>
+              {ibge.densidade && <p class="mt-0.5 text-xs text-ink-soft">{ibge.densidade.toLocaleString('pt-BR')} habitantes por km²</p>}
+            </div>
+          )}
+          {ibge.pibMilReais && (
+            <div class={cartao}>
+              <dt class={rotulo}>PIB ({ibge.pibMilReais.ano})</dt>
+              <dd class={valorGrande}>{brlCurto(ibge.pibMilReais.valor * 1000)}</dd>
+              {pibPerCapita && <p class="mt-0.5 text-xs text-ink-soft">{brl(pibPerCapita)} por habitante</p>}
+            </div>
+          )}
+          {ibge.bovinos && (
+            <div class={cartao}>
+              <dt class={rotulo}>Rebanho bovino ({ibge.bovinos.ano})</dt>
+              <dd class={valorGrande}>{n(ibge.bovinos.valor)}</dd>
+              {ibge.populacaoCenso && <p class="mt-0.5 text-xs text-ink-soft">{(ibge.bovinos.valor / ibge.populacaoCenso.valor).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} cabeças por habitante</p>}
+            </div>
+          )}
+        </dl>
+        {(ibge.lavouras.length > 0 || ibge.pessoalOcupado) && (
+          <div class={`${cartao} mt-3 grid gap-4 sm:grid-cols-2`}>
+            {ibge.lavouras.length > 0 && (
+              <div>
+                <h4 class="font-editorial text-lg font-extrabold text-ink">Lavouras (colheita {ibge.lavouras[0].ano})</h4>
+                <ul class="mt-2 space-y-1 text-sm">
+                  {ibge.lavouras.map((l) => (
+                    <li class="flex justify-between gap-3"><span>{l.nome}</span><span class="font-semibold tabular-nums">{n(l.toneladas)} t</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {ibge.pessoalOcupado && (
+              <div>
+                <h4 class="font-editorial text-lg font-extrabold text-ink">Empregos nas empresas ({ibge.pessoalOcupado.ano})</h4>
+                <ul class="mt-2 space-y-1 text-sm">
+                  <li class="flex justify-between gap-3"><span>Pessoal ocupado</span><span class="font-semibold tabular-nums">{n(ibge.pessoalOcupado.valor)}</span></li>
+                  {ibge.pessoalAssalariado && <li class="flex justify-between gap-3"><span>Assalariados</span><span class="font-semibold tabular-nums">{n(ibge.pessoalAssalariado.valor)}</span></li>}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    )}
+  </>
+)}

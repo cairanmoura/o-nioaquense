@@ -5,10 +5,12 @@ import ChartMeses from '../components/transparencia/ChartMeses.astro';
 import ChartLinha from '../components/transparencia/ChartLinha.astro';
 import ChartCalor from '../components/transparencia/ChartCalor.astro';
 import PrefeituraView from '../components/transparencia/PrefeituraView.astro';
+import ExternasView from '../components/transparencia/ExternasView.astro';
 import { createServiceClient } from '../lib/supabase/server';
 import { lerChave } from '../lib/transparencia-store';
 import type { ResumoReceitas } from '../lib/receitas';
-import { chaveResumo, chaveLista, anosPrefeitura } from '../lib/transparencia-job';
+import { chaveResumo, chaveLista, anosPrefeitura, chaveEstado, chaveFederal, chaveIbge } from '../lib/transparencia-job';
+import type { ResumoEstado, ResumoFederal, ResumoIbge } from '../lib/externas';
 import type { ResumoPref, PrefEmpenho } from '../lib/prefeitura';
 import {
   anosDisponiveis,
@@ -113,6 +115,9 @@ const sb = createServiceClient(Astro.locals);
 let resumo: ResumoAno | null = null;
 let resumoPref: ResumoPref | null = null;
 let receitas: ResumoReceitas | null = null;
+let estadoExt: ResumoEstado | null = null;
+let federalExt: ResumoFederal | null = null;
+let ibgeExt: ResumoIbge | null = null;
 let atualizadoEm: string | null = null;
 if (sb) {
   if (entidade === 'camara') {
@@ -124,6 +129,11 @@ if (sb) {
     resumoPref = r?.valor ?? null;
     atualizadoEm = r?.atualizadoEm ?? null;
     receitas = (await lerChave<ResumoReceitas>(sb, chaveResumo('receitas', ano)))?.valor ?? null;
+    [estadoExt, federalExt, ibgeExt] = await Promise.all([
+      lerChave<ResumoEstado>(sb, chaveEstado(ano)).then((r) => r?.valor ?? null),
+      lerChave<ResumoFederal>(sb, chaveFederal(ano)).then((r) => r?.valor ?? null),
+      lerChave<ResumoIbge>(sb, chaveIbge).then((r) => r?.valor ?? null),
+    ]);
   }
 }
 const orgaoSel = Astro.url.searchParams.get('orgao') ?? '';
@@ -267,6 +277,8 @@ const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
         BASE={BASE}
       />
     )}
+
+    {entidade === 'prefeitura' && <ExternasView ano={ano} estado={estadoExt} federal={federalExt} ibge={ibgeExt} />}
 
     {entidade === 'camara' && (
     <>

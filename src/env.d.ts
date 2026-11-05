@@ -35,6 +35,8 @@ interface Env {
   MISTRAL_API_KEY?: string;
   COHERE_API_KEY?: string;
   APIFY_TOKEN?: string;
+  /** chave da API de Dados do Portal da Transparencia (CGU), gratuita */
+  CGU_API_KEY?: string;
   [key: string]: unknown;
 }
 
