@@ -97,9 +97,9 @@ const details = [
   {/* Previsao dos proximos dias */}
   {
     weather.forecast.length > 0 && (
-      <ul class="grid grid-cols-3 gap-1 px-2 pb-2 sm:grid-cols-6">
+      <ul class="grid grid-cols-3 gap-2 px-3 pb-3 sm:grid-cols-6">
         {weather.forecast.slice(1, 7).map((day) => (
-          <li class="px-2 py-3 text-center">
+          <li class="rounded-[4px] border border-line bg-editorial px-2 py-3 text-center">
             <p class="text-xs font-medium text-ink-muted">
               {day.weekday} {day.day}
             </p>

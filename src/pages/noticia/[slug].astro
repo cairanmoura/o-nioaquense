@@ -85,6 +85,8 @@ const sourceName =
 const isColumnist = author?.role === 'columnist';
 const bylineName = article.author_name || (isColumnist ? (author?.column_name ?? author?.full_name) : null) || 'Redação';
 const sourceUrl = realSourceUrl;
+const stripSourceLine = (html: string) =>
+  String(html ?? '').replace(/(?:<p>(?:\s|<br\s*\/?>)*<\/p>\s*)*<p>\s*Fonte:[\s\S]*?<\/p>\s*$/i, '');
 const sourceInitials = sourceName
   ? sourceName
       .split(/\s+/)
@@ -335,7 +337,7 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
       <div class="min-w-0">
         <div
           class="prose-editorial space-y-5 font-editorial text-[1.125rem] leading-[1.8] text-ink sm:text-[1.1875rem]"
-          set:html={renderEventCards(linkifyArticle(article.content, { tags: article.tags ?? [], localTags: article.local_tags ?? [] }))}
+          set:html={renderEventCards(linkifyArticle(stripSourceLine(article.content), { tags: article.tags ?? [], localTags: article.local_tags ?? [] }))}
         />
 
         {otherVersions.length > 0 && (
@@ -353,20 +355,6 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
           </aside>
         )}
 
-        {sourceName && sourceUrl && (
-          <p class="mt-8 border-t border-line pt-4 text-sm leading-relaxed text-ink-soft">
-            <strong class="font-semibold text-ink">Fonte:</strong>{' '}
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="link-underline font-semibold text-nioaque-green"
-            >
-              {sourceName}
-            </a>
-            . O Nioaquense publica a chamada e a foto; a íntegra está no veículo original.
-          </p>
-        )}
 
         {/* Anuncio intercalado: o do comercio local (slot "Dentro da materia")
             e, abaixo, o espaco do Google AdSense. O banner local so aparece
