@@ -66,6 +66,12 @@ retry_delay = 60
 max_concurrency = 2
 dead_letter_queue = "news-scrape-dlq"
 
+[[queues.consumers]]
+queue = "news-scrape-dlq"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 0
+
 # -----------------------------------------------------------------------------
 #  Variaveis publicas (nao secretas) - espelham o .env
 # -----------------------------------------------------------------------------

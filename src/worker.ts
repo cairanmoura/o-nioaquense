@@ -8,6 +8,7 @@ import { passoTransparencia, transparenciaCron } from './lib/transparencia-job';
 import {
   enqueueJobs,
   markSeen,
+  noteSource,
   makeServiceClient,
   processEntry,
   refreshQuotes,
@@ -43,6 +44,24 @@ export function createExports(manifest: any) {
    */
   const queue = async (batch: any, env: any, _ctx: any) => {
     const supabase = makeServiceClient(env);
+
+    // Fila de falhas: nao reprocessa; so deixa o motivo visivel na fonte (tela Fontes)
+    if (String(batch.queue ?? '').endsWith('-dlq')) {
+      for (const msg of batch.messages) {
+        const job = msg.body as NewsJob;
+        try {
+          if (supabase && (job as any)?.sourceId) {
+            const what = job.type === 'article' ? `materia ${String((job as any).entry?.link ?? '').slice(0, 120)}` : job.type;
+            await noteSource(supabase, (job as any).sourceId, { last_status: 'erro', last_message: `Falhou 3 vezes e foi descartada: ${what}` });
+          }
+        } catch {
+          /* sem registro: segue */
+        }
+        msg.ack();
+      }
+      return;
+    }
+
     for (const msg of batch.messages) {
       const job = msg.body as NewsJob;
       try {
@@ -106,7 +125,8 @@ export function createExports(manifest: any) {
         }
       } catch (err: any) {
         console.error('queue: erro', job?.type, err?.message ?? err);
-        msg.retry({ delaySeconds: 30 });
+        // Backoff exponencial: 30 s, 60 s, 120 s... (teto de 10 min)
+        msg.retry({ delaySeconds: Math.min(30 * 2 ** Math.max(0, (msg.attempts ?? 1) - 1), 600) });
       }
     }
   };
