@@ -1,0 +1,41 @@
+---
+/**
+ * Player leve do YouTube: mostra a miniatura e so carrega o player (youtube-nocookie)
+ * quando a pessoa clica. Proporcao 16:9 reservada: sem salto de layout.
+ */
+interface Props {
+  id: string;
+  titulo: string;
+  /** transmissao no ar: mostra o selo "Ao vivo" */
+  aoVivo?: boolean;
+}
+const { id, titulo, aoVivo = false } = Astro.props;
+---
+
+<div class="yt-player relative aspect-video w-full overflow-hidden rounded-[4px] border border-line bg-ink" data-yt={id}>
+  <button type="button" class="group absolute inset-0 flex h-full w-full items-center justify-center" aria-label={`Assistir: ${titulo}`}>
+    <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" width="480" height="360" loading="lazy" class="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100" />
+    <span class="relative flex h-16 w-16 items-center justify-center rounded-full bg-nioaque-red text-white shadow-none ring-4 ring-white/80 transition-transform group-hover:scale-105">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+    </span>
+    {aoVivo && <span class="absolute left-3 top-3 rounded-[4px] bg-nioaque-red px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">Ao vivo</span>}
+  </button>
+</div>
+
+<script>
+  function montar(el: HTMLElement) {
+    const id = el.dataset.yt;
+    if (!id || el.querySelector('iframe')) return;
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
+    f.title = el.querySelector('button')?.getAttribute('aria-label') ?? 'Vídeo';
+    f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+    f.allowFullscreen = true;
+    f.className = 'absolute inset-0 h-full w-full border-0';
+    el.innerHTML = '';
+    el.appendChild(f);
+  }
+  document.querySelectorAll<HTMLElement>('.yt-player').forEach((el) => {
+    el.querySelector('button')?.addEventListener('click', () => montar(el));
+  });
+</script>

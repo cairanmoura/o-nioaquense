@@ -1,0 +1,43 @@
+---
+/**
+ * Aviso de transmissao da Camara (home e pagina de sessoes).
+ * So aparece quando o canal oficial esta ao vivo ou tem transmissao agendada
+ * nas proximas horas. Dado real do YouTube; sem transmissao, nada e' exibido.
+ */
+import type { AoVivo } from '../lib/camara-sessoes';
+
+interface Props {
+  estado: AoVivo;
+}
+const { estado } = Astro.props;
+const { vivo, agendada } = estado;
+const hora = agendada?.inicio
+  ? new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Campo_Grande', hour: '2-digit', minute: '2-digit' }).format(new Date(agendada.inicio))
+  : null;
+---
+
+{
+  vivo && (
+    <div class="border-b border-nioaque-red/20 bg-nioaque-red-50">
+      <div class="container-editorial flex min-h-[44px] flex-wrap items-center gap-x-4 gap-y-2 py-2.5">
+        <span class="inline-flex shrink-0 items-center gap-2 rounded-[4px] bg-nioaque-red px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">
+          <span class="h-2 w-2 animate-pulse rounded-full bg-white" aria-hidden="true" />
+          Ao vivo
+        </span>
+        <p class="min-w-0 flex-1 text-sm font-semibold text-ink">Sessão da Câmara de Nioaque acontece agora</p>
+        <a href="/camara/sessoes" class="inline-flex min-h-[44px] items-center rounded-[4px] bg-nioaque-green px-4 text-sm font-bold text-white hover:bg-nioaque-green-dark">Assistir</a>
+      </div>
+    </div>
+  )
+}
+{
+  !vivo && agendada && hora && (
+    <div class="border-b border-line bg-nioaque-green-50">
+      <div class="container-editorial flex min-h-[44px] flex-wrap items-center gap-x-4 gap-y-2 py-2.5">
+        <span class="shrink-0 rounded-[4px] bg-nioaque-green px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">Hoje</span>
+        <p class="min-w-0 flex-1 text-sm font-semibold text-ink">Sessão da Câmara às <span class="tabular-nums">{hora}</span>, com transmissão ao vivo</p>
+        <a href="/camara/sessoes" class="inline-flex min-h-[44px] items-center rounded-[4px] border border-nioaque-green px-4 text-sm font-bold text-nioaque-green-dark hover:bg-white">Ver sessões</a>
+      </div>
+    </div>
+  )
+}

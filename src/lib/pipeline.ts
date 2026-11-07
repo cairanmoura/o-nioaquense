@@ -72,7 +72,8 @@ export type NewsJob =
   | { type: 'quotes' }
   | { type: 'lotteries' }
   | { type: 'xposts' }
-  | { type: 'transparencia' };
+  | { type: 'transparencia' }
+  | { type: 'camara'; modo: 'youtube' | 'portal' | 'dados' | 'noticias' | 'rascunho'; forcar?: boolean };
 
 export interface ProcessOutcome {
   /** retry = falha temporaria (IA fora do ar etc.): a fila tenta de novo mais tarde. */

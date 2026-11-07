@@ -1,0 +1,213 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import AoVivoCamara from '../../../components/AoVivoCamara.astro';
+import YoutubePlayer from '../../../components/YoutubePlayer.astro';
+import { createServiceClient } from '../../../lib/supabase/server';
+import { lerProposicoesNormalizadas, producaoDosVereadores, type ResultadoNormalizacao } from '../../../lib/camara-dados';
+import { dataLocal } from '../../../lib/transparencia-store';
+import { VEREADORES } from '../../../lib/transparencia';
+import { CANAL_YOUTUBE, PORTAL_CAMARA, estadoAoVivo, lerSessoes, tipoDaSessao, type SessaoCamara } from '../../../lib/camara-sessoes';
+
+/**
+ * /camara/sessoes
+ * Sessoes da Camara Municipal: transmissao ao vivo, gravacao de cada sessao (canal oficial no YouTube),
+ * ata em PDF (portal da Camara) e producao legislativa de cada vereador. So dados reais das fontes oficiais.
+ */
+const sb = createServiceClient(Astro.locals);
+const hoje = dataLocal();
+const anos: number[] = [];
+let sessoes: SessaoCamara[] = [];
+let youtubeEm: string | null = null;
+let portalEm: string | null = null;
+let aoVivo = { vivo: null, agendada: null } as Awaited<ReturnType<typeof estadoAoVivo>>;
+let props: (ResultadoNormalizacao & { total: number; atualizadoEm: string }) | null = null;
+
+if (sb) {
+  const r = await lerSessoes(sb);
+  sessoes = r.sessoes;
+  youtubeEm = r.youtube?.atualizadoEm ?? null;
+  portalEm = r.portal?.atualizadoEm ?? null;
+  aoVivo = await estadoAoVivo(sb);
+}
+for (const s of sessoes) {
+  const a = Number(s.data.slice(0, 4));
+  if (!anos.includes(a)) anos.push(a);
+}
+const anoParam = Number(Astro.url.searchParams.get('ano'));
+const ano = anos.includes(anoParam) ? anoParam : (anos[0] ?? hoje.y);
+if (sb) props = await lerProposicoesNormalizadas(sb, ano);
+
+const doAno = sessoes.filter((s) => s.data.startsWith(String(ano)));
+const destaque = aoVivo.vivo ?? sessoes.find((s) => s.videos.length)?.videos.at(-1) ?? null;
+const destaqueSessao = destaque ? sessoes.find((s) => s.videos.some((v) => v.id === destaque.id)) : null;
+
+const fmtData = (iso: string) => new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const fmtDiaSemana = (iso: string) => new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const fmtHoraLocal = (iso: string | null) => (iso ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Campo_Grande' }).format(new Date(iso)) : null);
+const fmtDuracao = (seg: number | null) => {
+  if (!seg) return null;
+  const h = Math.floor(seg / 3600);
+  const m = Math.round((seg % 3600) / 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+};
+const fmtAtualizado = (iso: string | null) =>
+  iso ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Campo_Grande' }).format(new Date(iso)) : null;
+
+// Produção dos vereadores: cada autor do portal casado com o cadastro canônico dos 9 vereadores
+const producao = props ? producaoDosVereadores(props.itens) : new Map();
+const porVereador = VEREADORES.map((v) => ({ v, p: producao.get(v.slug) })).sort((a, b) => (b.p?.total ?? 0) - (a.p?.total ?? 0));
+const executivo = props ? props.itens.filter((x) => x.outrosAutores.some((a) => /^executivo$/i.test(a)) && x.sigla.startsWith('PL')).length : 0;
+
+const titulo = 'Sessões da Câmara Municipal de Nioaque: ao vivo, vídeos e atas';
+---
+
+<MainLayout title={titulo} description="Assista ao vivo e reveja as sessões da Câmara Municipal de Nioaque, com a ata em PDF de cada uma e o que cada vereador apresentou, direto das fontes oficiais.">
+  <AoVivoCamara estado={aoVivo} />
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="border-b-2 border-nioaque-green pb-5">
+      <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">Câmara Municipal de Nioaque</p>
+      <h1 class="mt-1 font-editorial text-3xl font-extrabold leading-tight text-ink sm:text-5xl">Sessões da Câmara</h1>
+      <p class="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">
+        As sessões acontecem às terças-feiras, às 19h, e são transmitidas ao vivo no canal oficial da Câmara. Aqui você assiste, revê qualquer sessão e acha a ata em PDF.
+      </p>
+      <nav class="mt-4 flex flex-wrap gap-2" aria-label="Atalhos">
+        <a href="/transparencia?entidade=camara" class="inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green">Transparência da Câmara</a>
+        <a href="/utilidade" class="inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green">Guia de utilidade pública</a>
+        <a href={CANAL_YOUTUBE} rel="noopener" target="_blank" class="inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green">Canal no YouTube</a>
+      </nav>
+    </header>
+
+    {
+      !sb || sessoes.length === 0 ? (
+        <p class="mt-8 rounded-[4px] border border-dashed border-line-strong bg-nioaque-white p-8 text-center text-sm text-ink-soft">
+          Dados ainda não sincronizados com as fontes oficiais. Assista no{' '}
+          <a class="font-semibold text-nioaque-green-dark underline" href={`${CANAL_YOUTUBE}/streams`} rel="noopener" target="_blank">canal da Câmara no YouTube</a>.
+        </p>
+      ) : (
+        <>
+          {/* Destaque: ao vivo ou ultima sessao */}
+          {destaque && (
+            <section class="mt-8" aria-labelledby="destaque">
+              <h2 id="destaque" class="font-editorial text-2xl font-extrabold text-ink">
+                {aoVivo.vivo ? 'Ao vivo agora' : 'Última sessão'}
+              </h2>
+              <div class="mt-4 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <YoutubePlayer id={destaque.id} titulo={destaque.titulo} aoVivo={Boolean(aoVivo.vivo)} />
+                <div class="rounded-[4px] border border-pedra bg-branco p-4">
+                  <p class="font-editorial text-lg font-extrabold leading-snug text-ink">{destaque.titulo}</p>
+                  <dl class="mt-3 space-y-1.5 text-sm text-ink-soft">
+                    {destaqueSessao && <div><dt class="inline font-semibold text-ink">Data: </dt><dd class="inline">{fmtDiaSemana(destaqueSessao.data)}, {fmtData(destaqueSessao.data)}</dd></div>}
+                    {destaque.inicio && <div><dt class="inline font-semibold text-ink">Início: </dt><dd class="inline tabular-nums">{fmtHoraLocal(destaque.inicio)}</dd></div>}
+                    {destaque.duracaoSeg ? <div><dt class="inline font-semibold text-ink">Duração: </dt><dd class="inline tabular-nums">{fmtDuracao(destaque.duracaoSeg)}</dd></div> : null}
+                    {destaque.views != null && <div><dt class="inline font-semibold text-ink">Visualizações: </dt><dd class="inline tabular-nums">{destaque.views}</dd></div>}
+                  </dl>
+                  {destaqueSessao && (
+                    <a href={`/camara/sessoes/${destaqueSessao.data}`} class="mt-4 inline-flex min-h-[44px] items-center rounded-[4px] bg-nioaque-green px-4 text-sm font-bold text-white hover:bg-nioaque-green-dark">Ver a página da sessão</a>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Lista de sessoes */}
+          <section class="mt-12" aria-labelledby="lista">
+            <div class="flex flex-wrap items-end justify-between gap-3 border-b-2 border-nioaque-green pb-3">
+              <h2 id="lista" class="font-editorial text-2xl font-extrabold text-ink">Todas as sessões</h2>
+              {anos.length > 1 && (
+                <div class="flex gap-2">
+                  {anos.map((a) => (
+                    <a href={`?ano=${a}`} aria-current={a === ano ? 'true' : undefined} class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>{a}</a>
+                  ))}
+                </div>
+              )}
+            </div>
+            <ul class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {doAno.map((s) => {
+                const v = s.videos[0];
+                return (
+                  <li class="flex flex-col rounded-[4px] border border-pedra bg-branco p-4">
+                    <p class="text-xs font-bold uppercase tracking-[0.1em] text-nioaque-green-dark">{fmtDiaSemana(s.data)}</p>
+                    <a href={`/camara/sessoes/${s.data}`} class="mt-0.5 font-editorial text-xl font-extrabold leading-tight text-ink hover:text-nioaque-green">{fmtData(s.data)}</a>
+                    <p class="mt-1 text-sm text-ink-soft">
+                      {`${tipoDaSessao(s)}${s.portal?.numero ? ` nº ${s.portal.numero}` : ''}`}
+                      {v?.duracaoSeg ? ` · ${fmtDuracao(v.duracaoSeg)}` : ''}
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2 pt-1">
+                      {s.videos.length > 0 ? (
+                        <a href={`/camara/sessoes/${s.data}`} class="inline-flex min-h-[44px] items-center rounded-[4px] bg-nioaque-green px-3 text-sm font-semibold text-white hover:bg-nioaque-green-dark">Assistir</a>
+                      ) : (
+                        <span class="inline-flex min-h-[44px] items-center text-xs text-ink-muted">Sem vídeo no canal</span>
+                      )}
+                      {s.portal?.ataUrl ? (
+                        <a href={s.portal.ataUrl} rel="noopener" target="_blank" class="inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra px-3 text-sm font-semibold text-ink hover:border-nioaque-green">Ata em PDF{s.portal.ataTamanho ? ` (${s.portal.ataTamanho})` : ''}</a>
+                      ) : (
+                        <span class="inline-flex min-h-[44px] items-center text-xs text-ink-muted">Ata ainda não publicada</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p class="mt-4 text-xs leading-relaxed text-ink-muted">
+              As atas são manuscritas e digitalizadas pela Câmara: o PDF é a imagem do documento original, sem texto pesquisável.
+              Vídeos do canal oficial no YouTube; número da sessão e ata do portal da Câmara.
+              {fmtAtualizado(youtubeEm) && ` Vídeos atualizados em ${fmtAtualizado(youtubeEm)}.`}
+              {fmtAtualizado(portalEm) && ` Portal atualizado em ${fmtAtualizado(portalEm)}.`}
+            </p>
+          </section>
+
+          {/* Producao legislativa */}
+          <section class="mt-12" aria-labelledby="producao">
+            <div class="border-b-2 border-nioaque-green pb-3">
+              <h2 id="producao" class="font-editorial text-2xl font-extrabold text-ink">O que cada vereador apresentou em {ano}</h2>
+              <p class="mt-1 text-sm text-ink-soft">Proposições registradas no portal da Câmara, por autor. Quantidade não mede qualidade: abra a ata e o vídeo da sessão para ver a discussão.</p>
+            </div>
+            {!props ? (
+              <p class="mt-5 rounded-[4px] border border-dashed border-line-strong bg-nioaque-white p-6 text-center text-sm text-ink-soft">Proposições de {ano} ainda não sincronizadas com o portal da Câmara.</p>
+            ) : (
+              <>
+                <div class="mt-5 overflow-x-auto rounded-[4px] border border-pedra bg-branco">
+                  <table class="w-full min-w-[600px] border-collapse text-left text-sm">
+                    <thead>
+                      <tr class="border-b border-pedra bg-papel text-xs uppercase tracking-[0.08em] text-ink-muted">
+                        <th scope="col" class="px-3 py-2.5">Vereador</th>
+                        <th scope="col" class="px-3 py-2.5 text-right">Leis e decretos</th>
+                        <th scope="col" class="px-3 py-2.5 text-right">Fiscalização do Executivo</th>
+                        <th scope="col" class="px-3 py-2.5 text-right">Zeladoria e homenagens</th>
+                        <th scope="col" class="px-3 py-2.5 text-right">Sem ementa</th>
+                        <th scope="col" class="px-3 py-2.5 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {porVereador.map(({ v, p }) => (
+                        <tr class="border-b border-pedra/70 last:border-0">
+                          <th scope="row" class="px-3 py-2.5 font-semibold text-ink">
+                            <a href={`/transparencia?entidade=camara&aba=vereadores&vereador=${v.slug}#vereadores`} class="hover:text-nioaque-green">{v.nome}</a>
+                            <span class="ml-1.5 text-xs font-normal text-ink-muted">{v.partido}</span>
+                          </th>
+                          <td class="px-3 py-2.5 text-right tabular-nums text-ink-soft">{p?.porCategoria.leis ?? 0}</td>
+                          <td class="px-3 py-2.5 text-right tabular-nums text-ink-soft">{p?.porCategoria.fiscalizacao ?? 0}</td>
+                          <td class="px-3 py-2.5 text-right tabular-nums text-ink-soft">{p?.porCategoria.zeladoria ?? 0}</td>
+                          <td class="px-3 py-2.5 text-right tabular-nums text-ink-soft">{p?.porCategoria['sem-ementa'] ?? 0}</td>
+                          <td class="px-3 py-2.5 text-right font-bold tabular-nums text-ink">{p?.total ?? 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p class="mt-3 text-xs leading-relaxed text-ink-muted">
+                  Leis e decretos: projetos de lei, decretos legislativos e resoluções. Fiscalização: requerimentos que pedem informações, cópias ou esclarecimentos ao Executivo.
+                  Zeladoria e homenagens: indicações, moções e requerimentos de pedidos. Sem ementa: requerimentos cujo texto o portal não publica.
+                  Fonte: <a class="underline" href={`${PORTAL_CAMARA}/portal/proposicoes`} rel="noopener" target="_blank">portal da Câmara</a>, {props.itens.length} proposições de {ano} depois de limpar {props.duplicatasRemovidas} repetidas
+                  {executivo ? `; o Executivo enviou ${executivo} projeto(s) de lei` : ''}
+                  {fmtAtualizado(props.atualizadoEm) ? `. Atualizado em ${fmtAtualizado(props.atualizadoEm)}.` : '.'}
+                  Pareceres de comissão não entram na tabela.
+                </p>
+              </>
+            )}
+          </section>
+        </>
+      )
+    }
+  </div>
+</MainLayout>

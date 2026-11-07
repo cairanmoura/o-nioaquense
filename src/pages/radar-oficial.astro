@@ -2,6 +2,7 @@
 import ArticleCard from '../components/ArticleCard.astro';
 import MainLayout from '../layouts/MainLayout.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
+import RadarCamaraFeed from '../components/RadarCamaraFeed.astro';
 import { getHomeFeed } from '../lib/content';
 
 /**
@@ -110,6 +111,8 @@ for (const article of radar) {
         })
       }
     </section>
+
+    <RadarCamaraFeed />
 
     {/* Todos os textos do Radar */}
     <section class="mt-12" aria-labelledby="todos-radar">

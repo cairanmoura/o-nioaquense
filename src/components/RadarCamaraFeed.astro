@@ -1,0 +1,99 @@
+---
+/**
+ * Feed da Camara no Radar Oficial: sessoes (com a ata manuscrita em PDF), leis e atos novos e
+ * proposicoes recentes. Tudo lido das fontes oficiais; sem dado, a secao diz isso.
+ */
+import { createServiceClient } from '../lib/supabase/server';
+import { lerChave } from '../lib/transparencia-store';
+import { dataLocal } from '../lib/transparencia-store';
+import { CHAVE_INSTAR, lerProposicoesNormalizadas, ROTULO_CATEGORIA, type DadosInstar } from '../lib/camara-dados';
+import { PORTAL_CAMARA, lerSessoes, tipoDaSessao } from '../lib/camara-sessoes';
+import { vereadorPorSlug } from '../lib/camara-vereadores';
+
+const sb = createServiceClient(Astro.locals);
+const ano = dataLocal().y;
+const [sess, instar, props] = sb
+  ? await Promise.all([lerSessoes(sb).then((r) => r.sessoes.slice(0, 5)), lerChave<DadosInstar>(sb, CHAVE_INSTAR(ano)).then((x) => x?.valor ?? null), lerProposicoesNormalizadas(sb, ano)])
+  : [[], null, null];
+
+const leis = (instar?.legislacao ?? [])
+  .filter((l) => /^(lei|decreto legislativo|resolu|emenda)/i.test(l.categoria))
+  .sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
+  .slice(0, 8);
+const recentes = (props?.itens ?? []).filter((p) => p.categoria !== 'parecer').slice(0, 10);
+
+const fmt = (iso: string | null) => (iso ? iso.split('-').reverse().join('/') : '');
+const fmtDia = (iso: string) => new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const autores = (p: (typeof recentes)[number]) => [...p.vereadores.map((s) => vereadorPorSlug(s)?.nome ?? s), ...p.outrosAutores].join(', ') || 'Autor não informado';
+const temDados = sess.length > 0 || leis.length > 0 || recentes.length > 0;
+---
+
+<section class="mt-12" aria-labelledby="camara-dados">
+  <div class="border-b-2 border-nioaque-green pb-3">
+    <h2 id="camara-dados" class="font-editorial text-2xl font-semibold tracking-tight text-ink">Esta semana na Câmara</h2>
+    <p class="mt-1 text-sm text-ink-soft">Sessões de terça-feira, leis novas e o que os vereadores apresentaram, direto do portal e do canal oficial da Câmara.</p>
+  </div>
+
+  {
+    !temDados ? (
+      <p class="mt-6 rounded-[4px] border border-dashed border-line-strong bg-nioaque-white p-6 text-center text-sm text-ink-soft">Dados da Câmara ainda não sincronizados com as fontes oficiais.</p>
+    ) : (
+      <div class="mt-6 grid gap-6 lg:grid-cols-3">
+        <div class="rounded-[4px] border border-line bg-nioaque-white p-5">
+          <h3 class="font-editorial text-lg font-extrabold text-ink">Sessões</h3>
+          <ul class="mt-3 divide-y divide-line">
+            {sess.map((s) => (
+              <li class="py-3">
+                <a href={`/camara/sessoes/${s.data}`} class="font-semibold capitalize text-ink hover:text-nioaque-green">{fmtDia(s.data)}</a>
+                <p class="text-xs text-ink-muted">{tipoDaSessao(s)}{s.portal?.numero ? ` nº ${s.portal.numero}` : ''}</p>
+                <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  {s.videos.length > 0 && <a class="font-semibold text-nioaque-green-dark underline" href={`/camara/sessoes/${s.data}`}>Assistir</a>}
+                  {s.portal?.ataUrl ? (
+                    <a class="underline" href={s.portal.ataUrl} target="_blank" rel="noopener noreferrer">Ata manuscrita (PDF não pesquisável)</a>
+                  ) : (
+                    <span class="text-xs text-ink-muted">Ata ainda não publicada</span>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <a href="/camara/sessoes" class="mt-2 inline-flex min-h-[44px] items-center text-sm font-bold text-nioaque-green-dark underline">Todas as sessões</a>
+        </div>
+
+        <div class="rounded-[4px] border border-line bg-nioaque-white p-5">
+          <h3 class="font-editorial text-lg font-extrabold text-ink">Leis e atos novos</h3>
+          {leis.length === 0 ? (
+            <p class="mt-3 text-sm text-ink-soft">Nenhuma lei ou decreto legislativo publicado em {ano}.</p>
+          ) : (
+            <ul class="mt-3 divide-y divide-line">
+              {leis.map((l) => (
+                <li class="py-3 text-sm">
+                  <p class="font-semibold text-ink">{l.categoria}{l.numero ? ` nº ${l.numero}` : ''} <span class="font-normal text-ink-muted">· {fmt(l.data)}</span></p>
+                  <p class="mt-0.5 text-xs leading-relaxed text-ink-soft">{l.ementa.length > 220 ? `${l.ementa.slice(0, 210).trim()}…` : l.ementa}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a href={`${PORTAL_CAMARA}/portal/leis_decretos`} target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex min-h-[44px] items-center text-sm font-bold text-nioaque-green-dark underline">Legislação no portal da Câmara</a>
+        </div>
+
+        <div class="rounded-[4px] border border-line bg-nioaque-white p-5">
+          <h3 class="font-editorial text-lg font-extrabold text-ink">Proposições recentes</h3>
+          {recentes.length === 0 ? (
+            <p class="mt-3 text-sm text-ink-soft">Proposições de {ano} ainda não sincronizadas.</p>
+          ) : (
+            <ul class="mt-3 divide-y divide-line">
+              {recentes.map((p) => (
+                <li class="py-3 text-sm">
+                  <a href={p.fonteUrl} target="_blank" rel="noopener noreferrer" class="font-semibold leading-snug text-ink hover:text-nioaque-green">{p.titulo}</a>
+                  <p class="mt-0.5 text-xs text-ink-muted">{autores(p)} · {ROTULO_CATEGORIA[p.categoria]} · {p.situacao || 'situação não informada'}{p.data ? ` · ${fmt(p.data)}` : ''}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a href="/transparencia?entidade=camara&aba=vereadores" class="mt-2 inline-flex min-h-[44px] items-center text-sm font-bold text-nioaque-green-dark underline">O que cada vereador apresentou</a>
+        </div>
+      </div>
+    )
+  }
+</section>

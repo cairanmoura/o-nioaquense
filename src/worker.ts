@@ -5,6 +5,10 @@ import { refreshLotteries } from './lib/lotteries';
 import { syncXColumnists } from './lib/xsync';
 import { X_FLAG_HANDLE } from './lib/colunas';
 import { passoTransparencia, transparenciaCron } from './lib/transparencia-job';
+import { modosDaVarredura, passoCamara } from './lib/camara-sessoes';
+import { buscarDadosInstar, buscarNoticias } from './lib/camara-dados';
+import { gerarRascunhoSemana } from './lib/camara-rascunho';
+import { dataLocal } from './lib/transparencia-store';
 import {
   enqueueJobs,
   markSeen,
@@ -75,6 +79,8 @@ export function createExports(manifest: any) {
           const sources = await sweepSources(supabase, !job.backfill);
           const jobs: NewsJob[] = sources.map((s) => ({ type: 'source', sourceId: s.id, backfill: job.backfill }));
           if (new Date().getUTCMinutes() < 10) { jobs.push({ type: 'quotes' }); jobs.push({ type: 'lotteries' }); }
+          // Sessoes da Camara: YouTube (ao vivo nas noites de sessao, 1x por hora no resto) e portal (3x por dia)
+          for (const modo of modosDaVarredura()) jobs.unshift({ type: 'camara', modo }); // na frente: ao vivo nao espera as fontes
           // Apify cobra por execucao: so 2x ao dia (09h e 21h UTC); a API oficial do X, a cada varredura
           const hr = new Date().getUTCHours();
           const xOn = (await supabase.from('x_columnists').select('id').eq('handle', X_FLAG_HANDLE).eq('active', true).limit(1)).data?.length;
@@ -113,6 +119,15 @@ export function createExports(manifest: any) {
           const r = await passoTransparencia(supabase, (env as any).CGU_API_KEY);
           console.log('transparencia:', r.info);
           if (r.continua) await env.NEWS_QUEUE.send({ type: 'transparencia' } satisfies NewsJob, { delaySeconds: r.atraso });
+          msg.ack();
+        } else if (job.type === 'camara') {
+          const anoCamara = dataLocal().y;
+          const textoCamara =
+            job.modo === 'dados' ? await buscarDadosInstar(supabase, anoCamara)
+            : job.modo === 'noticias' ? await buscarNoticias(supabase, anoCamara)
+            : job.modo === 'rascunho' ? await gerarRascunhoSemana(supabase, env, { forcar: job.forcar })
+            : await passoCamara(supabase, env, job.modo);
+          console.log('camara:', job.modo, textoCamara);
           msg.ack();
         } else if (job.type === 'quotes') {
           await refreshQuotes(supabase);

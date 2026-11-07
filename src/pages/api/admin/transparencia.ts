@@ -18,16 +18,18 @@ function preparar(locals: App.Locals) {
 
 async function situacao(locals: App.Locals) {
   const sb = preparar(locals);
-  const [estado, config, resumos] = await Promise.all([
+  const [estado, config, resumos, camara] = await Promise.all([
     lerEstado(sb),
     lerConfig(sb),
     sb.from('transparencia_cache').select('key, updated_at').like('key', 'resumo:%').order('key'),
+    sb.from('transparencia_cache').select('key, updated_at').like('key', 'camara:%').order('key'),
   ]);
   const hoje = dataLocal();
   return {
     estado,
     config,
     resumos: resumos.data ?? [],
+    camara: camara.data ?? [],
     diaExtraDestaSemana: DIAS_SEMANA[diaExtraDaSemana(hoje.y, hoje.m, hoje.d)],
     hojeDevida: devidaHoje(config, hoje).devida,
     proximas: proximasAtualizacoes(config, 5),
@@ -56,6 +58,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!queue) throw new Error('Fila de tarefas indisponivel neste ambiente');
       await iniciarRodada(sb, queue, 'manual', Boolean(body.completa));
       return jsonOk({ ok: true, ...(await situacao(locals)) });
+    }
+
+    // Camara: sessoes (YouTube + portal), dados abertos da Instar, noticias e rascunho da semana
+    if (acao === 'camara') {
+      const queue = (locals as any).runtime?.env?.NEWS_QUEUE;
+      if (!queue) throw new Error('Fila de tarefas indisponivel neste ambiente');
+      const modos = body.modo === 'rascunho' ? ['rascunho'] : ['youtube', 'portal', 'dados', 'noticias'];
+      for (const [i, modo] of modos.entries()) await queue.send({ type: 'camara', modo, forcar: modo === 'rascunho' }, { delaySeconds: i * 15 });
+      return jsonOk({ ok: true, enfileirados: modos, ...(await situacao(locals)) });
     }
 
     if (acao === 'config') {

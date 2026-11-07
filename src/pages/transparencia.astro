@@ -10,6 +10,8 @@ import { chaveResumo, chaveLista, anosPrefeitura, chaveEstado, chaveFederal, cha
 import type { ResumoEstado, ResumoFederal, ResumoIbge } from '../lib/externas';
 import type { ResumoPref, PrefEmpenho } from '../lib/prefeitura';
 import { anosDisponiveis, anoAtual, type ResumoAno } from '../lib/transparencia';
+import { CHAVE_INSTAR, lerProposicoesNormalizadas, type DadosInstar } from '../lib/camara-dados';
+import { lerSessoes, type SessaoCamara } from '../lib/camara-sessoes';
 
 /**
  * Transparência de Nioaque (Prefeitura e Câmara).
@@ -82,7 +84,6 @@ const grupos: Grupo[] = [
     resumo: 'Quem é quem, onde fica e como funciona.',
     itens: [
       { titulo: 'Dados da entidade', pergunta: 'Gestor, unidades e horário de funcionamento.', href: `${BASE}/dados-entidade/${ID}`, icone: 'predio' },
-      { titulo: 'Legislação', pergunta: 'Leis e normas do município.', href: `${BASE}/legislacao`, icone: 'doc' },
       { titulo: 'Dados abertos', pergunta: 'Baixe os dados para analisar.', href: `${BASE}/dados-abertos`, icone: 'grafico' },
       { titulo: 'Mapa do portal', pergunta: 'Veja tudo o que existe no portal oficial.', href: `${BASE}/mapa_portal/${ID}`, icone: 'mapa' },
     ],
@@ -105,6 +106,7 @@ const abaParam = Astro.url.searchParams.get('aba') ?? '';
 const aba = ABAS_VALIDAS.includes(abaParam) ? abaParam : ABAS_VALIDAS[0];
 const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 60);
 const slugSel = Astro.url.searchParams.get('vereador') ?? '';
+const localSel = Astro.url.searchParams.get('local') ?? '';
 const sb = createServiceClient(Astro.locals);
 let resumo: ResumoAno | null = null;
 let folhaCam: ResumoFolhaCamara | null = null;
@@ -115,6 +117,9 @@ let estadoExt: ResumoEstado | null = null;
 let federalExt: ResumoFederal | null = null;
 let ibgeExt: ResumoIbge | null = null;
 let atualizadoEm: string | null = null;
+let sessoesCam: SessaoCamara[] = [];
+let propsCam: Awaited<ReturnType<typeof lerProposicoesNormalizadas>> = null;
+let instarCam: DadosInstar | null = null;
 if (sb) {
   ibgeExt = (await lerChave<ResumoIbge>(sb, chaveIbge))?.valor ?? null;
   if (entidade === 'camara') {
@@ -122,6 +127,11 @@ if (sb) {
     resumo = r?.valor ?? null;
     atualizadoEm = r?.atualizadoEm ?? null;
     if (ano === anoAtual()) folhaCam = (await lerChave<ResumoFolhaCamara>(sb, chaveResumo('folhacamara', ano)))?.valor ?? null;
+    [sessoesCam, propsCam, instarCam] = await Promise.all([
+      lerSessoes(sb).then((r) => r.sessoes),
+      lerProposicoesNormalizadas(sb, ano),
+      lerChave<DadosInstar>(sb, CHAVE_INSTAR(ano)).then((x) => x?.valor ?? null),
+    ]);
   } else {
     const r = await lerChave<ResumoPref>(sb, chaveResumo('prefeitura', ano));
     resumoPref = r?.valor ?? null;
@@ -191,7 +201,7 @@ if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel |
     )}
 
     {entidade === 'camara' && (
-      <CamaraView resumo={resumo} folhaCam={folhaCam} ibge={ibgeExt} ano={ano} anos={anos} aba={aba} q={q} slugSel={slugSel} atualizadoEm={atualizadoEm} ID={ID} BASE={BASE} />
+      <CamaraView resumo={resumo} folhaCam={folhaCam} ibge={ibgeExt} ano={ano} anos={anos} aba={aba} q={q} slugSel={slugSel} atualizadoEm={atualizadoEm} ID={ID} BASE={BASE} sessoes={sessoesCam} proposicoes={propsCam} instar={instarCam} local={localSel} />
     )}
 
     <!-- =============================== ATALHOS (recolhidos) =============================== -->
@@ -240,6 +250,14 @@ if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel |
           Fazer um pedido (e-SIC)
         </a>
       </div>
+    </section>
+
+    <section class="mt-4 flex flex-col gap-3 rounded-[4px] border border-pedra bg-branco p-4 sm:flex-row sm:items-center sm:justify-between" aria-label="Sessões da Câmara">
+      <div>
+        <h2 class="font-editorial text-lg font-extrabold text-ink">Sessões da Câmara, ao vivo e gravadas</h2>
+        <p class="mt-0.5 text-sm text-ink-soft">Assista às sessões, baixe a ata em PDF e veja o que cada vereador apresentou.</p>
+      </div>
+      <a href="/camara/sessoes" class="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-[4px] bg-nioaque-green px-5 text-sm font-bold text-white hover:bg-nioaque-green-dark">Ver as sessões</a>
     </section>
 
     <details class="mt-4 rounded-[4px] border border-pedra bg-branco">

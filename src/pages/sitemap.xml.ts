@@ -30,6 +30,7 @@ export const GET: APIRoute = async ({ locals, site, url }) => {
     { loc: `${base}/`, priority: '1.0', changefreq: 'hourly' },
     { loc: `${base}/materias`, priority: '0.9', changefreq: 'hourly' },
     { loc: `${base}/radar-oficial`, priority: '0.9', changefreq: 'daily' },
+    { loc: `${base}/camara/sessoes`, priority: '0.8', changefreq: 'weekly' },
     { loc: `${base}/colunistas`, priority: '0.7', changefreq: 'weekly' },
     { loc: `${base}/editoria/coluna`, priority: '0.8', changefreq: 'daily' },
     { loc: `${base}/editoria/ms`, priority: '0.8', changefreq: 'daily' },

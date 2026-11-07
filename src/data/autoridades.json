@@ -276,7 +276,9 @@
      "whatsapp": "https://wa.me/5567999868287",
      "bio": null,
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/1/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/1/1",
+     "slug_transparencia": "reinaldo-andrea",
+     "apelidos": ["Reinaldo Garcia Andréa", "Reinaldo G. Andréa", "Reinaldo Andréa", "Nado Andréa", "Nado"]
     },
     {
      "id": "vereador-sergio-marques",
@@ -300,7 +302,9 @@
      "whatsapp": "https://wa.me/5567991380931",
      "bio": "Currículo NOME: SERGIO MARQUES ENDEREÇO: ALDEIA CABECEIRA Nº 50 NATURALIDADE: NIOAQUE DATA DE NASCIMENTO: 03/09/1975 ESTADO CIVIL: CASADO FILIAÇÃO: IZABELINO MARQUES E SABINA MIRANDA MARQUES PROFISSÃO: TECNICO EM AGROPECUARIA ESPOSA(O): EVANIA DA SILVA MARQUES FILHOS: SERGIO EVERTON DA SILVA MARQUES, FERNANDA DA SILVA MARQUES E IZABELIN",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/2/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/2/1",
+     "slug_transparencia": "sergio-marques",
+     "apelidos": ["Sérgio Marques", "Sergio Marques", "Sérgio Terena"]
     },
     {
      "id": "vereador-joao-carlos-corumba",
@@ -324,7 +328,9 @@
      "whatsapp": "https://wa.me/5567999372250",
      "bio": "Vereador pelo 2º Mandato, no bienio 2025/26 atua como 1º secretário. Nascido em Corumbá-MS no ano de 1983, Casado com a Srª Janaina Câmara Preguiça, 01 filho João Victor Preguiça Gonçalves Mudou-se para Nioaque no ano de: Ingressou na politica em:",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/3/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/3/1",
+     "slug_transparencia": "joao-goncalves",
+     "apelidos": ["João Carlos Vera Gonçalves", "João Carlos", "João Gonçalves", "Corumbá"]
     },
     {
      "id": "vereador-silas-ferreira",
@@ -348,7 +354,9 @@
      "whatsapp": "https://wa.me/5567999711291",
      "bio": "Vereador Silas Nunes Ferreira, natura de Caarapó-MS, nascido em 12/08 de 1966, filho de Valter Ferreira e Amélia Nunes Ferreira,. Mudou-se para Nioaque no ano de, vez que trabalhou nas empresas: No ano de iniciou sua carreira politica. Foi presidente por 4 anos no mandatode 2021a 2024.Cumpre o seu 5º Mandato consecutivo. Hoje faz parte do partido PSDB, mas ja fez parte dos partidos: Casado com Euza Camargo Nunes, constituiu uma filha Cinthia Aparecida Camargo Ferreira.",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/4/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/4/1",
+     "slug_transparencia": "silas-ferreira",
+     "apelidos": ["Silas Nunes Ferreira", "Silas Ferreira", "Silas"]
     },
     {
      "id": "vereador-jeuzimar-seco",
@@ -372,7 +380,9 @@
      "whatsapp": "https://wa.me/5567996217629",
      "bio": "Vereador Seco - PSDB está em seu 2º mandato consecutivo, recebeu o maior numeros de voto no pleito de 2024, seja 650 votos. Nascido em Nioaque, filho Sebastião Paulo de Araújo e Adelaide Teixeira Mendes, casado. É funcionário Público do municipio de Nioaque, cuja ocupação na Pastsa da saúde como motorista.",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/5/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/5/1",
+     "slug_transparencia": "jeuzimar-araujo",
+     "apelidos": ["Jeuzimar Mendes de Araújo", "Jeuzimar Araújo", "Jeuzimar", "Seco do Esporte", "Vereador Seco", "Seco"]
     },
     {
      "id": "vereador-jorge-uirapuru",
@@ -396,7 +406,9 @@
      "whatsapp": "https://wa.me/5567996533157",
      "bio": "Vereador Jorge Lemes eleito no pleito atual pelo PP, já foi vereador por 3 mandatos e atuou como suplente na gestão de 2018 a 2021, iniciando sua carreira política como vereador  no ano de 2001. Filliação: Nicanor Pereira Lemes e Filomena Fernandes. Possui o Ensino Médio completo - Magistério. Residente no P.A Uirapuru, atuando no seguimento rural, casado com Marilaine Menconça Viana com quem tem 02 filhas: Mary Hellen Mendonça Viana Lemes e Emylly Dayne Menconça Viana Lemes.",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/6/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/6/1",
+     "slug_transparencia": "jorge-lemes",
+     "apelidos": ["Jorge Fernandes Lemes", "Jorge F. Lemes", "Jorge Lemes", "Jorge do Uirapuru"]
     },
     {
      "id": "vereador-pablo-correa",
@@ -420,7 +432,9 @@
      "whatsapp": "https://wa.me/5567996020460",
      "bio": "Vereador Pablo Ruan Pache Corrêa está em seu 3º mandato consecutivo, é Médico Veterinario, funcionário Público seletivo no Poder Executivo, filho de Paulo José Corrêa e Eudes Pache Corrêa, casado,",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/7/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/7/1",
+     "slug_transparencia": "pablo-correa",
+     "apelidos": ["Pablo Ruan Pache Corrêa", "Pablo R. P. Corrêa", "Pablo Corrêa", "Pablo"]
     },
     {
      "id": "vereador-neguinho-santa-amelia",
@@ -444,7 +458,9 @@
      "whatsapp": "https://wa.me/5567999896560",
      "bio": "Vereador pelo 2º mandato consecutivo, natural de Bonito-MS, filho de Jose Simão e Terezinha Meira Simão.",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/8/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/8/1",
+     "slug_transparencia": "paulo-simao",
+     "apelidos": ["Paulo Roberto Meira Simão", "Paulo Roberto M. Simão", "Paulo Roberto", "Paulo Simão", "Neguinho da Santa Amélia", "Neguinho"]
     },
     {
      "id": "vereador-rose-arruda",
@@ -468,7 +484,9 @@
      "whatsapp": "https://wa.me/5567991606767",
      "bio": "A vereadora está em seu 2º mandato, sendo eleita no último pleito pelo PP. É funcionária do Poder Público Municipal, tem por formação Assistêcia Social,  atua na Pasta da saúde no Ambulatório. Casada com o Sr. Lizandro Antonio Medeiros Filiação: Benigno Dias Arruda e Cândida Meza Arruda No Poder Legislativo atua como membro das Comissões de Legislação, Justiça e Redação Final, e Comissão de Educação Saúde e Assistência social como Vice - Presidente.",
      "mandato": "01/01/2025 a 31/12/2026",
-     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/9/1"
+     "perfil": "https://www.cmnioaque.ms.gov.br/portal/vereadores/9/1",
+     "slug_transparencia": "rosemeire-arruda",
+     "apelidos": ["Rosemeire Meza Arruda", "Rosemeire M. Arruda", "Rosemeira M Arruda", "Rose Arruda", "Rose"]
     }
    ]
   },

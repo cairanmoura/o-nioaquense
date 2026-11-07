@@ -10,6 +10,9 @@ import MainLayout from '../layouts/MainLayout.astro';
 import { imgUrl } from '../lib/img';
 import MostRead from '../components/MostRead.astro';
 import RadarOficialBlock from '../components/RadarOficialBlock.astro';
+import AoVivoCamara from '../components/AoVivoCamara.astro';
+import { createServiceClient } from '../lib/supabase/server';
+import { estadoAoVivo } from '../lib/camara-sessoes';
 import AdStrip from '../components/AdStrip.astro';
 import AgroBand from '../components/AgroBand.astro';
 import ArticlePills from '../components/ArticlePills.astro';
@@ -116,9 +119,11 @@ const mundo = feed.byScope.mundo.slice(0, 3);
 const transparencia = feed.articles
   .filter((a) => a.category_label === 'Transparência' && isTransparencyStory(`${a.title} ${a.subtitle ?? ''} ${(a.summary_bullets ?? []).join(' ')}`))
   .slice(0, 3);
+const aoVivoCamara = await estadoAoVivo(createServiceClient(Astro.locals));
 ---
 
 <MainLayout description="Notícias hiperlocais de Nioaque (MS): o que acontece na cidade, no Sul de Mato Grosso do Sul e no Brasil.">
+  <AoVivoCamara estado={aoVivoCamara} />
   {
     breaking.length > 0 && (
       <div class="border-b border-nioaque-red/20 bg-nioaque-red-50">

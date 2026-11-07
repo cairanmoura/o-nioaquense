@@ -1,0 +1,185 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import AoVivoCamara from '../../../components/AoVivoCamara.astro';
+import YoutubePlayer from '../../../components/YoutubePlayer.astro';
+import { createServiceClient } from '../../../lib/supabase/server';
+import { lerProposicoesNormalizadas } from '../../../lib/camara-dados';
+import { vereadorPorSlug } from '../../../lib/camara-vereadores';
+import { CANAL_YOUTUBE, PORTAL_CAMARA, contarTipo, estadoAoVivo, lerSessoes, janelaDaSessao, proposicoesDaSessao, tipoDaSessao, urlProposicao } from '../../../lib/camara-sessoes';
+
+/**
+ * /camara/sessoes/2026-11-03
+ * Pagina de uma sessao: video(s), dados da sessao, ata em PDF (portal da Camara) e proposicoes registradas
+ * registradas a partir dela (a Camara registra no dia seguinte). Texto 100% derivado das fontes oficiais.
+ */
+const { data } = Astro.params;
+if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return new Response(null, { status: 404 });
+
+const sb = createServiceClient(Astro.locals);
+if (!sb) return new Response(null, { status: 404 });
+const { sessoes } = await lerSessoes(sb);
+const idx = sessoes.findIndex((s) => s.data === data);
+if (idx < 0) return new Response(null, { status: 404 });
+const sessao = sessoes[idx];
+const anterior = sessoes[idx + 1] ?? null; // lista em ordem decrescente
+const seguinte = idx > 0 ? sessoes[idx - 1] : null;
+const aoVivo = await estadoAoVivo(sb);
+const ano = Number(data.slice(0, 4));
+const props = await lerProposicoesNormalizadas(sb, ano);
+const janela = janelaDaSessao(data, seguinte?.data ?? null);
+const doPeriodo = props ? proposicoesDaSessao(props.itens, data, seguinte?.data ?? null) : [];
+
+const fmtData = (iso: string) => new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const fmtCurta = (iso: string) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const fmtDia = (iso: string) => new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+const hora = (iso: string | null) => (iso ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Campo_Grande' }).format(new Date(iso)) : null);
+const duracao = (seg: number | null) => {
+  if (!seg) return null;
+  const h = Math.floor(seg / 3600);
+  const m = Math.round((seg % 3600) / 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+};
+
+const tipoSessao = tipoDaSessao(sessao);
+const numero = sessao.portal?.numero ?? null;
+const titulo = `${tipoSessao}${numero ? ` nº ${numero}` : ''} da Câmara de Nioaque, ${fmtData(data)}`;
+const descSessao = tipoSessao === 'Sessão' ? 'sessão' : `sessão ${tipoSessao.toLowerCase()}`;
+const v0 = sessao.videos[0] ?? null;
+const totalViews = sessao.videos.reduce((s, v) => s + (v.views ?? 0), 0);
+const grupos = new Map<string, typeof doPeriodo>();
+for (const p of doPeriodo) grupos.set(p.tipo, [...(grupos.get(p.tipo) ?? []), p]);
+const ordem = ['PL - Projetos de Lei', 'PLC - Projetos de Lei Complementar', 'PDL - Projetos de Decreto Legislativo', 'REQ - Requerimentos', 'IND - Indicações', 'MOC - Moções'];
+const gruposOrd = [...grupos.entries()].sort((a, b) => {
+  const ia = ordem.indexOf(a[0]);
+  const ib = ordem.indexOf(b[0]);
+  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+});
+const resumoGrupos = gruposOrd.map(([t, l]) => contarTipo(t, l.length)).join(', ');
+
+const jsonLd = sessao.videos.map((v) => ({
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: v.titulo,
+  description: `${titulo}. Transmissão no canal oficial da Câmara Municipal de Nioaque.`,
+  thumbnailUrl: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+  uploadDate: v.inicio ?? undefined,
+  duration: v.duracaoSeg ? `PT${Math.floor(v.duracaoSeg / 60)}M${v.duracaoSeg % 60}S` : undefined,
+  embedUrl: `https://www.youtube.com/embed/${v.id}`,
+  contentUrl: `https://www.youtube.com/watch?v=${v.id}`,
+}));
+---
+
+<MainLayout title={titulo} description={`Assista à ${descSessao} da Câmara Municipal de Nioaque de ${fmtData(data)}${sessao.portal?.ataUrl ? ', com a ata em PDF' : ''} e veja as proposições registradas no período.`}>
+  {jsonLd.length > 0 && <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  <AoVivoCamara estado={aoVivo} />
+  <div class="container-editorial py-8 sm:py-10">
+    <nav class="text-xs text-ink-muted" aria-label="Você está em">
+      <a href="/camara/sessoes" class="hover:text-nioaque-green">Sessões da Câmara</a> <span aria-hidden="true">/</span> <span>{fmtCurta(data)}</span>
+    </nav>
+    <header class="mt-3 border-b-2 border-nioaque-green pb-5">
+      <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green">Câmara Municipal de Nioaque</p>
+      <h1 class="mt-1 font-editorial text-3xl font-extrabold leading-tight text-ink sm:text-4xl">{tipoSessao}{numero ? ` nº ${numero}` : ''}</h1>
+      <p class="mt-2 text-lg text-ink-soft"><span class="capitalize">{fmtDia(data)}</span>, {fmtData(data)}</p>
+    </header>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div class="space-y-6">
+        {sessao.videos.length > 0 ? (
+          sessao.videos.map((v, i) => (
+            <div>
+              {sessao.videos.length > 1 && <p class="mb-2 text-sm font-semibold text-ink">Parte {i + 1}: {v.titulo}</p>}
+              <YoutubePlayer id={v.id} titulo={v.titulo} aoVivo={v.estado === 'ao-vivo'} />
+            </div>
+          ))
+        ) : (
+          <p class="rounded-[4px] border border-dashed border-line-strong bg-nioaque-white p-8 text-center text-sm text-ink-soft">
+            Esta sessão não tem vídeo no{' '}
+            <a class="font-semibold text-nioaque-green-dark underline" href={`${CANAL_YOUTUBE}/streams`} rel="noopener" target="_blank">canal oficial da Câmara</a>.
+          </p>
+        )}
+
+        {/* Resumo com os fatos publicados */}
+        <section aria-labelledby="resumo" class="rounded-[4px] border border-pedra bg-branco p-5">
+          <h2 id="resumo" class="font-editorial text-xl font-extrabold text-ink">A sessão em resumo</h2>
+          <p class="mt-2 text-[0.9375rem] leading-relaxed text-ink-soft">
+            A Câmara Municipal de Nioaque realizou {numero ? `a ${descSessao} nº ${numero}` : `uma ${descSessao}`} em {fmtData(data)}
+            {v0?.inicio ? `, com início às ${hora(v0.inicio)}` : ''}
+            {v0?.duracaoSeg ? ` e transmissão de ${duracao(sessao.videos.reduce((s, v) => s + (v.duracaoSeg ?? 0), 0))}` : ''}.
+            {doPeriodo.length > 0
+              ? ` O portal da Câmara registrou, a partir desta sessão, ${doPeriodo.length === 1 ? '1 proposição' : `${doPeriodo.length} proposições`}: ${resumoGrupos}.`
+              : props
+                ? ' O portal da Câmara não registrou proposições novas neste período.'
+                : ''}
+          </p>
+          <p class="mt-3 text-xs leading-relaxed text-ink-muted">Texto montado automaticamente a partir dos dados oficiais, sem interpretação. Para saber o que foi decidido, veja o vídeo e a ata.</p>
+        </section>
+
+        {/* Proposicoes */}
+        {
+          doPeriodo.length > 0 && (
+            <section aria-labelledby="props">
+              <h2 id="props" class="border-b-2 border-nioaque-green pb-2 font-editorial text-xl font-extrabold text-ink">Proposições registradas no período</h2>
+              <p class="mt-2 text-xs text-ink-muted">Registradas no portal da Câmara {janela.ate ? `de ${fmtCurta(janela.de)} a ${fmtCurta(janela.ate)}` : `a partir de ${fmtCurta(janela.de)}`}. A Câmara costuma registrar no dia seguinte à sessão o que foi apresentado e votado nela, por isso a data de registro vem depois da sessão.</p>
+              {gruposOrd.map(([tipo, lista]) => (
+                <div class="mt-5">
+                  <h3 class="text-sm font-bold uppercase tracking-[0.08em] text-nioaque-green-dark">{tipo} <span class="tabular-nums text-ink-muted">({lista.length})</span></h3>
+                  <ul class="mt-2 divide-y divide-pedra rounded-[4px] border border-pedra bg-branco">
+                    {lista.map((p) => (
+                      <li class="p-3.5">
+                        <p class="text-sm font-bold leading-snug"><a href={urlProposicao(p.id)} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-pedra underline-offset-2 hover:text-nioaque-green hover:decoration-nioaque-green">{p.titulo}{p.numeroReal ? ` (nº ${p.numeroReal})` : ''}</a></p>
+                        {p.descricao && <p class="mt-1 text-sm leading-relaxed text-ink-soft">{p.descricao.length >= 300 ? `${p.descricao.slice(0, 280).trim()}…` : p.descricao}</p>}
+                        <p class="mt-1.5 text-xs text-ink-muted">
+                          {p.autores.length > 0 ? `Autor: ${p.autores.join(', ')}` : 'Autor não informado'}{p.divergencia ? ` (o título no portal cita ${vereadorPorSlug(p.divergencia)?.nome ?? 'outro vereador'}, mas vale o campo Autor, que confere com o PDF)` : ''}
+                          {p.situacao ? ` · Situação: ${p.situacao}` : ''}
+                          {p.data ? ` · Registrada em ${fmtCurta(p.data)}` : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <p class="mt-3 text-xs text-ink-muted">Veja o texto completo de cada proposição no <a class="underline" href={`${PORTAL_CAMARA}/portal/proposicoes`} rel="noopener" target="_blank">portal da Câmara</a>. Números corrigidos pelo título quando a fonte os traz corrompidos.</p>
+            </section>
+          )
+        }
+      </div>
+
+      <aside class="space-y-5">
+        <div class="rounded-[4px] border border-pedra bg-branco p-4">
+          <h2 class="font-editorial text-lg font-extrabold text-ink">Dados da sessão</h2>
+          <dl class="mt-3 space-y-2 text-sm text-ink-soft">
+            <div><dt class="inline font-semibold text-ink">Tipo: </dt><dd class="inline">{tipoSessao}</dd></div>
+            <div><dt class="inline font-semibold text-ink">Número: </dt><dd class="inline tabular-nums">{numero ?? 'ainda não publicado no portal'}</dd></div>
+            {v0?.inicio && <div><dt class="inline font-semibold text-ink">Início da transmissão: </dt><dd class="inline tabular-nums">{hora(v0.inicio)}</dd></div>}
+            {sessao.videos.at(-1)?.fim && <div><dt class="inline font-semibold text-ink">Fim da transmissão: </dt><dd class="inline tabular-nums">{hora(sessao.videos.at(-1)!.fim)}</dd></div>}
+            {sessao.videos.some((v) => v.duracaoSeg) && <div><dt class="inline font-semibold text-ink">Duração: </dt><dd class="inline tabular-nums">{duracao(sessao.videos.reduce((s, v) => s + (v.duracaoSeg ?? 0), 0))}</dd></div>}
+            {sessao.videos.some((v) => v.views != null) && <div><dt class="inline font-semibold text-ink">Visualizações: </dt><dd class="inline tabular-nums">{totalViews}</dd></div>}
+          </dl>
+        </div>
+
+        <div class="rounded-[4px] border border-pedra bg-branco p-4">
+          <h2 class="font-editorial text-lg font-extrabold text-ink">Ata da sessão</h2>
+          {sessao.portal?.ataUrl ? (
+            <>
+              <a href={sessao.portal.ataUrl} rel="noopener" target="_blank" class="mt-3 inline-flex min-h-[44px] items-center rounded-[4px] bg-nioaque-green px-4 text-sm font-bold text-white hover:bg-nioaque-green-dark">Baixar a ata em PDF{sessao.portal.ataTamanho ? ` (${sessao.portal.ataTamanho})` : ''}</a>
+              <p class="mt-3 text-xs leading-relaxed text-ink-muted">A ata é manuscrita e digitalizada pela Câmara: o PDF é a imagem do documento original e não pode ser pesquisado por texto.</p>
+            </>
+          ) : (
+            <p class="mt-2 text-sm leading-relaxed text-ink-soft">A Câmara ainda não publicou a ata desta sessão no portal.</p>
+          )}
+          {sessao.portal && <p class="mt-3 text-xs"><a class="underline text-ink-muted hover:text-nioaque-green" href={`${PORTAL_CAMARA}/portal/sessaoplenaria/0/${sessao.portal.portalId}`} rel="noopener" target="_blank">Ver no portal da Câmara</a></p>}
+        </div>
+
+        <div class="rounded-[4px] border border-pedra bg-branco p-4 text-sm">
+          <h2 class="font-editorial text-lg font-extrabold text-ink">Outras sessões</h2>
+          <ul class="mt-3 space-y-2">
+            {anterior && <li><a class="font-semibold text-nioaque-green-dark hover:underline" href={`/camara/sessoes/${anterior.data}`}>← Sessão anterior, {fmtCurta(anterior.data)}</a></li>}
+            {seguinte && <li><a class="font-semibold text-nioaque-green-dark hover:underline" href={`/camara/sessoes/${seguinte.data}`}>Próxima sessão, {fmtCurta(seguinte.data)} →</a></li>}
+            <li><a class="font-semibold text-nioaque-green-dark hover:underline" href="/camara/sessoes">Todas as sessões</a></li>
+            <li><a class="font-semibold text-nioaque-green-dark hover:underline" href="/transparencia?entidade=camara">Transparência da Câmara</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</MainLayout>

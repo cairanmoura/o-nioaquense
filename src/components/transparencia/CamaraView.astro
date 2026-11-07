@@ -11,6 +11,10 @@ import { anoAtual, brl, brlCurto, CATEGORIAS, MESES, MESES_LONGOS, parts, semAce
 import type { ResumoFolhaCamara, ServidorCamara } from '../../lib/folha';
 import type { ResumoIbge } from '../../lib/externas';
 import { formatDate } from '../../lib/format';
+import { ROTULO_CATEGORIA, datasDaViagem, ehTerca, producaoDosVereadores, seloDaLicitacao, selosDoContrato, ultimoRegistro, type DadosInstar, type PropNormalizada, type ResultadoNormalizacao } from '../../lib/camara-dados';
+import { GRUPOS_LOCAL, LOCAIS, localPorId, type GrupoLocal } from '../../lib/locations-nioaque';
+import type { SessaoCamara } from '../../lib/camara-sessoes';
+import { dataLocal } from '../../lib/transparencia-store';
 
 interface Props {
   resumo: ResumoAno | null;
@@ -24,8 +28,16 @@ interface Props {
   atualizadoEm: string | null;
   ID: string;
   BASE: string;
+  /** sessoes (YouTube + portal da Camara) */
+  sessoes: SessaoCamara[];
+  /** proposicoes do ano, ja higienizadas */
+  proposicoes: (ResultadoNormalizacao & { total: number; atualizadoEm: string }) | null;
+  /** contratos, licitacoes, legislacao e temas vazios do portal da Camara */
+  instar: DadosInstar | null;
+  /** local escolhido no filtro "quem lembra do seu bairro" */
+  local: string;
 }
-const { resumo, folhaCam, ibge, ano, anos, aba, q, slugSel, atualizadoEm, ID, BASE } = Astro.props;
+const { resumo, folhaCam, ibge, ano, anos, aba, q, slugSel, atualizadoEm, ID, BASE, sessoes, proposicoes, instar, local } = Astro.props;
 
 const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
 const tituloCartao = 'font-editorial text-lg font-extrabold text-ink';
@@ -66,6 +78,37 @@ const vereadoresTotal = resumo ? resumo.diariasPorVereador.reduce((s, v) => s + 
 const porVereador = resumo ? resumo.diariasPorVereador.map((r) => ({ ...r, info: VEREADORES.find((v) => v.slug === r.slug)! })) : [];
 const maxVer = Math.max(...porVereador.map((v) => v.total), 1);
 const diariasDe = (slug: string) => (resumo ? resumo.diarias.filter((d) => d.vereador === slug) : []);
+
+// producao legislativa (portal da Camara) e viagens em dia de sessao
+const sessaoPorData = new Map(sessoes.map((x) => [x.data, x]));
+const producao = proposicoes ? producaoDosVereadores(proposicoes.itens) : new Map<string, ReturnType<typeof producaoDosVereadores> extends Map<string, infer V> ? V : never>();
+/** datas (terca com sessao registrada) em que a viagem do empenho coincide com a sessao plenaria */
+const viagemEmSessao = (historico: string) => datasDaViagem(historico).filter((x) => ehTerca(x) && sessaoPorData.has(x));
+const hojeIso = dataLocal().iso;
+const semTexto = (p: PropNormalizada) => p.texto.replace(p.titulo, '').trim() === '';
+const comTexto = proposicoes ? proposicoes.itens.filter((p) => p.categoria !== 'parecer' && !semTexto(p)).length : 0;
+const totalProp = proposicoes ? proposicoes.itens.filter((p) => p.categoria !== 'parecer').length : 0;
+const nomeVer = (slug: string) => VEREADORES.find((v) => v.slug === slug)?.nome ?? slug;
+
+// filtro por local
+const gruposLocal = Object.keys(GRUPOS_LOCAL) as GrupoLocal[];
+const porLocal = new Map<string, PropNormalizada[]>();
+for (const p of proposicoes?.itens ?? []) if (p.categoria !== 'parecer') for (const id of p.locais) porLocal.set(id, [...(porLocal.get(id) ?? []), p]);
+const localSel = localPorId(local);
+const propsDoLocal = localSel ? (porLocal.get(localSel.id) ?? []) : [];
+const autoresDoLocal = new Map<string, number>();
+for (const p of propsDoLocal) for (const sl of p.vereadores) autoresDoLocal.set(sl, (autoresDoLocal.get(sl) ?? 0) + 1);
+
+// raio-x do portal oficial
+const sessoesAno = sessoes.filter((x) => x.data.startsWith(String(ano)) && x.portal);
+const ataPdfAno = sessoesAno.filter((x) => x.portal?.ataUrl).length;
+const ult = instar ? ultimoRegistro(instar) : null;
+const temaDe = (chave: string) => instar?.temas.find((t) => t.chave === chave) ?? null;
+const periodoTema = (t: { porAno: Record<string, number> }) => {
+  const k = Object.keys(t.porAno).sort();
+  return k.length > 1 ? `${k[0]}–${k[k.length - 1]}` : (k[0] ?? '');
+};
+const loa = proposicoes?.itens.find((p) => /\bLOA\b/i.test(p.titulo) && p.sigla === 'PL') ?? null;
 
 // subsídio: salário base do cargo eletivo na folha de pagamento do portal (mês de referência abaixo)
 const refFolha = folhaCam ? `${folhaCam.ref.slice(5)}/${folhaCam.ref.slice(0, 4)}` : '';
@@ -246,6 +289,8 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
           {porVereador.map((v) => {
             const sv = servidorDe(v.info);
             const viagens = diariasDe(v.slug);
+            const prod = producao.get(v.slug);
+            const emSessao = viagens.filter((d) => viagemEmSessao(d.historico).length > 0).length;
             return (
               <li>
                 <details open={slugSel === v.slug} class="group h-full rounded-[4px] border border-pedra bg-branco open:border-2 open:border-nioaque-green">
@@ -257,11 +302,37 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
                       <span class="mt-1 block text-xs text-ink-soft">Subsídio: <strong class="tabular-nums text-ink">{sv ? brl(sv.base) : 'não sincronizado'}</strong></span>
                       <span class="block text-sm font-semibold tabular-nums text-nioaque-red-dark">{brl(v.total)} <span class="text-xs font-normal text-ink-soft">em diárias</span></span>
                       <span class="mt-1.5 block h-1.5 rounded-[2px] bg-editorial"><span class="block h-1.5 rounded-[2px] bg-nioaque-red" style={`width:${(v.total / maxVer) * 100}%`}></span></span>
+                      <span class="mt-2 block text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft">Produção legislativa em {ano}</span>
+                      {proposicoes ? (
+                        <span class="mt-1 grid grid-cols-3 gap-1 text-center text-[10px] leading-tight text-ink-soft">
+                          <span class="rounded-[2px] bg-nioaque-green-50 px-1 py-1"><strong class="block text-base tabular-nums text-ink">{prod?.porCategoria.leis ?? 0}</strong>Leis e decretos</span>
+                          <span class="rounded-[2px] bg-nioaque-green-50 px-1 py-1"><strong class="block text-base tabular-nums text-ink">{prod?.porCategoria.fiscalizacao ?? 0}</strong>Fiscalização</span>
+                          <span class="rounded-[2px] bg-nioaque-green-50 px-1 py-1"><strong class="block text-base tabular-nums text-ink">{prod?.porCategoria.zeladoria ?? 0}</strong>Zeladoria e homenagens</span>
+                        </span>
+                      ) : (
+                        <span class="mt-1 block text-xs text-ink-soft">Proposições de {ano} ainda não sincronizadas.</span>
+                      )}
+                      {prod && prod.porCategoria['sem-ementa'] > 0 && <span class="mt-1 block text-[11px] text-ink-soft">+ {prod.porCategoria['sem-ementa']} {prod.porCategoria['sem-ementa'] === 1 ? 'requerimento' : 'requerimentos'} sem ementa publicada no portal</span>}
                     </span>
                     <span class="self-center text-ink-soft transition-transform group-open:rotate-180" aria-hidden="true">▾</span>
                   </summary>
                   <div class="border-t border-pedra p-3">
                     <p class="text-xs text-ink-soft">{v.quantidade === 0 ? 'Nenhuma diária paga em ' + ano + '.' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'}${diasTxt(v.dias)}.`}{sv ? ` Subsídio = salário base na folha de ${refFolha}.` : ''}</p>
+                    {emSessao > 0 && <p class="mt-1 text-xs font-semibold text-ink">{emSessao} {emSessao === 1 ? 'viagem paga coincide' : 'viagens pagas coincidem'} com dia de sessão plenária (terça-feira).</p>}
+                    {prod && prod.itens.length > 0 && (
+                      <details class="mt-3 rounded-[4px] border border-pedra">
+                        <summary class="flex min-h-[44px] cursor-pointer items-center px-3 text-sm font-bold text-nioaque-green-dark">Ver as {prod.total} proposições de {v.info.nome}</summary>
+                        <ul class="max-h-72 divide-y divide-pedra overflow-y-auto border-t border-pedra text-sm">
+                          {prod.itens.slice(0, 60).map((p) => (
+                            <li class="p-2">
+                              <p class="font-semibold text-ink">{p.titulo}</p>
+                              <p class="text-xs text-ink-soft">{ROTULO_CATEGORIA[p.categoria]} · {p.situacao || 'situação não informada'}{p.data ? ` · ${formatDate(p.data)}` : ''} · <a class="underline" href={p.fonteUrl} target="_blank" rel="noopener noreferrer">fonte oficial</a></p>
+                              {p.divergencia && <p class="text-xs text-ink-soft">O título cita {nomeVer(p.divergencia)}, mas vale o campo Autor do portal, que confere com o PDF.</p>}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                     {v.quantidade > 0 && (
                       <>
                         <ol class="mt-2 grid grid-cols-6 gap-1 text-center text-[10px] uppercase text-ink-soft" aria-label={`Diárias de ${v.info.nome} por mês`}>
@@ -278,6 +349,13 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
                               <div class="min-w-0">
                                 <p class="font-semibold text-ink">{d.destino}{diasTxt(d.dias)}</p>
                                 <p class="text-xs text-ink-soft"><span class="tabular-nums">{formatDate(d.data)}</span> · empenho nº {d.numero}</p>
+                                {viagemEmSessao(d.historico).map((dt) => (
+                                  <p class="mt-1 text-xs">
+                                    <span class="rounded-[2px] bg-editorial px-1.5 py-0.5 font-bold text-ink">Viagem em dia de sessão: terça, {formatDate(dt)}</span>{' '}
+                                    <a class="underline" href={`/camara/sessoes/${dt}`}>Ver a sessão</a>
+                                    {sessaoPorData.get(dt)?.portal?.ataUrl && <> · <a class="underline" href={sessaoPorData.get(dt)!.portal!.ataUrl!} target="_blank" rel="noopener noreferrer">Ata manuscrita (PDF não pesquisável)</a></>}
+                                  </p>
+                                ))}
                               </div>
                               <p class="shrink-0 font-semibold tabular-nums text-ink">{brl(d.valor)}</p>
                             </li>
@@ -295,6 +373,54 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
             );
           })}
         </ul>
+
+        <section id="locais" class={`${cartao} mt-4 scroll-mt-4`} aria-labelledby="h-locais">
+          <h3 id="h-locais" class={tituloCartao}>Quem lembra do seu bairro, aldeia ou assentamento?</h3>
+          <p class="mb-3 text-xs text-ink-soft">Escolha o lugar para ver quantas proposições de {ano} citam esse local e quais vereadores as assinaram. Só conta o que está escrito na ementa ou na notícia oficial da Câmara.</p>
+          {!proposicoes ? (
+            <p class="text-sm text-ink-soft">Proposições de {ano} ainda não sincronizadas com o portal da Câmara.</p>
+          ) : porLocal.size === 0 ? (
+            <p class="text-sm text-ink-soft">Nenhuma ementa publicada cita bairros, aldeias ou assentamentos.</p>
+          ) : (
+            <>
+              {gruposLocal.map((g) => {
+                const lista = LOCAIS.filter((l) => l.grupo === g && (porLocal.get(l.id)?.length ?? 0) > 0);
+                return lista.length === 0 ? null : (
+                  <div class="mb-3">
+                    <p class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">{GRUPOS_LOCAL[g]}</p>
+                    <ul class="flex flex-wrap gap-2">
+                      {lista.map((l) => (
+                        <li>
+                          <a href={`?entidade=camara&ano=${ano}&aba=vereadores&local=${l.id}#locais`} aria-current={localSel?.id === l.id ? 'true' : undefined} class:list={['inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border px-3 text-sm font-semibold', localSel?.id === l.id ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>
+                            {l.nome} <span class="tabular-nums text-xs font-normal opacity-80">{porLocal.get(l.id)!.length}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+              {localSel && (
+                <div class="mt-3 rounded-[4px] border-2 border-nioaque-green p-3">
+                  <h4 class="font-editorial text-lg font-extrabold text-ink">{localSel.nome}: {propsDoLocal.length} {propsDoLocal.length === 1 ? 'proposição' : 'proposições'} em {ano}</h4>
+                  {autoresDoLocal.size > 0 && (
+                    <p class="mt-1 text-sm text-ink-soft">Vereadores: {[...autoresDoLocal.entries()].sort((a, b) => b[1] - a[1]).map(([sl, n]) => `${nomeVer(sl)} (${n})`).join(', ')}.</p>
+                  )}
+                  <ul class="mt-2 divide-y divide-pedra rounded-[4px] border border-pedra text-sm">
+                    {propsDoLocal.map((p) => (
+                      <li class="p-2.5">
+                        <p class="font-semibold text-ink">{p.titulo}</p>
+                        {p.descricao && <p class="text-xs leading-relaxed text-ink-soft">{p.descricao.length >= 300 ? `${p.descricao.slice(0, 280).trim()}…` : p.descricao}</p>}
+                        <p class="mt-0.5 text-xs text-ink-soft">{[...p.vereadores.map(nomeVer), ...p.outrosAutores].join(', ') || 'Autor não informado'} · {ROTULO_CATEGORIA[p.categoria]} · {p.situacao || 'situação não informada'} · <a class="underline" href={p.fonteUrl} target="_blank" rel="noopener noreferrer">fonte oficial</a></p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p class="mt-3 text-xs text-ink-soft">{comTexto} de {totalProp} proposições têm ementa ou notícia oficial que permite identificar o local; as demais não entram na busca por lugar. Pareceres de comissão não são contados.</p>
+            </>
+          )}
+        </section>
 
         <div class={`${cartao} mt-4 hidden md:block`}>
           <h3 class={`${tituloCartao} mb-1`}>Mapa de calor: quem recebeu e quando</h3>
@@ -362,11 +488,109 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
           Fonte: API de Dados Abertos da Câmara (Quality Sistemas). Empenhos repetidos pela fonte são contados uma só vez. Diárias identificadas pela natureza da despesa (3.3.90.14) no detalhe do empenho; o nome do vereador é associado ao nome do favorecido.
           {resumo.semDetalhe > 0 && ` Atenção: ainda estamos lendo o detalhe de ${resumo.semDetalhe} despesas de pessoas físicas; por enquanto elas aparecem em "Fornecedores e serviços".`}
         </p>
+
+        {loa && (
+          <div class={`${cartao} mt-4`}>
+            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">LOA 2027 em tramitação</p>
+            <h2 class={tituloCartao}>{loa.titulo}</h2>
+            <p class="mt-1 text-sm text-ink-soft">{loa.descricao || 'Estima a receita e fixa a despesa do município para 2027.'} Situação no portal da Câmara: <strong class="text-ink">{loa.situacao || 'não informada'}</strong>.</p>
+            <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <a class="font-semibold text-nioaque-green-dark underline" href="/transparencia?entidade=prefeitura&aba=receitas">Ver as receitas da Prefeitura</a>
+              <a class="text-ink-soft underline" href={loa.fonteUrl} target="_blank" rel="noopener noreferrer">Fonte oficial</a>
+            </p>
+          </div>
+        )}
+
+        <section class={`${cartao} mt-4`} aria-labelledby="h-raiox">
+          <h2 id="h-raiox" class={tituloCartao}>Raio-X do portal oficial da Câmara</h2>
+          <p class="mb-3 text-xs text-ink-soft">O que o portal da Câmara (cmnioaque.ms.gov.br) publica, comparado ao que o Portal da Transparência registra. Números lidos das fontes, sem interpretação.</p>
+          {!instar ? (
+            <p class="text-sm text-ink-soft">Dados ainda não sincronizados com o portal da Câmara.</p>
+          ) : (
+            <ul class="divide-y divide-pedra text-sm">
+              <li class="py-2.5">
+                <p class="font-semibold text-ink">Diárias e relatórios de viagem</p>
+                <p class="text-ink-soft">Pagas no Portal da Transparência: <strong class="tabular-nums text-ink">{brl(resumo.diariasTotal)}</strong> ({resumo.diarias.length} pagamentos em {ano}). Relatórios de viagem publicados no portal da Câmara: <strong class="tabular-nums text-ink">{temaDe('relatorio-viagens')?.total ?? 0}</strong>{temaDe('relatorio-viagens') ? ` (${periodoTema(temaDe('relatorio-viagens')!)})` : ''}.</p>
+              </li>
+              <li class="py-2.5">
+                <p class="font-semibold text-ink">Atas das sessões</p>
+                <p class="text-ink-soft"><strong class="tabular-nums text-ink">{sessoesAno.length}</strong> {sessoesAno.length === 1 ? 'sessão' : 'sessões'} de {ano} no portal, <strong class="tabular-nums text-ink">{ataPdfAno}</strong> com ata em PDF. As atas são publicadas como imagem de texto manuscrito: sem texto pesquisável e sem acessibilidade para leitores de tela.</p>
+              </li>
+              <li class="py-2.5">
+                <p class="font-semibold text-ink">Seções sem nenhum registro</p>
+                <ul class="mt-1 grid gap-x-6 gap-y-0.5 text-ink-soft sm:grid-cols-2">
+                  {['diario-oficial', 'obras', 'audiencias-publicas', 'compra-direta', 'chamamento-publico', 'concursos', 'carta-servicos'].map((c) => temaDe(c)).filter(Boolean).map((t) => (
+                    <li>{t!.rotulo}: <strong class="tabular-nums text-ink">{t!.total}</strong> {t!.total === 1 ? 'registro' : 'registros'} <span class="text-xs">({periodoTema(t!)})</span></li>
+                  ))}
+                  <li>SIC (pedidos de informação, {instar.ano}): <strong class="tabular-nums text-ink">{instar.sicPedidos ?? 'não informado'}</strong></li>
+                  <li>Ouvidoria (manifestações, {instar.ano}): <strong class="tabular-nums text-ink">{instar.ouvidoriaPedidos ?? 'não informado'}</strong></li>
+                </ul>
+              </li>
+              <li class="py-2.5">
+                <p class="font-semibold text-ink">Contratos e licitações</p>
+                <p class="text-ink-soft">Último contrato com data de assinatura: <strong class="tabular-nums text-ink">{ult?.contratos ? formatDate(ult.contratos) : 'nenhum'}</strong>. Última licitação publicada: <strong class="tabular-nums text-ink">{ult?.licitacoes ? formatDate(ult.licitacoes) : 'nenhuma'}</strong>. Dados lidos do portal em {formatDate(instar.atualizadoEm.slice(0, 10))}.</p>
+              </li>
+              {proposicoes && (
+                <li class="py-2.5">
+                  <p class="font-semibold text-ink">Qualidade dos dados das proposições</p>
+                  <p class="text-ink-soft">{proposicoes.numerosCorrigidos} {proposicoes.numerosCorrigidos === 1 ? 'número vem corrompido' : 'números vêm corrompidos'} na fonte e {proposicoes.numerosCorrigidos === 1 ? 'foi corrigido' : 'foram corrigidos'} aqui pelo título; {proposicoes.duplicatasRemovidas} {proposicoes.duplicatasRemovidas === 1 ? 'registro repetido foi contado' : 'registros repetidos foram contados'} uma só vez; {proposicoes.divergencias.length} {proposicoes.divergencias.length === 1 ? 'proposição tem' : 'proposições têm'} autor diferente entre o título e o campo Autor do portal; nesses casos o site adota o campo Autor, que confere com o PDF da proposição (conferido em 5 documentos).</p>
+                </li>
+              )}
+            </ul>
+          )}
+        </section>
       </section>
 
       <!-- ============================ ABA 3: CONTRATOS E FORNECEDORES ============================ -->
       <section role="tabpanel" id="painel-contratos" data-painel="contratos" aria-labelledby="aba-contratos" hidden={aba !== 'contratos'}>
         <div class="grid gap-4">
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Contratos publicados no portal da Câmara</h2>
+            <p class="mb-3 text-xs text-ink-soft">Lista oficial do portal (Instar). Os selos apontam lacunas na própria fonte.</p>
+            {!instar || instar.contratos.length === 0 ? (
+              <p class="text-sm text-ink-soft">Nenhum contrato publicado, ou dados ainda não sincronizados com o portal da Câmara.</p>
+            ) : (
+              <ul class="divide-y divide-pedra text-sm">
+                {[...instar.contratos].sort((a, b) => (b.assinatura ?? '').localeCompare(a.assinatura ?? '')).map((c) => {
+                  const selos = selosDoContrato(c, hojeIso);
+                  return (
+                    <li class="py-2.5">
+                      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                        <p class="min-w-0 font-semibold text-ink">{c.nome ? bonito(c.nome) : 'Contratado não informado'}</p>
+                        <p class="shrink-0 font-semibold tabular-nums text-ink">{c.valor ? brl(c.valor) : '–'}</p>
+                      </div>
+                      <p class="text-xs text-ink-soft">
+                        {c.tipo ?? 'Contrato'}{c.numero ? ` nº ${c.numero}` : ''}{c.assinatura ? ` · assinado em ${formatDate(c.assinatura)}` : ''}{c.fim ? ` · vigência até ${formatDate(c.fim)}` : ''}{c.situacao ? ` · ${c.situacao}` : ''}
+                      </p>
+                      {selos.length > 0 && (
+                        <ul class="mt-1 flex flex-wrap gap-1.5">
+                          {selos.map((x) => <li class="rounded-[2px] border border-ocre bg-editorial px-1.5 py-0.5 text-[11px] font-bold text-ink">[{x.texto}]</li>)}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {instar && instar.licitacoes.length > 0 && (
+              <>
+                <h3 class="mt-5 font-editorial text-base font-extrabold text-ink">Licitações publicadas</h3>
+                <ul class="mt-2 divide-y divide-pedra text-sm">
+                  {instar.licitacoes.map((l) => {
+                    const selo = seloDaLicitacao(l, hojeIso);
+                    return (
+                      <li class="py-2.5">
+                        <p class="font-semibold text-ink">{l.titulo}</p>
+                        <p class="text-xs text-ink-soft">{l.modalidade ?? 'Modalidade não informada'}{l.postagem ? ` · publicada em ${formatDate(l.postagem)}` : ''}{l.realizacao ? ` · sessão em ${formatDate(l.realizacao)}` : ''}{l.situacao ? ` · ${l.situacao}` : ''}{l.valorHomologado ? ` · homologado: ${l.valorHomologado}` : ' · sem valor homologado'}</p>
+                        {selo && <p class="mt-1"><span class="rounded-[2px] border border-ocre bg-editorial px-1.5 py-0.5 text-[11px] font-bold text-ink">[{selo.texto}]</span></p>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </div>
+
           <div class={cartao}>
             <h2 class={tituloCartao}>Maiores fornecedores</h2>
             <p class="mb-3 text-xs text-ink-soft">Empresas que mais receberam da Câmara em {ano}, sem folha, encargos e diárias.</p>
