@@ -19,7 +19,7 @@ import {
   type RawEmpenho,
 } from './transparencia';
 import { buscarReceitas } from './receitas';
-import { buscarFolha, type ResumoFolha } from './folha';
+import { buscarFolha, buscarFolhaCamara, type ResumoFolha } from './folha';
 import { buscarEstado, buscarFederal, buscarIbge } from './externas';
 import { chaveEmpenho, ENTIDADE_PREFEITURA, montarResumoPref, orgaoDe, ORGAOS_TENTAR } from './prefeitura';
 import { CONFIG_PADRAO, dataLocal, devidaHoje, gravarChave, lerChave, type ConfigAtualizacao } from './transparencia-store';
@@ -40,7 +40,7 @@ const LOTE = 20;
 const SIMULTANEAS = 5;
 const MAX_ERROS = 6;
 
-export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas' | 'folha', ano: number) => `resumo:${entidade}:${ano}`;
+export const chaveResumo = (entidade: 'camara' | 'prefeitura' | 'receitas' | 'folha' | 'folhacamara', ano: number) => `resumo:${entidade}:${ano}`;
 export const chaveLista = (ano: number) => `lista:prefeitura:${ano}`;
 /** fontes de fora (IBGE, Governo de MS, Governo Federal) */
 export const chaveIbge = 'ext:ibge';
@@ -68,7 +68,7 @@ export async function lerConfig(sb: SupabaseClient): Promise<ConfigAtualizacao> 
 /** Comeca uma rodada de atualizacao e enfileira o primeiro passo. */
 export async function iniciarRodada(sb: SupabaseClient, queue: any, origem: Estado['origem'], completa = false): Promise<Estado> {
   const atual = anoAtual();
-  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`, `folha:${atual}`, 'ibge:0', `estado:${atual}`, `federal:${atual}`];
+  const alvos: string[] = [`camara:${atual}`, `prefeitura:${atual}`, `receitas:${atual}`, `folha:${atual}`, `folhacamara:${atual}`, 'ibge:0', `estado:${atual}`, `federal:${atual}`];
   const existentes = new Set(
     ((await sb.from('transparencia_cache').select('key').like('key', 'resumo:%')).data ?? []).map((r: { key: string }) => r.key),
   );
@@ -189,6 +189,18 @@ export async function passoTransparencia(sb: SupabaseClient, chaveFederalApi?: s
     if (!est.pendentes.length) est.fimEm = new Date().toISOString();
     await gravarChave(sb, 'estado', est);
     return { continua: est.pendentes.length > 0, atraso: 1, info: 'folha ' + ano + ': pronta' };
+  }
+  // Quadro de servidores da Camara: uma consulta so ao portal
+  if (nome === 'folhacamara') {
+    const fc = await buscarFolhaCamara(ano, dataLocal().m);
+    if (!fc) return falhar('folha da Câmara: portal sem resposta');
+    await gravarChave(sb, chaveResumo('folhacamara', ano), fc);
+    est.pendentes.shift();
+    est.erros = 0;
+    est.ultimoErro = undefined;
+    if (!est.pendentes.length) est.fimEm = new Date().toISOString();
+    await gravarChave(sb, 'estado', est);
+    return { continua: est.pendentes.length > 0, atraso: 1, info: `folha da Câmara ${ano}: pronta` };
   }
   // Receitas: vem do Tesouro Nacional (SICONFI), sem detalhes por empenho: um passo so
   if (nome === 'receitas') {

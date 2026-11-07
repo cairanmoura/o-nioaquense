@@ -262,7 +262,7 @@ async function desenharResumo(ctx: CanvasRenderingContext2D, d: ExportData, logo
     ctx.fillText(v.total > 0 ? brlInt(v.total) : 'R$ 0', nomeX, by + 102);
     ctx.fillStyle = SUAVE;
     fonte(ctx, 600, 20);
-    ctx.fillText(v.quantidade === 0 ? 'nenhuma diária' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'} · ${v.dias} ${v.dias === 1 ? 'dia' : 'dias'}`, bx + 20, by + ch - 14);
+    ctx.fillText(v.quantidade === 0 ? 'nenhuma diária' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'}${v.dias > 0 ? ` · ${v.dias} ${v.dias === 1 ? 'dia' : 'dias'}` : ''}`, bx + 20, by + ch - 14);
   });
 
   // Resumo das diárias
@@ -305,7 +305,7 @@ async function desenharVereador(ctx: CanvasRenderingContext2D, d: ExportData, v:
   const media = v.quantidade ? v.total / v.quantidade : 0;
   const stats: [string, string, boolean][] = [
     ['Total recebido', brl(v.total), true],
-    ['Diárias', `${v.quantidade} (${v.dias} ${v.dias === 1 ? 'dia' : 'dias'})`, false],
+    ['Diárias', `${v.quantidade}${v.dias > 0 ? ` (${v.dias} ${v.dias === 1 ? 'dia' : 'dias'})` : ''}`, false],
     ['Média por diária', brl(media), false],
   ];
   stats.forEach(([rot, val, dest], i) => {
@@ -414,7 +414,7 @@ function desenharVereadores(ctx: CanvasRenderingContext2D, d: ExportData, logo: 
     ctx.fillText(txt, bx + cw / 2, by + 232);
     ctx.fillStyle = SUAVE;
     fonte(ctx, 600, 20);
-    ctx.fillText(v.quantidade === 0 ? 'nenhuma diária' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'} · ${v.dias} ${v.dias === 1 ? 'dia' : 'dias'}`, bx + cw / 2, by + 262);
+    ctx.fillText(v.quantidade === 0 ? 'nenhuma diária' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'}${v.dias > 0 ? ` · ${v.dias} ${v.dias === 1 ? 'dia' : 'dias'}` : ''}`, bx + cw / 2, by + 262);
     ctx.textAlign = 'left';
     // barra proporcional
     ctx.fillStyle = PEDRA;

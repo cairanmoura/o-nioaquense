@@ -9,10 +9,9 @@ port = 54322
 shadow_port = 54320
 major_version = 15
 
-# Aplica supabase/seed.sql depois das migrations em `supabase db reset`
+# Sem seed: regra do projeto, zero dados ficticios.
 [db.seed]
-enabled = true
-sql_paths = ["./seed.sql"]
+enabled = false
 
 [studio]
 enabled = true

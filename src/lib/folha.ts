@@ -143,3 +143,82 @@ export async function buscarFolha(ano: number, mesAtual: number, parcial?: Resum
     atualizadoEm: new Date().toISOString(),
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Camara Municipal (entidade 164): quadro de servidores                       */
+/* -------------------------------------------------------------------------- */
+
+export interface ServidorCamara {
+  nome: string;
+  cargo: string;
+  /** Cargo Eletivo, Cargo Comissionado, Cargo Efetivo, Contrato Temporario */
+  tipo: string;
+  situacao: string;
+  admissao: string;
+  base: number;
+  bruto: number;
+  descontos: number;
+  liquido: number;
+}
+
+export interface ResumoFolhaCamara {
+  /** mes da folha (AAAA-MM) */
+  ref: string;
+  servidores: ServidorCamara[];
+  atualizadoEm: string;
+}
+
+/**
+ * Quadro de servidores da Camara, lido da pagina "Folha de pagamento" do portal oficial (a mesma consulta
+ * que o portal faz para quem abre a pagina). A busca exige 3 letras; "camara" casa com a unidade gestora
+ * de todos os servidores. Procura o mes mais recente cuja folha ja foi fechada (soma dos liquidos > 0).
+ * Nao guardamos CPF. Devolve null se o portal nao respondeu.
+ */
+export async function buscarFolhaCamara(ano: number, mesAtual: number): Promise<ResumoFolhaCamara | null> {
+  const cookie = await (async () => {
+    try {
+      const r = await fetch(`${PORTAL}/folha-de-pagamento/164`, { signal: AbortSignal.timeout(20_000) });
+      return r.headers.get('set-cookie')?.split(';')[0] ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  if (!cookie) return null;
+
+  let a = ano;
+  let m = mesAtual;
+  for (let i = 0; i < 4; i++) {
+    let lista: Servidor[] | null = null;
+    for (let t = 0; t < 2 && lista === null; t++) {
+      try {
+        const r = await fetch(`${PORTAL}/api/v1/folha-de-pagamento/164/cargos/busca?ano=${a}&mes=${m}&termo=camara`, {
+          headers: { cookie, accept: 'application/json' },
+          signal: AbortSignal.timeout(45_000),
+        });
+        if (r.ok) lista = ((await r.json()) as Busca).flatMap((o) => o.grupos.flatMap((g) => g.servidores));
+      } catch {
+        /* tenta de novo */
+      }
+    }
+    if (lista === null) return null;
+    if (lista.reduce((s, x) => s + x.salarioLiquido, 0) > 0) {
+      return {
+        ref: `${a}-${String(m).padStart(2, '0')}`,
+        servidores: lista.map((x) => ({
+          nome: x.nome,
+          cargo: x.cargo,
+          tipo: x.tipoCargo ?? '',
+          situacao: x.situacao,
+          admissao: x.dataAdmissao,
+          base: x.salarioBase,
+          bruto: cent(x.salarioLiquido + x.descontos),
+          descontos: x.descontos,
+          liquido: x.salarioLiquido,
+        })),
+        atualizadoEm: new Date().toISOString(),
+      };
+    }
+    [a, m] = anterior(a, m);
+  }
+  return null;
+}

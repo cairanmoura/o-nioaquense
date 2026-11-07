@@ -1,0 +1,87 @@
+---
+/**
+ * Abas da Transparência. Cada aba é um link real (?aba=...): funciona sem JavaScript.
+ * Com JavaScript, trocamos o painel na hora (sem recarregar nem rolar a página).
+ * Os painéis são `<section role="tabpanel" data-painel="id" hidden>` escritos por quem usa este componente.
+ */
+interface Props {
+  abas: { id: string; label: string }[];
+  ativa: string;
+  /** parâmetros da URL a preservar (entidade, ano, q...) */
+  params: Record<string, string | number>;
+}
+const { abas, ativa, params } = Astro.props;
+const href = (id: string) => {
+  const p = new URLSearchParams({ ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])), aba: id });
+  return `?${p.toString()}#abas`;
+};
+---
+
+<nav id="abas" data-abas role="tablist" aria-label="Seções da página" class="-mx-4 mb-6 flex scroll-mt-4 gap-1 overflow-x-auto border-b-2 border-pedra px-4 sm:mx-0 sm:px-0 print:hidden">
+  {abas.map((a) => (
+    <a
+      role="tab"
+      id={`aba-${a.id}`}
+      data-aba={a.id}
+      aria-controls={`painel-${a.id}`}
+      aria-selected={a.id === ativa ? 'true' : 'false'}
+      href={href(a.id)}
+      class:list={[
+        'relative -mb-[2px] inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap border-b-[3px] px-4 text-sm font-bold',
+        a.id === ativa ? 'border-nioaque-red text-ink' : 'border-transparent text-ink-soft hover:border-pedra-escura hover:text-ink',
+      ]}
+    >
+      {a.label}
+    </a>
+  ))}
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-abas]');
+  if (nav) {
+    const abas = [...nav.querySelectorAll<HTMLAnchorElement>('[data-aba]')];
+    const painel = (id: string) => document.querySelector<HTMLElement>(`[data-painel="${id}"]`);
+    const ativar = (id: string, empurrar: boolean) => {
+      if (!painel(id)) return;
+      for (const a of abas) {
+        const ativa = a.dataset.aba === id;
+        a.setAttribute('aria-selected', String(ativa));
+        a.classList.toggle('border-nioaque-red', ativa);
+        a.classList.toggle('text-ink', ativa);
+        a.classList.toggle('border-transparent', !ativa);
+        a.classList.toggle('text-ink-soft', !ativa);
+        const p = painel(a.dataset.aba ?? '');
+        if (p) p.hidden = !ativa;
+      }
+      if (empurrar) {
+        const u = new URL(location.href);
+        u.searchParams.set('aba', id);
+        history.replaceState(null, '', u.pathname + u.search);
+      }
+    };
+    for (const a of abas) {
+      a.addEventListener('click', (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        ativar(a.dataset.aba ?? '', true);
+      });
+    }
+    // alterna listas dentro de um painel (ex.: por secretaria / por área)
+    document.querySelectorAll<HTMLElement>('[data-alterna]').forEach((grupo) => {
+      const botoes = [...grupo.querySelectorAll<HTMLButtonElement>('[data-alvo]')];
+      botoes.forEach((b) =>
+        b.addEventListener('click', () => {
+          for (const x of botoes) {
+            const on = x === b;
+            x.setAttribute('aria-pressed', String(on));
+            x.classList.toggle('bg-nioaque-green', on);
+            x.classList.toggle('text-white', on);
+            x.classList.toggle('border-nioaque-green', on);
+            const alvo = grupo.querySelector<HTMLElement>(`[data-visao="${x.dataset.alvo}"]`);
+            if (alvo) alvo.hidden = !on;
+          }
+        }),
+      );
+    });
+  }
+</script>

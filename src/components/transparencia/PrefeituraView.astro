@@ -1,23 +1,28 @@
 ---
 /**
- * Transparência da Prefeitura: números, gráficos, primeiro escalão,
- * secretarias, fornecedores e busca. Dados vêm da tabela transparencia_cache.
+ * Transparência da Prefeitura: topo fixo (busca e resumo) + 4 abas.
+ * Todos os números vêm da tabela transparencia_cache (portal oficial, SICONFI, IBGE etc.).
  */
-import ChartDonut from './ChartDonut.astro';
 import ChartMeses from './ChartMeses.astro';
-import ChartLinha from './ChartLinha.astro';
 import FotoAutoridade from './FotoAutoridade.astro';
-import { brl, brlCurto, MESES_LONGOS, semAcento } from '../../lib/transparencia';
+import Abas from './Abas.astro';
+import ExternasView from './ExternasView.astro';
+import { anoAtual, brl, brlCurto, MESES_LONGOS, parts, semAcento } from '../../lib/transparencia';
 import { CATEGORIAS_PREF, slugDe, type CategoriaPref, type PrefEmpenho, type ResumoPref } from '../../lib/prefeitura';
 import type { ResumoReceitas } from '../../lib/receitas';
 import type { ResumoFolha } from '../../lib/folha';
+import type { ResumoEstado, ResumoFederal, ResumoIbge } from '../../lib/externas';
 
 interface Props {
   resumo: ResumoPref | null;
   receitas: ResumoReceitas | null;
   folha: ResumoFolha | null;
+  estado: ResumoEstado | null;
+  federal: ResumoFederal | null;
+  ibge: ResumoIbge | null;
   ano: number;
   anos: number[];
+  aba: string;
   q: string;
   orgaoSel: string;
   areaSel: string;
@@ -30,28 +35,48 @@ interface Props {
   ID: string;
   BASE: string;
 }
-const { resumo, receitas, folha, ano, anos, q, orgaoSel, areaSel, catSel, escSel, autSel, pag, listaPref, atualizadoEm, ID, BASE } = Astro.props;
+const { resumo, receitas, folha, estado, federal, ibge, ano, anos, aba, q, orgaoSel, areaSel, catSel, escSel, autSel, pag, listaPref, atualizadoEm, ID, BASE } = Astro.props;
 
 const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
 const tituloSecao = 'font-editorial text-2xl font-extrabold text-ink';
+const tituloCartao = 'font-editorial text-lg font-extrabold text-ink';
 const pill =
   'inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green hover:text-nioaque-green-dark';
 const botao =
   'inline-flex min-h-[44px] items-center gap-2 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60';
 const url = (extra: Record<string, string | number>, ancora = '') => {
-  const p = new URLSearchParams({ entidade: 'prefeitura', ano: String(ano), ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])) });
+  const p = new URLSearchParams({ entidade: 'prefeitura', ano: String(ano), aba, ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])) });
   return `?${p.toString()}${ancora}`;
 };
 const dataBr = (iso: string) => iso.split('-').reverse().join('/');
+const fmtCnpj = (c: string) =>
+  c.length === 14 ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : c.length === 11 ? `CPF ***.${c.slice(3, 6)}.${c.slice(6, 9)}-**` : c;
 
 let ultimoMes = 0;
 if (resumo) resumo.porMes.forEach((v, i) => v > 0 && (ultimoMes = i));
 const periodo = resumo ? (ultimoMes === 0 ? `janeiro de ${ano}` : `janeiro a ${MESES_LONGOS[ultimoMes]} de ${ano}`) : String(ano);
+// o ano exibido é o corrente: o último mês com valor ainda está em andamento
+const mesAndamento = resumo && ano === anoAtual() && ultimoMes === Number(parts().month) - 1 ? ultimoMes : undefined;
+
+// custo por habitante: estimativa de população do IBGE mais recente até o ano exibido
+const pop = ibge ? ([...ibge.estimativas].filter((e) => e.ano <= ano).sort((a, b) => b.ano - a.ano)[0] ?? null) : null;
 
 const maxSec = resumo?.porSecretaria[0]?.valor || 1;
 const maxFun = resumo?.porFuncao[0]?.valor || 1;
-const maxCred = resumo?.credores[0]?.pago || 1;
 const pct = (v: number) => (resumo && resumo.totalPago ? (v / resumo.totalPago) * 100 : 0);
+const pct1 = (v: number) => pct(v).toFixed(1).replace('.', ',');
+
+// "Para onde vai o dinheiro": os três blocos pedidos mais "demais", para a soma fechar com o total pago
+const gFolha = resumo ? resumo.porCategoria.pessoal + resumo.porCategoria.encargos : 0;
+const gServicos = resumo ? resumo.porCategoria.servicos : 0;
+const gObras = resumo ? resumo.porCategoria.obras : 0;
+const gOutros = resumo ? resumo.porCategoria.diarias + resumo.porCategoria.repasses + resumo.porCategoria.outras : 0;
+const destinos = [
+  { nome: 'Folha e encargos', detalhe: 'Salários e INSS', valor: gFolha, cor: '#0D4722', cat: 'pessoal' },
+  { nome: 'Serviços e materiais', detalhe: 'Empresas, manutenção, combustível, medicamentos', valor: gServicos, cor: '#6FCB8B', cat: 'servicos' },
+  { nome: 'Obras e equipamentos', detalhe: 'Investimentos', valor: gObras, cor: '#2B6CB0', cat: 'obras' },
+  { nome: 'Diárias, repasses e demais', detalhe: 'Viagens a serviço, subvenções e outras despesas (inclui pagamento de dívida)', valor: gOutros, cor: '#8A8F8A', cat: '' },
+];
 
 const escalao = resumo?.escalao ?? [];
 const escFiltrado = escalao.filter((a) => (escSel === 'prefeito' ? a.grupo !== 'secretario' : escSel === 'secretarios' ? a.grupo === 'secretario' : true));
@@ -71,7 +96,7 @@ const todos = listaPref
     )
   : null;
 const POR_PAGINA = 25;
-const resultados = todos ? todos.slice((pag - 1) * POR_PAGINA, pag * POR_PAGINA) : (resumo?.maiores.slice(0, 15) ?? []);
+const resultados = todos ? todos.slice((pag - 1) * POR_PAGINA, pag * POR_PAGINA) : [];
 const totalResultados = todos ? todos.reduce((s, e) => s + e.p, 0) : 0;
 const paginas = todos ? Math.max(1, Math.ceil(todos.length / POR_PAGINA)) : 1;
 const filtroParams = { ...(q ? { q } : {}), ...(orgaoSel ? { orgao: orgaoSel } : {}), ...(areaSel ? { area: areaSel } : {}), ...(catSel ? { cat: catSel } : {}) };
@@ -87,6 +112,7 @@ const folhaDe = (slug: string) => {
   return f && f.nome ? f : null;
 };
 const refFolhaTxt = folha ? folha.ref.slice(5) + '/' + folha.ref.slice(0, 4) : '';
+const folhaEscalao = escalao.map((a) => folhaDe(a.slug)).filter((f): f is NonNullable<ReturnType<typeof folhaDe>> => f !== null);
 const cargoCurto = (c: string) => c.replace(/^Secret[áa]ri[oa] Municipal d[aeo]s? /i, 'Secretaria de ');
 const exportData = resumo
   ? {
@@ -121,228 +147,299 @@ const NOMES_MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', '
 const periodoReceitas = receitas ? `janeiro a ${NOMES_MES[Math.min(11, receitas.bimestre * 2 - 1)]} de ${receitas.ano}` : '';
 const maxGrupo = receitas ? Math.max(...receitas.grupos.map((g) => g.arrecadado), 1) : 1;
 const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
+
+const fornecedores = resumo?.fornecedores ?? [];
+const semLicCredores = resumo?.semLicCredores ?? [];
+const diariasRanking = resumo?.diariasRanking ?? [];
+const maxForn = fornecedores[0]?.pago || 1;
+const baseLic = resumo ? resumo.comLicitacao + resumo.semLicitacao : 0;
+const ABAS = [
+  { id: 'geral', label: 'Visão geral' },
+  { id: 'fornecedores', label: 'Fornecedores e licitações' },
+  { id: 'escalao', label: 'Primeiro escalão, folha e diárias' },
+  { id: 'receitas', label: 'Receitas' },
+];
 ---
 
 <div id="p-conteudo" data-titulo={`Transparência da Prefeitura de Nioaque ${ano}`}>
   {!resumo && (
     <p class={`${cartao} mb-10 text-sm text-ink-soft`}>
-      Os dados da Prefeitura em {ano} estão sendo preparados e aparecem aqui em instantes. Enquanto isso, consulte direto no
+      Dados ainda não sincronizados com a fonte oficial para {ano}. Enquanto isso, consulte direto no
       <a class="underline" href={`${BASE}/${ID}`} target="_blank" rel="noopener noreferrer">Portal da Transparência oficial</a>.
     </p>
   )}
 
   {resumo && (
     <>
-      <nav aria-label="Atalhos da Prefeitura" class="mb-8 flex flex-wrap gap-2 print:hidden">
-        <a href="#p-numeros" class={pill}>Números</a>
-        {receitas && <a href="#p-receitas" class={pill}>Receitas</a>}
-        <a href="#p-graficos" class={pill}>Gráficos</a>
-        <a href="#p-escalao" class={pill}>Primeiro escalão</a>
-        <a href="#p-secretarias" class={pill}>Secretarias</a>
-        <a href="#p-areas" class={pill}>Áreas</a>
-        <a href="#p-fornecedores" class={pill}>Fornecedores</a>
-        <a href="#p-busca" class={pill}>Buscar despesas</a>
-        <a href="#dinheiro" class={pill}>Receitas e orçamento</a>
-        <a href="#compras" class={pill}>Licitações e contratos</a>
-        <a href="#pessoal" class={pill}>Folha e diárias</a>
-      </nav>
-
-      <section id="p-numeros" class="mb-10 scroll-mt-24">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div class="border-l-4 border-nioaque-red pl-3">
-            <h2 class={tituloSecao}>Despesas em números</h2>
-            <p class="text-sm text-ink-soft">{periodo}. Atualizado semanalmente{atual ? ` (última vez em ${atual})` : ''}.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 print:hidden">
-            <nav aria-label="Ano" class="flex gap-1">
-              {anos.map((a) => (
-                <a
-                  href={`?entidade=prefeitura&ano=${a}`}
-                  aria-current={a === ano ? 'true' : undefined}
-                  class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}
-                >
-                  {a}
-                </a>
-              ))}
-            </nav>
-            <button type="button" data-png-pref="resumo" class={botaoPng}>
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
-              <span data-rotulo>Salvar imagem (PNG)</span>
-            </button>
-            <button type="button" data-pdf="#p-conteudo" class={botao}>
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PDF}></path></svg>
-              <span data-rotulo>Exportar PDF</span>
-            </button>
-          </div>
+      <!-- ============================ TOPO FIXO ============================ -->
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <nav aria-label="Ano" class="flex gap-1">
+          {anos.map((a) => (
+            <a
+              href={`?entidade=prefeitura&ano=${a}&aba=${aba}`}
+              aria-current={a === ano ? 'true' : undefined}
+              class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}
+            >
+              {a}
+            </a>
+          ))}
+        </nav>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-png-pref="resumo" class={botaoPng}>
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
+            <span data-rotulo>Salvar imagem (PNG)</span>
+          </button>
+          <button type="button" data-pdf="#p-conteudo" class={botao}>
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PDF}></path></svg>
+            <span data-rotulo>Exportar PDF</span>
+          </button>
         </div>
+      </div>
 
-        <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class={`${cartao} @container`}>
-            <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Pago</dt>
-            <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(resumo.totalPago)}</dd>
+      <form id="busca" method="get" action="#busca" class="mb-6 scroll-mt-24 print:hidden">
+        <input type="hidden" name="entidade" value="prefeitura" />
+        <input type="hidden" name="ano" value={ano} />
+        <input type="hidden" name="aba" value={aba} />
+        {areaSel && <input type="hidden" name="area" value={areaSel} />}
+        <label class="sr-only" for="q-pref">Pesquisar fornecedor, CNPJ, servidor ou despesa</label>
+        <div class="flex gap-2">
+          <input id="q-pref" name="q" value={q} type="search" placeholder="Pesquisar fornecedor, CNPJ, servidor ou despesa..." class="min-h-[48px] min-w-0 flex-1 rounded-[4px] border-2 border-pedra bg-branco px-4 text-base text-ink focus:border-nioaque-green" />
+          <button type="submit" class={`${botao} min-h-[48px] px-5`}>Buscar</button>
+        </div>
+        <details class="mt-2" open={Boolean(orgaoSel || catSel)}>
+          <summary class="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-nioaque-green-dark">Filtrar por secretaria ou tipo de gasto</summary>
+          <div class="mt-2 grid gap-3 sm:grid-cols-2">
+            <label class="text-sm font-semibold text-ink">
+              Secretaria ou órgão
+              <select name="orgao" class="mt-1 min-h-[44px] w-full rounded-[4px] border border-pedra bg-branco px-2 text-sm font-normal text-ink">
+                <option value="">Todas</option>
+                {resumo.porSecretaria.map((s) => <option value={s.slug} selected={s.slug === orgaoSel}>{s.nome}</option>)}
+              </select>
+            </label>
+            <label class="text-sm font-semibold text-ink">
+              Tipo de gasto
+              <select name="cat" class="mt-1 min-h-[44px] w-full rounded-[4px] border border-pedra bg-branco px-2 text-sm font-normal text-ink">
+                <option value="">Todos</option>
+                {(Object.keys(CATEGORIAS_PREF) as CategoriaPref[]).map((c) => <option value={c} selected={c === catSel}>{CATEGORIAS_PREF[c].label}</option>)}
+              </select>
+            </label>
           </div>
-          <div class={`${cartao} @container`}>
-            <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Liquidado</dt>
-            <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(resumo.totalLiquidado)}</dd>
-          </div>
-          <div class={`${cartao} @container`}>
-            <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Reservado (empenhado)</dt>
-            <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(resumo.totalEmpenhado)}</dd>
-          </div>
-          <div class={`${cartao} @container`}>
-            <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Despesas registradas</dt>
-            <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{resumo.qtd.toLocaleString('pt-BR')}</dd>
-          </div>
-        </dl>
-        <p class="mt-2 text-xs text-ink-soft">
-          Empenhado é o valor reservado para a despesa; liquidado, o serviço já entregue; pago, o dinheiro que saiu do cofre.
-        </p>
-      </section>
+        </details>
+      </form>
 
-
-      {receitas && (
-        <section id="p-receitas" class="mb-10 scroll-mt-24">
-          <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div class="border-l-4 border-nioaque-red pl-3">
-              <h2 class={tituloSecao}>Receitas: de onde vem o dinheiro</h2>
-              <p class="text-sm text-ink-soft">{periodoReceitas}. Dados que a Prefeitura informa ao Tesouro Nacional (a cada dois meses).</p>
-            </div>
-            <button type="button" data-png-pref="receitas" class={botaoPng}>
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
-              <span data-rotulo>Salvar imagem (PNG)</span>
-            </button>
-          </div>
-
-          <dl class="grid gap-3 sm:grid-cols-3">
-            <div class={`${cartao} @container`}>
-              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Arrecadado</dt>
-              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(receitas.arrecadado)}</dd>
-            </div>
-            <div class={`${cartao} @container`}>
-              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Previsto para o ano</dt>
-              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(receitas.previsao)}</dd>
-            </div>
-            <div class={`${cartao} @container`}>
-              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Do previsto já arrecadado</dt>
-              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{receitas.previsao ? ((receitas.arrecadado / receitas.previsao) * 100).toFixed(1).replace('.', ',') : '0'}%</dd>
-            </div>
-          </dl>
-
-          <div class="mt-4 grid gap-4 lg:grid-cols-2">
-            <div class={cartao}>
-              <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">De onde veio o dinheiro</h3>
-              <ul class="space-y-3">
-                {receitas.grupos.filter((g) => g.arrecadado > 0).map((g) => (
-                  <li>
-                    <div class="flex items-baseline justify-between gap-3 text-sm"><span class="min-w-0 text-ink">{g.nome}</span><strong class="shrink-0 tabular-nums">{brl(g.arrecadado)}</strong></div>
-                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px]" style={`width:${(g.arrecadado / maxGrupo) * 100}%;background:${g.cor}`}></div></div>
-                    <p class="mt-0.5 text-xs text-ink-soft">{((g.arrecadado / receitas.arrecadado) * 100).toFixed(1).replace('.', ',')}% do arrecadado</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div class="space-y-4">
-              <div class={cartao}>
-                <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Arrecadação a cada dois meses</h3>
-                <ul class="space-y-3">
-                  {receitas.porBimestre.map((v, i) => (
-                    <li>
-                      <div class="flex items-baseline justify-between gap-3 text-sm"><span class="text-ink">{['Jan–Fev', 'Mar–Abr', 'Mai–Jun', 'Jul–Ago', 'Set–Out', 'Nov–Dez'][i]}</span><strong class="shrink-0 tabular-nums">{brl(v)}</strong></div>
-                      <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(v / maxBim) * 100}%`}></div></div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {receitas.anoFontes && receitas.fontes.length > 0 && (
-                <div class={cartao}>
-                  <h3 class="mb-1 font-editorial text-lg font-extrabold text-ink">Principais fontes em {receitas.anoFontes}</h3>
-                  <p class="mb-3 text-xs text-ink-soft">Ano fechado: {brl(receitas.totalFontes)} no total (bruto).</p>
-                  <ul class="divide-y divide-pedra text-sm">
-                    {receitas.fontes.slice(0, 8).map((f) => (
-                      <li class="flex items-baseline justify-between gap-3 py-2"><span class="min-w-0 text-ink">{f.nome}</span><strong class="shrink-0 tabular-nums">{brl(f.valor)}</strong></li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+      {filtrando && (
+        <section id="p-resultados" data-titulo={`Despesas da Prefeitura de Nioaque ${ano}`} class={`${cartao} mb-8`} aria-label="Resultados da busca">
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+            {todos && (
+              <p class="text-sm text-ink">
+                <strong>{todos.length.toLocaleString('pt-BR')}</strong> {todos.length === 1 ? 'despesa encontrada' : 'despesas encontradas'}, somando <strong>{brl(totalResultados)}</strong> pagos em {ano}
+                {nomeOrgao ? ` · ${nomeOrgao}` : ''}{nomeArea ? ` · área ${nomeArea}` : ''}{catSel && CATEGORIAS_PREF[catSel as CategoriaPref] ? ` · ${CATEGORIAS_PREF[catSel as CategoriaPref].label}` : ''}{q ? ` · "${q}"` : ''}.
+              </p>
+            )}
+            <div class="flex gap-2 print:hidden">
+              <button type="button" data-pdf="#p-resultados" class={botao}>
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PDF}></path></svg>
+                <span data-rotulo>PDF</span>
+              </button>
+              <a href={`?entidade=prefeitura&ano=${ano}&aba=${aba}`} class={pill}>Limpar busca</a>
             </div>
           </div>
+          {todos && todos.length === 0 && <p class="text-sm text-ink-soft">Nada encontrado com esses filtros.</p>}
+          {resultados.length > 0 && (
+            <ul class="divide-y divide-pedra rounded-[4px] border border-pedra">
+              {resultados.map((e) => (
+                <li class="p-3 text-sm">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <strong class="min-w-0 text-ink">{e.c}</strong>
+                    <strong class="shrink-0 tabular-nums text-ink">{brl(e.p)}</strong>
+                  </div>
+                  <div class="mt-0.5 text-xs text-ink-soft">
+                    {dataBr(e.d)} · empenho {e.n} · {e.s} · {CATEGORIAS_PREF[e.t].label}
+                    {e.lic ? ` · ${e.lic}` : ''}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {todos && paginas > 1 && (
+            <nav aria-label="Páginas de resultados" class="mt-3 flex flex-wrap items-center gap-2 print:hidden">
+              {pag > 1 && <a href={url({ ...filtroParams, pag: pag - 1 }, '#busca')} class={pill}>Anterior</a>}
+              <span class="text-sm text-ink-soft">Página {pag} de {paginas}</span>
+              {pag < paginas && <a href={url({ ...filtroParams, pag: pag + 1 }, '#busca')} class={pill}>Próxima</a>}
+            </nav>
+          )}
           <p class="mt-2 text-xs text-ink-soft">
-            Fonte: SICONFI, do Tesouro Nacional (relatório bimestral e balanço anual que a própria Prefeitura envia). O relatório bimestral já desconta a parte que vai para o FUNDEB
-            {receitas.deducoesFontes > 0 && <>{' '}(em {receitas.anoFontes}, {brl(receitas.deducoesFontes)})</>}; por isso a receita "bruta" do balanço anual é maior. Receita é o que entra no cofre; não se compara direto com as despesas do período, que são de datas diferentes.
+            Fonte: API de Dados Abertos da Prefeitura (Quality Sistemas). Empenhos repetidos pela fonte são contados uma só vez.
+            {resumo.semDetalhe > 0 && ` Em ${resumo.semDetalhe} despesas o portal não informou a natureza; elas entram em "Serviços e materiais" e em "Não identificada".`}
           </p>
         </section>
       )}
 
-      <section id="p-graficos" class="mb-10 scroll-mt-24">
-        <div class="mb-4 border-l-4 border-nioaque-red pl-3">
-          <h2 class={tituloSecao}>Gráficos</h2>
-          <p class="text-sm text-ink-soft">Para onde vai o dinheiro e quando.</p>
+      <section aria-label="Resumo do ano" class="mb-8">
+        <p class="text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green">Pago em {ano}</p>
+        <div class="mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+          <p class="font-editorial text-[clamp(2rem,9vw,3.25rem)] font-extrabold leading-none tabular-nums text-nioaque-green-dark">{brl(resumo.totalPago)}</p>
+          {pop && (
+            <p class="text-base text-ink">
+              <strong class="tabular-nums">{brl(resumo.totalPago / pop.valor)}</strong> por habitante
+              <span class="block text-xs text-ink-soft">População estimada de {pop.valor.toLocaleString('pt-BR')} (IBGE, {pop.ano}).</span>
+            </p>
+          )}
         </div>
+        <p class="mt-2 text-sm text-ink-soft">
+          {periodo}. Dinheiro que já saiu do cofre.
+          Liquidado: <abbr title="Produto ou serviço já recebido e conferido" class="no-underline"><span class="tabular-nums">{brl(resumo.totalLiquidado)}</span></abbr>
+          · Reservado (empenhado): <abbr title="Valor separado no orçamento para a despesa" class="no-underline"><span class="tabular-nums">{brl(resumo.totalEmpenhado)}</span></abbr>
+          · {resumo.qtd.toLocaleString('pt-BR')} despesas.
+          {atual ? ` Atualizado semanalmente (última vez em ${atual}).` : ''}
+        </p>
+      </section>
+
+      <Abas abas={ABAS} ativa={aba} params={{ entidade: 'prefeitura', ano, ...filtroParams }} />
+
+      <!-- ============================ ABA 1: VISÃO GERAL ============================ -->
+      <section role="tabpanel" id="painel-geral" data-painel="geral" aria-labelledby="aba-geral" hidden={aba !== 'geral'}>
         <div class="grid gap-4 lg:grid-cols-2">
           <div class={cartao}>
-            <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Pago por mês</h3>
-            <ChartMeses series={[{ label: 'Pago', cor: '#166A34', valores: resumo.porMes }]} ultimoMes={ultimoMes} altura={220} brl={brl} descricao="Valor pago por mês" />
-          </div>
-          <div class={cartao}>
-            <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Em que o dinheiro foi gasto</h3>
-            <ChartDonut
-              brl={brl}
-              centro={brlCurto(resumo.totalPago)}
-              legendaCentro={`pago em ${ano}`}
-              items={(Object.keys(CATEGORIAS_PREF) as CategoriaPref[]).map((c) => ({ label: CATEGORIAS_PREF[c].label, value: resumo.porCategoria[c], color: CATEGORIAS_PREF[c].cor }))}
-            />
-          </div>
-          <div class={cartao}>
-            <h3 class="mb-1 font-editorial text-lg font-extrabold text-ink">Acumulado no ano</h3>
-            <p class="mb-2 text-xs text-ink-soft">Quanto já foi pago desde janeiro.</p>
-            <ChartLinha valores={resumo.porMes} ultimoMes={ultimoMes} cor="#166A34" brl={brl} descricao="Valor pago acumulado ao longo do ano" />
-          </div>
-          <div class={cartao}>
-            <h3 class="mb-1 font-editorial text-lg font-extrabold text-ink">Compras e serviços: com ou sem licitação?</h3>
-            <p class="mb-3 text-xs text-ink-soft">Considera serviços, materiais, obras e repasses (não inclui folha nem encargos).</p>
-            {resumo.comLicitacao + resumo.semLicitacao > 0 ? (
-              <>
-                <div class="flex h-6 overflow-hidden rounded-[4px] bg-line" role="img" aria-label={`Com licitação ou contrato: ${((resumo.comLicitacao / (resumo.comLicitacao + resumo.semLicitacao)) * 100).toFixed(0)}%`}>
-                  <span class="block h-full bg-nioaque-green" style={`width:${(resumo.comLicitacao / (resumo.comLicitacao + resumo.semLicitacao)) * 100}%`}></span>
-                  <span class="block h-full bg-ocre" style={`width:${(resumo.semLicitacao / (resumo.comLicitacao + resumo.semLicitacao)) * 100}%`}></span>
-                </div>
-                <ul class="mt-3 space-y-1 text-sm">
-                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-nioaque-green"></span>Com licitação ou contrato</span><strong class="tabular-nums">{brl(resumo.comLicitacao)}</strong></li>
-                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-ocre"></span>Sem licitação informada</span><strong class="tabular-nums">{brl(resumo.semLicitacao)}</strong></li>
-                </ul>
-                <p class="mt-2 text-xs text-ink-soft">"Sem licitação informada" inclui compras de pequeno valor e dispensas previstas em lei.</p>
-              </>
-            ) : (
-              <p class="text-sm text-ink-soft">Sem dados suficientes.</p>
-            )}
-          </div>
-          <div class={cartao}>
-            <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Por secretaria (maiores gastos)</h3>
-            <ul class="space-y-3">
-              {resumo.porSecretaria.slice(0, 8).map((s) => (
+            <h2 class={tituloCartao}>Para onde vai o dinheiro</h2>
+            <p class="mb-3 text-xs text-ink-soft">Cada real pago em {ano}, por tipo de gasto.</p>
+            <div class="flex h-6 overflow-hidden rounded-[4px] bg-line" role="img" aria-label={destinos.map((d) => `${d.nome}: ${pct1(d.valor)}%`).join('; ')}>
+              {destinos.map((d) => <span class="block h-full" style={`width:${pct(d.valor)}%;background:${d.cor}`}></span>)}
+            </div>
+            <ul class="mt-3 space-y-3">
+              {destinos.map((d) => (
                 <li>
-                  <div class="flex items-baseline justify-between gap-3 text-sm"><span class="min-w-0 text-ink">{s.nome}</span><strong class="shrink-0 tabular-nums">{brl(s.valor)}</strong></div>
-                  <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(s.valor / maxSec) * 100}%`}></div></div>
+                  <div class="flex items-baseline justify-between gap-3 text-sm">
+                    <span class="flex min-w-0 items-center gap-2 text-ink"><span class="h-3 w-3 shrink-0 rounded-[2px]" style={`background:${d.cor}`}></span>{d.cat ? <a class="hover:text-nioaque-green-dark" href={url({ cat: d.cat }, '#busca')}>{d.nome}</a> : d.nome}</span>
+                    <strong class="shrink-0 tabular-nums">{brl(d.valor)}</strong>
+                  </div>
+                  <p class="ml-5 text-xs text-ink-soft">{pct1(d.valor)}% · {d.detalhe}</p>
                 </li>
               ))}
             </ul>
           </div>
-          <div class={cartao}>
-            <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Por área (função de governo)</h3>
-            <ul class="space-y-3">
-              {resumo.porFuncao.slice(0, 8).map((s) => (
-                <li>
-                  <div class="flex items-baseline justify-between gap-3 text-sm"><span class="min-w-0 text-ink">{s.nome}</span><strong class="shrink-0 tabular-nums">{brl(s.valor)}</strong></div>
-                  <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-red" style={`width:${(s.valor / maxFun) * 100}%`}></div></div>
-                </li>
-              ))}
-            </ul>
+
+          <div class={cartao} data-alterna>
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class={tituloCartao}>Gastos por secretaria ou área</h2>
+              <div class="flex gap-1" role="group" aria-label="Agrupar por">
+                <button type="button" data-alvo="secretaria" aria-pressed="true" class="min-h-[44px] rounded-[4px] border border-nioaque-green bg-nioaque-green px-3 text-sm font-semibold text-white">Por secretaria</button>
+                <button type="button" data-alvo="area" aria-pressed="false" class="min-h-[44px] rounded-[4px] border border-pedra bg-branco px-3 text-sm font-semibold text-ink hover:border-nioaque-green">Por área</button>
+              </div>
+            </div>
+            <div data-visao="secretaria">
+              <ul class="space-y-3">
+                {resumo.porSecretaria.slice(0, 10).map((s) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm"><a href={url({ orgao: s.slug }, '#busca')} class="min-w-0 text-ink hover:text-nioaque-green-dark">{s.nome}</a><strong class="shrink-0 tabular-nums">{brl(s.valor)}</strong></div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(s.valor / maxSec) * 100}%`}></div></div>
+                    <p class="mt-0.5 text-xs text-ink-soft">{pct1(s.valor)}% do total · {s.qtd.toLocaleString('pt-BR')} despesas</p>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" data-png-pref="secretarias" class={`${botaoPng} mt-3`}>
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
+                <span data-rotulo>Salvar imagem (PNG)</span>
+              </button>
+            </div>
+            <div data-visao="area" hidden>
+              <p class="mb-2 text-xs text-ink-soft">Saúde, educação, assistência social e outras áreas, somando todos os órgãos.</p>
+              <ul class="space-y-3">
+                {resumo.porFuncao.slice(0, 10).map((s) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm"><a href={url({ area: s.slug }, '#busca')} class="min-w-0 text-ink hover:text-nioaque-green-dark">{s.nome}</a><strong class="shrink-0 tabular-nums">{brl(s.valor)}</strong></div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-red" style={`width:${(s.valor / maxFun) * 100}%`}></div></div>
+                    <p class="mt-0.5 text-xs text-ink-soft">{pct1(s.valor)}% do total</p>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" data-png-pref="areas" class={`${botaoPng} mt-3`}>
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
+                <span data-rotulo>Salvar imagem (PNG)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class={`${cartao} lg:col-span-2`}>
+            <h2 class={`${tituloCartao} mb-3`}>Pago por mês</h2>
+            <ChartMeses series={[{ label: 'Pago', cor: '#166A34', valores: resumo.porMes }]} ultimoMes={ultimoMes} mesAndamento={mesAndamento} altura={220} brl={brl} descricao="Valor pago por mês" />
           </div>
         </div>
       </section>
 
+      <!-- ============================ ABA 2: FORNECEDORES ============================ -->
+      <section role="tabpanel" id="painel-fornecedores" data-painel="fornecedores" aria-labelledby="aba-fornecedores" hidden={aba !== 'fornecedores'}>
+        <div class="grid gap-4">
+          <div class={cartao}>
+            <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 class={tituloCartao}>Maiores fornecedores</h2>
+                <p class="text-xs text-ink-soft">Quem mais recebeu da Prefeitura em {ano}, sem folha, encargos e diárias.</p>
+              </div>
+              <button type="button" data-png-pref="fornecedores" class={botaoPng}>
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
+                <span data-rotulo>Salvar imagem (PNG)</span>
+              </button>
+            </div>
+            {fornecedores.length === 0 ? (
+              <p class="text-sm text-ink-soft">Dados ainda não sincronizados com a fonte oficial. Eles aparecem após a próxima atualização semanal.</p>
+            ) : (
+              <ol class="space-y-4">
+                {fornecedores.slice(0, 10).map((f, i) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm">
+                      <a href={url({ q: f.cnpj.length >= 11 ? f.cnpj : f.nome }, '#busca')} class="min-w-0 font-semibold text-ink hover:text-nioaque-green-dark"><span class="tabular-nums text-ink-soft">{i + 1}.</span> {f.nome}</a>
+                      <strong class="shrink-0 tabular-nums">{brl(f.pago)}</strong>
+                    </div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(f.pago / maxForn) * 100}%`}></div></div>
+                    <p class="mt-0.5 text-xs text-ink-soft">{fmtCnpj(f.cnpj)}{f.oque ? ` · ${f.oque}` : ''} · {f.empenhos} {f.empenhos === 1 ? 'despesa' : 'despesas'}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p class="mt-3 text-xs text-ink-soft">"O que fornece" é a natureza da despesa mais frequente nos empenhos da empresa, como o portal informa.</p>
+          </div>
+
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Compras com licitação ou sem licitação informada</h2>
+            <p class="mb-3 text-xs text-ink-soft">Considera serviços, materiais, obras, diárias e repasses (não inclui folha nem encargos).</p>
+            {baseLic > 0 ? (
+              <>
+                <div class="flex h-7 overflow-hidden rounded-[4px] bg-line" role="img" aria-label={`Com licitação ou contrato: ${((resumo.comLicitacao / baseLic) * 100).toFixed(0)}%`}>
+                  <span class="block h-full bg-nioaque-green" style={`width:${(resumo.comLicitacao / baseLic) * 100}%`}></span>
+                  <span class="block h-full bg-ocre" style={`width:${(resumo.semLicitacao / baseLic) * 100}%`}></span>
+                </div>
+                <ul class="mt-3 space-y-1 text-sm">
+                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-nioaque-green"></span>Com licitação ou contrato · {((resumo.comLicitacao / baseLic) * 100).toFixed(0)}%</span><strong class="tabular-nums">{brl(resumo.comLicitacao)}</strong></li>
+                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-ocre"></span>Sem licitação informada · {((resumo.semLicitacao / baseLic) * 100).toFixed(0)}%</span><strong class="tabular-nums">{brl(resumo.semLicitacao)}</strong></li>
+                </ul>
+                <p class="mt-2 text-xs text-ink-soft">"Sem licitação informada" inclui compras de pequeno valor, dispensas previstas em lei e despesas em que o portal não registra o número da licitação. Não é, por si só, irregularidade.</p>
+                {(resumo.licSemDetalhe ?? 0) > 0 && <p class="mt-1 text-xs text-ink-soft">Fora da conta: {brl(resumo.licSemDetalhe ?? 0)} pagos em despesas cujo detalhe o portal ainda não entregou.</p>}
+                {semLicCredores.length > 0 && (
+                  <details class="mt-3 rounded-[4px] border border-pedra">
+                    <summary class="flex min-h-[44px] cursor-pointer items-center px-3 text-sm font-bold text-nioaque-green-dark">Ver quem recebeu sem licitação informada ({semLicCredores.length} maiores)</summary>
+                    <ol class="divide-y divide-pedra border-t border-pedra text-sm">
+                      {semLicCredores.map((f) => (
+                        <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2">
+                          <span class="min-w-0"><a href={url({ q: f.cnpj.length >= 11 ? f.cnpj : f.nome }, '#busca')} class="font-semibold text-ink hover:text-nioaque-green-dark">{f.nome}</a><span class="block text-xs text-ink-soft">{fmtCnpj(f.cnpj)}{f.oque ? ` · ${f.oque}` : ''}</span></span>
+                          <strong class="shrink-0 tabular-nums">{brl(f.pago)}</strong>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+              </>
+            ) : (
+              <p class="text-sm text-ink-soft">Dados ainda não sincronizados com a fonte oficial.</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ ABA 3: PRIMEIRO ESCALÃO ============================ -->
+      <section role="tabpanel" id="painel-escalao" data-painel="escalao" aria-labelledby="aba-escalao" hidden={aba !== 'escalao'}>
       <!-- ============================ PRIMEIRO ESCALÃO ============================ -->
-      <section id="p-escalao" class="mb-10 scroll-mt-24">
+      <div id="p-escalao" class="scroll-mt-24">
         <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div class="border-l-4 border-nioaque-red pl-3">
             <h2 class={tituloSecao}>Primeiro escalão</h2>
@@ -430,155 +527,121 @@ const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
             )}
           </div>
         )}
-      </section>
+      </div>
 
-      <!-- ============================ SECRETARIAS ============================ -->
-      <section id="p-secretarias" class="mb-10 scroll-mt-24">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div class="border-l-4 border-nioaque-red pl-3">
-          <h2 class={tituloSecao}>Secretarias e órgãos</h2>
-          <p class="text-sm text-ink-soft">Toque em uma secretaria para ver as despesas dela.</p>
-        </div>
-          <button type="button" data-png-pref="secretarias" class={botaoPng}>
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
-              <span data-rotulo>Salvar imagem (PNG)</span>
-            </button>
-        </div>
-        <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {resumo.porSecretaria.slice(0, 18).map((s) => (
-            <li>
-              <a href={url({ orgao: s.slug }, '#p-busca')} class="block h-full min-h-[44px] rounded-[4px] border border-pedra bg-branco p-3 transition-colors hover:border-nioaque-green">
-                <span class="block text-sm font-semibold leading-snug text-ink">{s.nome}</span>
-                <span class="mt-1 block text-lg font-bold tabular-nums text-ink">{brl(s.valor)}</span>
-                <span class="block text-xs text-ink-soft">{pct(s.valor).toFixed(1).replace('.', ',')}% do total · {s.qtd.toLocaleString('pt-BR')} despesas</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section id="p-areas" class="mb-10 scroll-mt-24">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div class="border-l-4 border-nioaque-red pl-3">
-          <h2 class={tituloSecao}>Por área de atuação</h2>
-          <p class="text-sm text-ink-soft">Saúde, educação, assistência social e outras áreas, somando todos os órgãos.</p>
-        </div>
-          <button type="button" data-png-pref="areas" class={botaoPng}>
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
-              <span data-rotulo>Salvar imagem (PNG)</span>
-            </button>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          {resumo.porFuncao.slice(0, 12).map((f) => (
-            <a href={url({ area: f.slug }, '#p-busca')} class={pill}>
-              {f.nome} <span class="ml-2 tabular-nums text-ink-soft">{brlCurto(f.valor)}</span>
-            </a>
-          ))}
+        <div class="mt-8 grid gap-4 lg:grid-cols-2">
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Resumo da folha</h2>
+            <p class="mb-3 text-xs text-ink-soft">Pagamentos de pessoal em {ano}, segundo as despesas do portal.</p>
+            <dl class="space-y-2 text-sm">
+              <div class="flex items-baseline justify-between gap-3"><dt class="text-ink">Folha de pagamento (salários)</dt><dd class="font-bold tabular-nums">{brl(resumo.porCategoria.pessoal)}</dd></div>
+              <div class="flex items-baseline justify-between gap-3"><dt class="text-ink">Encargos (INSS e outros)</dt><dd class="font-bold tabular-nums">{brl(resumo.porCategoria.encargos)}</dd></div>
+              <div class="flex items-baseline justify-between gap-3 border-t border-pedra pt-2"><dt class="font-semibold text-ink">Folha e encargos</dt><dd class="font-bold tabular-nums">{brl(gFolha)}</dd></div>
+              <div class="flex items-baseline justify-between gap-3"><dt class="text-ink-soft">Do total pago no ano</dt><dd class="font-semibold tabular-nums">{pct1(gFolha)}%</dd></div>
+            </dl>
+            {folhaEscalao.length > 0 && (
+              <p class="mt-3 text-xs text-ink-soft">
+                Primeiro escalão ({folhaEscalao.length} {folhaEscalao.length === 1 ? 'autoridade' : 'autoridades'}, folha de {refFolhaTxt}): bruto somado de <strong class="tabular-nums">{brl(folhaEscalao.reduce((s, f) => s + f.bruto, 0))}</strong> no mês.
+              </p>
+            )}
+          </div>
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Diárias do Executivo</h2>
+            <p class="mb-3 text-xs text-ink-soft">{resumo.diariasQtd} {resumo.diariasQtd === 1 ? 'pagamento' : 'pagamentos'} em {ano}, somando <strong class="tabular-nums text-ink">{brl(resumo.diariasTotal)}</strong> ({pct1(resumo.diariasTotal)}% do pago).</p>
+            {diariasRanking.length === 0 ? (
+              <p class="text-sm text-ink-soft">{resumo.diariasQtd === 0 ? `Nenhuma diária registrada em ${ano}.` : 'Dados ainda não sincronizados com a fonte oficial.'}</p>
+            ) : (
+              <ol class="divide-y divide-pedra text-sm">
+                {diariasRanking.slice(0, 10).map((r, i) => (
+                  <li class="flex items-baseline justify-between gap-3 py-2">
+                    <a href={url({ q: r.nome }, '#busca')} class="min-w-0 text-ink hover:text-nioaque-green-dark"><span class="tabular-nums text-ink-soft">{i + 1}.</span> {r.nome}<span class="block text-xs text-ink-soft">{r.qtd} {r.qtd === 1 ? 'pagamento' : 'pagamentos'}</span></a>
+                    <strong class="shrink-0 tabular-nums">{brl(r.pago)}</strong>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
       </section>
 
-      <section id="p-fornecedores" class="mb-10 scroll-mt-24">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div class="border-l-4 border-nioaque-red pl-3">
-          <h2 class={tituloSecao}>Maiores recebedores</h2>
-          <p class="text-sm text-ink-soft">Quem mais recebeu da Prefeitura em {ano} (inclui a folha de pagamento).</p>
-        </div>
-          <button type="button" data-png-pref="fornecedores" class={botaoPng}>
+      <!-- ============================ ABA 4: RECEITAS ============================ -->
+      <section role="tabpanel" id="painel-receitas" data-painel="receitas" aria-labelledby="aba-receitas" hidden={aba !== 'receitas'}>
+        {!receitas && <p class={`${cartao} mb-8 text-sm text-ink-soft`}>Receitas: dados ainda não sincronizados com a fonte oficial (Tesouro Nacional).</p>}
+      {receitas && (
+        <section id="p-receitas" class="mb-10 scroll-mt-24">
+          <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div class="border-l-4 border-nioaque-red pl-3">
+              <h2 class={tituloSecao}>Receitas: de onde vem o dinheiro</h2>
+              <p class="text-sm text-ink-soft">{periodoReceitas}. Dados que a Prefeitura informa ao Tesouro Nacional (a cada dois meses).</p>
+            </div>
+            <button type="button" data-png-pref="receitas" class={botaoPng}>
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
               <span data-rotulo>Salvar imagem (PNG)</span>
             </button>
-        </div>
-        <ul class={`${cartao} space-y-3`}>
-          {resumo.credores.slice(0, 10).map((c, i) => (
-            <li>
-              <div class="flex items-baseline justify-between gap-3 text-sm">
-                <a href={url({ q: c.nome }, '#p-busca')} class="min-w-0 text-ink hover:text-nioaque-green-dark"><span class="tabular-nums text-ink-soft">{i + 1}.</span> {c.nome}</a>
-                <strong class="shrink-0 tabular-nums">{brl(c.pago)}</strong>
+          </div>
+
+          <dl class="grid gap-3 sm:grid-cols-3">
+            <div class={`${cartao} @container`}>
+              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Arrecadado</dt>
+              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(receitas.arrecadado)}</dd>
+            </div>
+            <div class={`${cartao} @container`}>
+              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Previsto para o ano</dt>
+              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{brl(receitas.previsao)}</dd>
+            </div>
+            <div class={`${cartao} @container`}>
+              <dt class="text-xs font-bold uppercase tracking-[0.12em] text-ink-soft">Do previsto já arrecadado</dt>
+              <dd class="mt-1 whitespace-nowrap font-editorial text-[clamp(1rem,7.4cqw,1.6rem)] font-extrabold tabular-nums text-ink">{receitas.previsao ? ((receitas.arrecadado / receitas.previsao) * 100).toFixed(1).replace('.', ',') : '0'}%</dd>
+            </div>
+          </dl>
+
+          <div class="mt-4 grid gap-4 lg:grid-cols-2">
+            <div class={cartao}>
+              <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">De onde veio o dinheiro</h3>
+              <ul class="space-y-3">
+                {receitas.grupos.filter((g) => g.arrecadado > 0).map((g) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm"><span class="min-w-0 text-ink">{g.nome}</span><strong class="shrink-0 tabular-nums">{brl(g.arrecadado)}</strong></div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px]" style={`width:${(g.arrecadado / maxGrupo) * 100}%;background:${g.cor}`}></div></div>
+                    <p class="mt-0.5 text-xs text-ink-soft">{((g.arrecadado / receitas.arrecadado) * 100).toFixed(1).replace('.', ',')}% do arrecadado</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div class="space-y-4">
+              <div class={cartao}>
+                <h3 class="mb-3 font-editorial text-lg font-extrabold text-ink">Arrecadação a cada dois meses</h3>
+                <ul class="space-y-3">
+                  {receitas.porBimestre.map((v, i) => (
+                    <li>
+                      <div class="flex items-baseline justify-between gap-3 text-sm"><span class="text-ink">{['Jan–Fev', 'Mar–Abr', 'Mai–Jun', 'Jul–Ago', 'Set–Out', 'Nov–Dez'][i]}</span><strong class="shrink-0 tabular-nums">{brl(v)}</strong></div>
+                      <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(v / maxBim) * 100}%`}></div></div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(c.pago / maxCred) * 100}%`}></div></div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <!-- ============================ BUSCA ============================ -->
-      <section id="p-busca" class="mb-10 scroll-mt-24">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div class="border-l-4 border-nioaque-red pl-3">
-            <h2 class={tituloSecao}>Buscar despesas</h2>
-            <p class="text-sm text-ink-soft">Por empresa, pessoa, CNPJ, secretaria, área ou tipo de gasto.</p>
+              {receitas.anoFontes && receitas.fontes.length > 0 && (
+                <div class={cartao}>
+                  <h3 class="mb-1 font-editorial text-lg font-extrabold text-ink">Principais fontes em {receitas.anoFontes}</h3>
+                  <p class="mb-3 text-xs text-ink-soft">Ano fechado: {brl(receitas.totalFontes)} no total (bruto).</p>
+                  <ul class="divide-y divide-pedra text-sm">
+                    {receitas.fontes.slice(0, 8).map((f) => (
+                      <li class="flex items-baseline justify-between gap-3 py-2"><span class="min-w-0 text-ink">{f.nome}</span><strong class="shrink-0 tabular-nums">{brl(f.valor)}</strong></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-          <button type="button" data-pdf="#p-resultados" class={`${botao} print:hidden`}>
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PDF}></path></svg>
-            <span data-rotulo>Exportar resultados em PDF</span>
-          </button>
-        </div>
+          <p class="mt-2 text-xs text-ink-soft">
+            Fonte: SICONFI, do Tesouro Nacional (relatório bimestral e balanço anual que a própria Prefeitura envia). O relatório bimestral já desconta a parte que vai para o FUNDEB
+            {receitas.deducoesFontes > 0 && <>{' '}(em {receitas.anoFontes}, {brl(receitas.deducoesFontes)})</>}; por isso a receita "bruta" do balanço anual é maior. Receita é o que entra no cofre; não se compara direto com as despesas do período, que são de datas diferentes.
+          </p>
+        </section>
+      )}
 
-        <form method="get" action="#p-busca" class={`${cartao} mb-4 grid gap-3 print:hidden sm:grid-cols-2 lg:grid-cols-4`}>
-          <input type="hidden" name="entidade" value="prefeitura" />
-          <input type="hidden" name="ano" value={ano} />
-          <label class="text-sm font-semibold text-ink sm:col-span-2">
-            Empresa, pessoa ou CNPJ
-            <input name="q" value={q} placeholder="Ex.: Energisa, 03.979.663, João" class="mt-1 min-h-[44px] w-full rounded-[4px] border border-pedra bg-editorial px-3 text-sm font-normal text-ink" />
-          </label>
-          <label class="text-sm font-semibold text-ink">
-            Secretaria ou órgão
-            <select name="orgao" class="mt-1 min-h-[44px] w-full rounded-[4px] border border-pedra bg-editorial px-2 text-sm font-normal text-ink">
-              <option value="">Todas</option>
-              {resumo.porSecretaria.map((s) => <option value={s.slug} selected={s.slug === orgaoSel}>{s.nome}</option>)}
-            </select>
-          </label>
-          <label class="text-sm font-semibold text-ink">
-            Tipo de gasto
-            <select name="cat" class="mt-1 min-h-[44px] w-full rounded-[4px] border border-pedra bg-editorial px-2 text-sm font-normal text-ink">
-              <option value="">Todos</option>
-              {(Object.keys(CATEGORIAS_PREF) as CategoriaPref[]).map((c) => <option value={c} selected={c === catSel}>{CATEGORIAS_PREF[c].label}</option>)}
-            </select>
-          </label>
-          {areaSel && <input type="hidden" name="area" value={areaSel} />}
-          <div class="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-4">
-            <button type="submit" class={botao}>Buscar</button>
-            {filtrando && <a href={url({}, '#p-busca')} class={pill}>Limpar filtros</a>}
-          </div>
-        </form>
 
-        <div id="p-resultados" data-titulo={`Despesas da Prefeitura de Nioaque ${ano}`}>
-          {filtrando && todos && (
-            <p class="mb-2 text-sm text-ink">
-              <strong>{todos.length.toLocaleString('pt-BR')}</strong> {todos.length === 1 ? 'despesa encontrada' : 'despesas encontradas'}, somando <strong>{brl(totalResultados)}</strong> pagos em {ano}
-              {nomeOrgao ? ` · ${nomeOrgao}` : ''}{nomeArea ? ` · área ${nomeArea}` : ''}{catSel && CATEGORIAS_PREF[catSel as CategoriaPref] ? ` · ${CATEGORIAS_PREF[catSel as CategoriaPref].label}` : ''}{q ? ` · "${q}"` : ''}.
-            </p>
-          )}
-          {!filtrando && <p class="mb-2 text-sm text-ink-soft">Maiores pagamentos do ano. Use os filtros acima para procurar outros.</p>}
-          {filtrando && todos && todos.length === 0 && <p class={`${cartao} text-sm text-ink-soft`}>Nada encontrado com esses filtros.</p>}
-          {resultados.length > 0 && (
-            <ul class="divide-y divide-pedra rounded-[4px] border border-pedra bg-branco">
-              {resultados.map((e) => (
-                <li class="p-3 text-sm">
-                  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <strong class="min-w-0 text-ink">{e.c}</strong>
-                    <strong class="shrink-0 tabular-nums text-ink">{brl(e.p)}</strong>
-                  </div>
-                  <div class="mt-0.5 text-xs text-ink-soft">
-                    {dataBr(e.d)} · empenho {e.n} · {e.s} · {CATEGORIAS_PREF[e.t].label}
-                    {e.lic ? ` · ${e.lic}` : ''}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          {todos && paginas > 1 && (
-            <nav aria-label="Páginas de resultados" class="mt-3 flex flex-wrap items-center gap-2 print:hidden">
-              {pag > 1 && <a href={url({ ...filtroParams, pag: pag - 1 }, '#p-busca')} class={pill}>Anterior</a>}
-              <span class="text-sm text-ink-soft">Página {pag} de {paginas}</span>
-              {pag < paginas && <a href={url({ ...filtroParams, pag: pag + 1 }, '#p-busca')} class={pill}>Próxima</a>}
-            </nav>
-          )}
-        </div>
-        <p class="mt-2 text-xs text-ink-soft">
-          Fonte: API de Dados Abertos da Prefeitura (Quality Sistemas). Empenhos repetidos pela fonte são contados uma só vez.
-          {resumo.semDetalhe > 0 && ` Em ${resumo.semDetalhe} despesas o portal não informou a natureza; elas entram em "Serviços e materiais" e em "Não identificada".`}
-        </p>
+        <ExternasView ano={ano} estado={estado} federal={federal} ibge={ibge} />
       </section>
     </>
   )}
@@ -597,7 +660,8 @@ const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
       if (!alvo) return;
       const titulo = alvo.dataset.titulo ?? document.title;
       const clone = alvo.cloneNode(true) as HTMLElement;
-      clone.querySelectorAll('[data-pdf], form, nav, .print\\:hidden').forEach((n) => n.remove());
+      clone.querySelectorAll('[hidden]').forEach((n) => n.removeAttribute('hidden'));
+      clone.querySelectorAll('[data-pdf], form, nav, details > summary, .print\\:hidden').forEach((n) => n.remove());
       const estilos = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((n) => n.outerHTML).join('');
       const w = window.open('', '_blank');
       if (!w) return;
@@ -610,3 +674,4 @@ const maxBim = receitas ? Math.max(...receitas.porBimestre, 1) : 1;
     });
   });
 </script>
+

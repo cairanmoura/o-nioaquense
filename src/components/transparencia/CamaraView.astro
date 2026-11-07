@@ -1,0 +1,496 @@
+---
+/**
+ * Transparência da Câmara: topo fixo (busca e total pago) + 4 abas.
+ * Só dados reais do portal oficial (despesas, detalhes dos empenhos e folha de pagamento).
+ */
+import ChartDonut from './ChartDonut.astro';
+import ChartMeses from './ChartMeses.astro';
+import ChartCalor from './ChartCalor.astro';
+import Abas from './Abas.astro';
+import { anoAtual, brl, brlCurto, CATEGORIAS, MESES, MESES_LONGOS, parts, semAcento, VEREADORES, type Categoria, type ResumoAno } from '../../lib/transparencia';
+import type { ResumoFolhaCamara, ServidorCamara } from '../../lib/folha';
+import type { ResumoIbge } from '../../lib/externas';
+import { formatDate } from '../../lib/format';
+
+interface Props {
+  resumo: ResumoAno | null;
+  folhaCam: ResumoFolhaCamara | null;
+  ibge: ResumoIbge | null;
+  ano: number;
+  anos: number[];
+  aba: string;
+  q: string;
+  slugSel: string;
+  atualizadoEm: string | null;
+  ID: string;
+  BASE: string;
+}
+const { resumo, folhaCam, ibge, ano, anos, aba, q, slugSel, atualizadoEm, ID, BASE } = Astro.props;
+
+const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
+const tituloCartao = 'font-editorial text-lg font-extrabold text-ink';
+const botao =
+  'inline-flex min-h-[44px] items-center gap-2 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60';
+const pill =
+  'inline-flex min-h-[44px] items-center rounded-[4px] border border-pedra bg-branco px-4 text-sm font-semibold text-ink hover:border-nioaque-green hover:text-nioaque-green-dark';
+const ICONE_IMG = 'M12 3v12m0 0-4-4m4 4 4-4M5 21h14';
+
+const norm = (t: string) => semAcento(t);
+const soDigitos = q.replace(/\D/g, '');
+const bonito = (t: string) =>
+  t === t.toUpperCase()
+    ? t
+        .toLowerCase()
+        .replace(/(^|[\s.-])(\S)/g, (_, a, b) => a + b.toUpperCase())
+        .replace(/\s(De|Do|Da|Dos|Das|E)\s/g, (c) => c.toLowerCase())
+        .replace(/\b(Inss|Eireli|Epp|Mei|Ltda|Me|Fgts|Rpps)\b/g, (s) => (s === 'Ltda' ? 'Ltda' : s.toUpperCase()))
+    : t;
+const fmtCnpj = (c: string) =>
+  c.length === 14 ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : c.length === 11 ? `CPF ***.${c.slice(3, 6)}.${c.slice(6, 9)}-**` : c;
+
+const filtrados = resumo && q ? resumo.empenhos.filter((e) => norm(e.credor).includes(norm(q)) || (soDigitos.length >= 4 && e.cnpj.includes(soDigitos))) : [];
+const LIMITE = 40;
+
+let ultimoMes = 0;
+if (resumo) resumo.porMes.forEach((v, i) => v > 0 && (ultimoMes = i));
+const periodo = resumo ? (ultimoMes === 0 ? `janeiro de ${ano}` : `janeiro a ${MESES_LONGOS[ultimoMes]} de ${ano}`) : String(ano);
+const mesAndamento = resumo && ano === anoAtual() && ultimoMes === Number(parts().month) - 1 ? ultimoMes : undefined;
+const pop = ibge ? ([...ibge.estimativas].filter((e) => e.ano <= ano).sort((a, b) => b.ano - a.ano)[0] ?? null) : null;
+
+const cat = (c: Categoria) => resumo?.porCategoria[c] ?? 0;
+const pctDe = (v: number) => (resumo && resumo.totalPago ? (v / resumo.totalPago) * 100 : 0);
+const pct1 = (v: number) => pctDe(v).toFixed(1).replace('.', ',');
+const pctFolhaDiarias = pctDe(cat('folha') + cat('diarias'));
+const vereadoresTotal = resumo ? resumo.diariasPorVereador.reduce((s, v) => s + v.total, 0) : 0;
+
+const porVereador = resumo ? resumo.diariasPorVereador.map((r) => ({ ...r, info: VEREADORES.find((v) => v.slug === r.slug)! })) : [];
+const maxVer = Math.max(...porVereador.map((v) => v.total), 1);
+const diariasDe = (slug: string) => (resumo ? resumo.diarias.filter((d) => d.vereador === slug) : []);
+
+// subsídio: salário base do cargo eletivo na folha de pagamento do portal (mês de referência abaixo)
+const refFolha = folhaCam ? `${folhaCam.ref.slice(5)}/${folhaCam.ref.slice(0, 4)}` : '';
+const servidorDe = (v: { match: RegExp }): ServidorCamara | null => folhaCam?.servidores.find((s) => /eletivo/i.test(s.tipo) && v.match.test(semAcento(s.nome).toUpperCase())) ?? null;
+
+const destinosInformados = resumo ? resumo.destinos.filter((d) => d.nome !== 'Não informado') : [];
+const destinosTop = destinosInformados.slice(0, 6);
+const destinosSemInfo = resumo ? (resumo.destinos.find((d) => d.nome === 'Não informado')?.quantidade ?? 0) : 0;
+const maxDestino = destinosTop[0]?.valor || 1;
+
+const fornecedores = resumo?.fornecedores ?? [];
+const maxForn = fornecedores[0]?.pago || 1;
+const lic = resumo?.licitacao;
+const licBase = lic ? lic.com + lic.sem : 0;
+const semLic = fornecedores.filter((f) => f.sem > 0).sort((a, b) => b.sem - a.sem);
+
+// quadro de servidores, agrupado por tipo de vínculo
+const ORDEM_TIPOS = ['Cargo Eletivo', 'Cargo Comissionado', 'Cargo Efetivo', 'Contrato Temporário'];
+const servidores = folhaCam?.servidores ?? [];
+const tipos = [...new Set(servidores.map((s) => s.tipo || 'Outros'))].sort((a, b) => (ORDEM_TIPOS.indexOf(a) + 100) % 100 - (ORDEM_TIPOS.indexOf(b) + 100) % 100);
+const totalBase = servidores.reduce((s, x) => s + x.base, 0);
+
+const atual = atualizadoEm ? new Date(atualizadoEm).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' }) : null;
+
+const exportData = resumo
+  ? {
+      ano,
+      periodo,
+      atualizadoEm: resumo.atualizadoEm,
+      total: { empenhado: resumo.totalEmpenhado, liquidado: resumo.totalLiquidado, pago: resumo.totalPago },
+      categorias: (Object.keys(CATEGORIAS) as Categoria[]).map((c) => ({ label: CATEGORIAS[c].label, cor: CATEGORIAS[c].cor, valor: cat(c) })),
+      diarias: {
+        total: resumo.diariasTotal,
+        quantidade: resumo.diarias.length,
+        pctGasto: pctDe(resumo.diariasTotal),
+        equipeTotal: resumo.diariasEquipe.total,
+        equipeQtd: resumo.diariasEquipe.quantidade,
+        vereadoresTotal,
+      },
+      vereadores: porVereador.map((v) => ({
+        slug: v.slug,
+        nome: v.info.nome,
+        cargo: v.info.cargo,
+        partido: v.info.partido,
+        foto: v.info.foto,
+        total: v.total,
+        quantidade: v.quantidade,
+        dias: v.dias,
+        porMes: v.porMes,
+        lista: diariasDe(v.slug).slice(0, 9).map((d) => ({ data: d.data, destino: d.destino, valor: d.valor, dias: d.dias })),
+      })),
+    }
+  : null;
+
+const ABAS = [
+  { id: 'vereadores', label: 'Vereadores e diárias' },
+  { id: 'resumo', label: 'Resumo geral' },
+  { id: 'contratos', label: 'Contratos e fornecedores' },
+  { id: 'servidores', label: 'Servidores e folha' },
+];
+const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` : '');
+---
+
+<div data-titulo={`Transparência da Câmara de Nioaque ${ano}`}>
+  {!resumo && (
+    <p class={`${cartao} mb-10 text-sm text-ink-soft`}>
+      Dados ainda não sincronizados com a fonte oficial para {ano}. Enquanto isso, consulte direto em
+      <a class="underline" href={`${BASE}/despesas/${ID}`} target="_blank" rel="noopener noreferrer">Despesas</a>.
+    </p>
+  )}
+  {resumo && resumo.empenhos.length === 0 && <p class={`${cartao} mb-10 text-sm text-ink-soft`}>Nenhuma despesa registrada em {ano}.</p>}
+
+  {resumo && resumo.empenhos.length > 0 && exportData && (
+    <>
+      <!-- ============================ TOPO FIXO ============================ -->
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <nav aria-label="Ano" class="flex gap-1">
+          {anos.map((a) => (
+            <a
+              href={`?entidade=camara&ano=${a}&aba=${aba}`}
+              aria-current={a === ano ? 'true' : undefined}
+              class:list={['inline-flex min-h-[44px] min-w-[56px] items-center justify-center rounded-[4px] border px-3 text-sm font-semibold tabular-nums', a === ano ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}
+            >
+              {a}
+            </a>
+          ))}
+        </nav>
+        <button type="button" data-exportar-png="" class={botao}>
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_IMG} /></svg>
+          <span data-rotulo>Baixar resumo em imagem (PNG)</span>
+        </button>
+      </div>
+
+      <form id="busca" method="get" action="#busca" class="mb-6 scroll-mt-24 print:hidden">
+        <input type="hidden" name="entidade" value="camara" />
+        <input type="hidden" name="ano" value={ano} />
+        <input type="hidden" name="aba" value={aba} />
+        <label class="sr-only" for="q-cam">Pesquisar fornecedor, CNPJ, servidor ou despesa</label>
+        <div class="flex gap-2">
+          <input id="q-cam" name="q" value={q} type="search" placeholder="Pesquisar fornecedor, CNPJ, servidor ou despesa..." class="min-h-[48px] min-w-0 flex-1 rounded-[4px] border-2 border-pedra bg-branco px-4 text-base text-ink focus:border-nioaque-green" />
+          <button type="submit" class={`${botao} min-h-[48px] px-5`}>Buscar</button>
+        </div>
+      </form>
+
+      {q && (
+        <section id="lista" class={`${cartao} mb-8`} aria-label="Resultados da busca">
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm text-ink"><strong>{filtrados.length}</strong> {filtrados.length === 1 ? 'despesa encontrada' : 'despesas encontradas'} para “{q}”, somando <strong>{brl(filtrados.reduce((s, e) => s + e.pago, 0))}</strong> pagos em {ano}.</p>
+            <a href={`?entidade=camara&ano=${ano}&aba=${aba}`} class={pill}>Limpar busca</a>
+          </div>
+          {filtrados.length === 0 ? (
+            <p class="text-sm text-ink-soft">Nenhuma despesa encontrada para essa busca.</p>
+          ) : (
+            <ul class="divide-y divide-pedra rounded-[4px] border border-pedra">
+              {filtrados.slice(0, LIMITE).map((e) => (
+                <li class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 p-3">
+                  <div class="min-w-0">
+                    <p class="font-semibold text-ink">{bonito(e.credor)} {e.categoria === 'diarias' && <span class="ml-1 rounded-[2px] bg-nioaque-red-50 px-1.5 py-0.5 align-middle text-[11px] font-bold uppercase text-nioaque-red-dark">Diária</span>}</p>
+                    <p class="text-xs text-ink-soft"><span class="tabular-nums">{formatDate(e.data)}</span> · empenho nº {e.numero}{e.cnpj ? ` · ${fmtCnpj(e.cnpj)}` : ''}</p>
+                  </div>
+                  <p class="text-right font-semibold tabular-nums text-ink">{brl(e.pago)}<span class="block text-xs font-normal text-ink-soft">{e.pago < e.empenhado ? `de ${brl(e.empenhado)} reservados` : 'pago'}</span></p>
+                </li>
+              ))}
+            </ul>
+          )}
+          {filtrados.length > LIMITE && (
+            <p class="mt-2 text-sm text-ink-soft">Mostrando {LIMITE} de {filtrados.length}. Refine a busca ou veja a lista completa em
+              <a class="underline hover:text-nioaque-green-dark" href={`${BASE}/despesas/${ID}`} target="_blank" rel="noopener noreferrer">Despesas no portal oficial</a>.</p>
+          )}
+        </section>
+      )}
+
+      <section aria-label="Resumo do ano" class="mb-8">
+        <p class="text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green">Total pago em {ano}</p>
+        <div class="mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+          <p class="font-editorial text-[clamp(2rem,9vw,3.25rem)] font-extrabold leading-none tabular-nums text-nioaque-green-dark">{brl(resumo.totalPago)}</p>
+          {pop && (
+            <p class="text-base text-ink">
+              <strong class="tabular-nums">{brl(resumo.totalPago / pop.valor)}</strong> por habitante
+              <span class="block text-xs text-ink-soft">População estimada de {pop.valor.toLocaleString('pt-BR')} (IBGE, {pop.ano}).</span>
+            </p>
+          )}
+        </div>
+        <p class="mt-2 text-sm text-ink">
+          Folha e diárias pesam <strong class="tabular-nums">{pctFolhaDiarias.toFixed(1).replace('.', ',')}%</strong> do total
+          <span class="text-ink-soft">(folha {pct1(cat('folha'))}% · diárias {pct1(cat('diarias'))}%)</span>.
+        </p>
+        <p class="mt-1 text-sm text-ink-soft">
+          {periodo}. Liquidado: <abbr title="Serviço ou produto já recebido e conferido" class="no-underline"><span class="tabular-nums">{brl(resumo.totalLiquidado)}</span></abbr>
+          · Reservado (empenhado): <abbr title="Valor separado no orçamento para a despesa" class="no-underline"><span class="tabular-nums">{brl(resumo.totalEmpenhado)}</span></abbr>
+          · {resumo.empenhos.length} despesas.{atual ? ` Atualizado semanalmente (última vez em ${atual}).` : ''}
+        </p>
+      </section>
+
+      <Abas abas={ABAS} ativa={aba} params={{ entidade: 'camara', ano, ...(q ? { q } : {}) }} />
+
+      <!-- ============================ ABA 1: VEREADORES E DIÁRIAS ============================ -->
+      <section role="tabpanel" id="painel-vereadores" data-painel="vereadores" aria-labelledby="aba-vereadores" hidden={aba !== 'vereadores'}>
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 class="font-editorial text-2xl font-extrabold text-ink">Raio-X dos vereadores</h2>
+            <p class="text-sm text-ink-soft">Subsídio e diárias recebidas em {ano}. Toque em um vereador para ver cada viagem.</p>
+          </div>
+          <button type="button" data-exportar-png="__vereadores__" class={botao}>
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_IMG} /></svg>
+            <span data-rotulo>Salvar esta seção (PNG)</span>
+          </button>
+        </div>
+
+        <dl class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Diárias pagas</dt><dd class="font-editorial text-xl font-extrabold tabular-nums text-ink">{brl(resumo.diariasTotal)}</dd><p class="text-xs text-ink-soft">{resumo.diarias.length} pagamentos</p></div>
+          <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Do total gasto</dt><dd class="font-editorial text-xl font-extrabold tabular-nums text-ink">{pct1(resumo.diariasTotal)}%</dd></div>
+          <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Vereadores</dt><dd class="font-editorial text-xl font-extrabold tabular-nums text-ink">{brlCurto(vereadoresTotal)}</dd></div>
+          <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Assessores e equipe</dt><dd class="font-editorial text-xl font-extrabold tabular-nums text-ink">{brlCurto(resumo.diariasEquipe.total)}</dd></div>
+        </dl>
+
+        <ul class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {porVereador.map((v) => {
+            const sv = servidorDe(v.info);
+            const viagens = diariasDe(v.slug);
+            return (
+              <li>
+                <details open={slugSel === v.slug} class="group h-full rounded-[4px] border border-pedra bg-branco open:border-2 open:border-nioaque-green">
+                  <summary class="flex min-h-[44px] cursor-pointer list-none gap-3 p-3 [&::-webkit-details-marker]:hidden">
+                    <img src={v.info.foto} alt={`Foto de ${v.info.nome}`} width="64" height="64" loading="lazy" class="h-16 w-16 shrink-0 rounded-full border-2 border-pedra object-cover" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate font-editorial text-base font-extrabold text-ink">{v.info.nome}</span>
+                      <span class="block text-xs text-ink-soft">{v.info.cargo} · {v.info.partido}</span>
+                      <span class="mt-1 block text-xs text-ink-soft">Subsídio: <strong class="tabular-nums text-ink">{sv ? brl(sv.base) : 'não sincronizado'}</strong></span>
+                      <span class="block text-sm font-semibold tabular-nums text-nioaque-red-dark">{brl(v.total)} <span class="text-xs font-normal text-ink-soft">em diárias</span></span>
+                      <span class="mt-1.5 block h-1.5 rounded-[2px] bg-editorial"><span class="block h-1.5 rounded-[2px] bg-nioaque-red" style={`width:${(v.total / maxVer) * 100}%`}></span></span>
+                    </span>
+                    <span class="self-center text-ink-soft transition-transform group-open:rotate-180" aria-hidden="true">▾</span>
+                  </summary>
+                  <div class="border-t border-pedra p-3">
+                    <p class="text-xs text-ink-soft">{v.quantidade === 0 ? 'Nenhuma diária paga em ' + ano + '.' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'}${diasTxt(v.dias)}.`}{sv ? ` Subsídio = salário base na folha de ${refFolha}.` : ''}</p>
+                    {v.quantidade > 0 && (
+                      <>
+                        <ol class="mt-2 grid grid-cols-6 gap-1 text-center text-[10px] uppercase text-ink-soft" aria-label={`Diárias de ${v.info.nome} por mês`}>
+                          {MESES.slice(0, ultimoMes + 1).map((m, i) => (
+                            <li class:list={['rounded-[2px] py-1', v.porMes[i] > 0 ? 'bg-nioaque-green-50 font-bold text-ink' : 'bg-editorial']}>
+                              {m}
+                              <span class="block text-[11px] normal-case tabular-nums">{v.porMes[i] > 0 ? brlCurto(v.porMes[i]) : '–'}</span>
+                            </li>
+                          ))}
+                        </ol>
+                        <ul class="mt-3 max-h-72 divide-y divide-pedra overflow-y-auto rounded-[4px] border border-pedra text-sm">
+                          {viagens.map((d) => (
+                            <li class="flex items-start justify-between gap-3 p-2">
+                              <div class="min-w-0">
+                                <p class="font-semibold text-ink">{d.destino}{diasTxt(d.dias)}</p>
+                                <p class="text-xs text-ink-soft"><span class="tabular-nums">{formatDate(d.data)}</span> · empenho nº {d.numero}</p>
+                              </div>
+                              <p class="shrink-0 font-semibold tabular-nums text-ink">{brl(d.valor)}</p>
+                            </li>
+                          ))}
+                        </ul>
+                        <button type="button" data-exportar-png={v.slug} class={`${botao} mt-3`}>
+                          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_IMG} /></svg>
+                          <span data-rotulo>Baixar imagem (PNG)</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div class={`${cartao} mt-4 hidden md:block`}>
+          <h3 class={`${tituloCartao} mb-1`}>Mapa de calor: quem recebeu e quando</h3>
+          <p class="mb-3 text-xs text-ink-soft">Quanto mais escuro o quadrado, maior o valor de diárias do vereador naquele mês (em reais, "k" = mil).</p>
+          <ChartCalor ultimoMes={ultimoMes} brl={brl} linhas={porVereador.map((v) => ({ slug: v.slug, nome: v.info.nome, foto: v.info.foto, valores: v.porMes }))} />
+        </div>
+
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+          <div class={cartao}>
+            <h3 class={`${tituloCartao} mb-3`}>Para onde viajam</h3>
+            {destinosTop.length === 0 ? (
+              <p class="text-sm text-ink-soft">O portal não informa o destino nos empenhos deste ano.</p>
+            ) : (
+              <ol class="space-y-3">
+                {destinosTop.map((d) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm">
+                      <span class="min-w-0 truncate font-semibold">{d.nome}</span>
+                      <span class="shrink-0 tabular-nums">{d.quantidade} {d.quantidade === 1 ? 'viagem' : 'viagens'} · {brlCurto(d.valor)}</span>
+                    </div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-editorial"><div class="h-2 rounded-[2px] bg-nioaque-red" style={`width:${(d.valor / maxDestino) * 100}%`}></div></div>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p class="mt-3 text-xs text-ink-soft">Destino conforme o histórico do empenho no portal.{destinosSemInfo > 0 ? ` Em ${destinosSemInfo} ${destinosSemInfo === 1 ? 'pagamento' : 'pagamentos'} o histórico não informa o destino e ele não entra no ranking.` : ''}</p>
+          </div>
+          <div class={cartao}>
+            <h3 class={`${tituloCartao} mb-3`}>Assessores e equipe que mais receberam</h3>
+            {resumo.diariasEquipe.pessoas.length === 0 ? (
+              <p class="text-sm text-ink-soft">Nenhuma diária paga a assessores ou equipe em {ano}.</p>
+            ) : (
+              <ol class="space-y-2">
+                {resumo.diariasEquipe.pessoas.slice(0, 6).map((p, i) => (
+                  <li class="flex items-baseline justify-between gap-3 text-sm">
+                    <span class="min-w-0 truncate"><span class="tabular-nums text-ink-soft">{i + 1}.</span> {bonito(p.nome)}</span>
+                    <span class="shrink-0 font-semibold tabular-nums">{brl(p.pago)} <span class="text-xs font-normal text-ink-soft">({p.empenhos})</span></span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p class="mt-3 text-xs text-ink-soft">Inclui motoristas e servidores que acompanham os vereadores, como aparece nos empenhos.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ ABA 2: RESUMO GERAL ============================ -->
+      <section role="tabpanel" id="painel-resumo" data-painel="resumo" aria-labelledby="aba-resumo" hidden={aba !== 'resumo'}>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div class={cartao}>
+            <h2 class={`${tituloCartao} mb-3`}>Em que o dinheiro foi gasto</h2>
+            <ChartDonut
+              brl={brl}
+              centro={brlCurto(resumo.totalPago)}
+              legendaCentro={`pago em ${ano}`}
+              items={(Object.keys(CATEGORIAS) as Categoria[]).map((c) => ({ label: CATEGORIAS[c].label, value: cat(c), color: CATEGORIAS[c].cor }))}
+            />
+          </div>
+          <div class={cartao}>
+            <h2 class={`${tituloCartao} mb-3`}>Pago mês a mês</h2>
+            <ChartMeses series={[{ label: 'Pago', cor: '#166A34', valores: resumo.porMes }]} ultimoMes={ultimoMes} mesAndamento={mesAndamento} altura={220} brl={brl} descricao="Valor pago por mês" />
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-ink-soft">
+          Fonte: API de Dados Abertos da Câmara (Quality Sistemas). Empenhos repetidos pela fonte são contados uma só vez. Diárias identificadas pela natureza da despesa (3.3.90.14) no detalhe do empenho; o nome do vereador é associado ao nome do favorecido.
+          {resumo.semDetalhe > 0 && ` Atenção: ainda estamos lendo o detalhe de ${resumo.semDetalhe} despesas de pessoas físicas; por enquanto elas aparecem em "Fornecedores e serviços".`}
+        </p>
+      </section>
+
+      <!-- ============================ ABA 3: CONTRATOS E FORNECEDORES ============================ -->
+      <section role="tabpanel" id="painel-contratos" data-painel="contratos" aria-labelledby="aba-contratos" hidden={aba !== 'contratos'}>
+        <div class="grid gap-4">
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Maiores fornecedores</h2>
+            <p class="mb-3 text-xs text-ink-soft">Empresas que mais receberam da Câmara em {ano}, sem folha, encargos e diárias.</p>
+            {fornecedores.length === 0 ? (
+              <p class="text-sm text-ink-soft">Nenhuma empresa recebeu da Câmara em {ano}, ou os dados ainda não foram sincronizados com a fonte oficial.</p>
+            ) : (
+              <ol class="space-y-4">
+                {fornecedores.slice(0, 10).map((f, i) => (
+                  <li>
+                    <div class="flex items-baseline justify-between gap-3 text-sm">
+                      <a href={`?entidade=camara&ano=${ano}&aba=contratos&q=${encodeURIComponent(f.cnpj)}#busca`} class="min-w-0 font-semibold text-ink hover:text-nioaque-green-dark"><span class="tabular-nums text-ink-soft">{i + 1}.</span> {bonito(f.nome)}</a>
+                      <strong class="shrink-0 tabular-nums">{brl(f.pago)}</strong>
+                    </div>
+                    <div class="mt-1 h-2 rounded-[2px] bg-line"><div class="h-full rounded-[2px] bg-nioaque-green" style={`width:${(f.pago / maxForn) * 100}%`}></div></div>
+                    <p class="mt-0.5 text-xs text-ink-soft">{fmtCnpj(f.cnpj)}{f.oque ? ` · ${f.oque}` : ''} · {f.empenhos} {f.empenhos === 1 ? 'despesa' : 'despesas'}</p>
+                    {f.refs.length > 0 && <p class="text-xs text-ink-soft">Licitação/contrato informado: {f.refs.join('; ')}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Dispensas: pagamentos a empresas sem licitação informada</h2>
+            <p class="mb-3 text-xs text-ink-soft">Considera só empresas (CNPJ); a licitação ou o contrato vem do detalhe de cada empenho no portal.</p>
+            {lic && licBase > 0 ? (
+              <>
+                <div class="flex h-7 overflow-hidden rounded-[4px] bg-line" role="img" aria-label={`Com licitação ou contrato: ${((lic.com / licBase) * 100).toFixed(0)}%`}>
+                  <span class="block h-full bg-nioaque-green" style={`width:${(lic.com / licBase) * 100}%`}></span>
+                  <span class="block h-full bg-ocre" style={`width:${(lic.sem / licBase) * 100}%`}></span>
+                </div>
+                <ul class="mt-3 space-y-1 text-sm">
+                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-nioaque-green"></span>Com licitação ou contrato · {((lic.com / licBase) * 100).toFixed(0)}%</span><strong class="tabular-nums">{brl(lic.com)}</strong></li>
+                  <li class="flex items-center justify-between gap-3"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-[2px] bg-ocre"></span>Sem licitação informada · {((lic.sem / licBase) * 100).toFixed(0)}%</span><strong class="tabular-nums">{brl(lic.sem)}</strong></li>
+                </ul>
+                <p class="mt-2 text-xs text-ink-soft">"Sem licitação informada" inclui compras de pequeno valor e dispensas previstas em lei. Não é, por si só, irregularidade.</p>
+                {lic.semDetalhe > 0 && <p class="mt-1 text-xs text-ink-soft">Fora da conta: {brl(lic.semDetalhe)} em despesas cujo detalhe o portal ainda não entregou.</p>}
+                {semLic.length > 0 && (
+                  <details class="mt-3 rounded-[4px] border border-pedra">
+                    <summary class="flex min-h-[44px] cursor-pointer items-center px-3 text-sm font-bold text-nioaque-green-dark">Ver quem recebeu sem licitação informada ({semLic.length})</summary>
+                    <ol class="divide-y divide-pedra border-t border-pedra text-sm">
+                      {semLic.map((f) => (
+                        <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2">
+                          <span class="min-w-0"><span class="font-semibold text-ink">{bonito(f.nome)}</span><span class="block text-xs text-ink-soft">{fmtCnpj(f.cnpj)}{f.oque ? ` · ${f.oque}` : ''}</span></span>
+                          <strong class="shrink-0 tabular-nums">{brl(f.sem)}</strong>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+              </>
+            ) : (
+              <p class="text-sm text-ink-soft">Dados ainda não sincronizados com a fonte oficial.</p>
+            )}
+          </div>
+
+          <p class={`${cartao} text-sm text-ink-soft`}>
+            Contratos vigentes e editais de licitação não são entregues pela API de dados abertos; consulte a lista oficial em
+            <a class="underline hover:text-nioaque-green-dark" href={`${BASE}/contratos/${ID}`} target="_blank" rel="noopener noreferrer">Contratos</a> e
+            <a class="underline hover:text-nioaque-green-dark" href={`${BASE}/licitacoes/${ID}`} target="_blank" rel="noopener noreferrer">Licitações</a> no portal oficial.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================ ABA 4: SERVIDORES E FOLHA ============================ -->
+      <section role="tabpanel" id="painel-servidores" data-painel="servidores" aria-labelledby="aba-servidores" hidden={aba !== 'servidores'}>
+        <div class="grid gap-4 lg:grid-cols-3">
+          <div class={cartao}>
+            <h2 class={tituloCartao}>Folha paga em {ano}</h2>
+            <dl class="mt-3 space-y-2 text-sm">
+              <div class="flex items-baseline justify-between gap-3"><dt>Folha de pagamento</dt><dd class="font-bold tabular-nums">{brl(cat('folha'))}</dd></div>
+              <div class="flex items-baseline justify-between gap-3"><dt>Encargos (INSS)</dt><dd class="font-bold tabular-nums">{brl(cat('encargos'))}</dd></div>
+              <div class="flex items-baseline justify-between gap-3 border-t border-pedra pt-2"><dt class="font-semibold">Total</dt><dd class="font-bold tabular-nums">{brl(cat('folha') + cat('encargos'))}</dd></div>
+              <div class="flex items-baseline justify-between gap-3 text-ink-soft"><dt>Do total pago</dt><dd class="tabular-nums">{pct1(cat('folha') + cat('encargos'))}%</dd></div>
+            </dl>
+          </div>
+          <div class={`${cartao} lg:col-span-2`}>
+            <h2 class={tituloCartao}>Quadro de servidores</h2>
+            {servidores.length === 0 ? (
+              <p class="mt-2 text-sm text-ink-soft">Dados ainda não sincronizados com a fonte oficial (folha de pagamento da Câmara).</p>
+            ) : (
+              <>
+                <p class="mt-1 text-sm text-ink-soft">
+                  <strong class="text-ink">{servidores.length}</strong> servidores na folha de {refFolha}; salário base somado de <strong class="tabular-nums text-ink">{brl(totalBase)}</strong> por mês.
+                </p>
+                <ul class="mt-2 flex flex-wrap gap-2 text-xs text-ink-soft">
+                  {tipos.map((t) => <li class="rounded-[2px] bg-editorial px-2 py-1"><strong class="text-ink">{servidores.filter((s) => (s.tipo || 'Outros') === t).length}</strong> {t.toLowerCase()}</li>)}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+
+        {servidores.length > 0 && (
+          <div class="mt-4 space-y-3">
+            {tipos.map((t) => {
+              const lista = servidores.filter((s) => (s.tipo || 'Outros') === t).sort((a, b) => b.base - a.base);
+              return (
+                <details class="rounded-[4px] border border-pedra bg-branco" open={t === 'Cargo Eletivo'}>
+                  <summary class="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 px-4 py-2 font-editorial text-base font-extrabold text-ink">
+                    <span>{t}</span><span class="text-sm font-normal text-ink-soft">{lista.length} {lista.length === 1 ? 'servidor' : 'servidores'}</span>
+                  </summary>
+                  <ul class="divide-y divide-pedra border-t border-pedra text-sm">
+                    {lista.map((s) => (
+                      <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-4 py-2">
+                        <span class="min-w-0"><span class="font-semibold text-ink">{s.nome}</span><span class="block text-xs text-ink-soft">{s.cargo} · {s.situacao}{s.admissao ? ` · admissão ${s.admissao}` : ''}</span></span>
+                        <span class="shrink-0 text-right"><strong class="tabular-nums text-ink">{s.base > 0 ? brl(s.base) : 'sem salário base'}</strong><span class="block text-xs text-ink-soft">salário base</span></span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              );
+            })}
+            <p class="text-xs text-ink-soft">
+              Fonte: <a class="underline" href={`${BASE}/folha-de-pagamento/${ID}`} target="_blank" rel="noopener noreferrer">Folha de pagamento</a> do Portal da Transparência da Câmara, mês de {refFolha}. Salário base é o valor de tabela do cargo; o que cai na conta varia com férias, gratificações e descontos, por isso não o mostramos aqui. Não guardamos CPF.
+            </p>
+          </div>
+        )}
+      </section>
+    </>
+  )}
+</div>
+
+{exportData && <script type="application/json" id="export-data" set:html={JSON.stringify(exportData).replace(/</g, '\\u003c')} />}
+<script>
+  import '../../scripts/transparencia-export';
+</script>

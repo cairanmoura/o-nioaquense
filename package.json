@@ -15,7 +15,6 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts",
-    "seed:generate": "node scripts/generate-seed.mjs",
     "placeholders": "node scripts/generate-placeholders.mjs"
   },
   "dependencies": {

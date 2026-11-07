@@ -48,7 +48,9 @@ function categoriaDe(natureza: string, credor: string): CategoriaPref {
   if (!cod) return 'servicos';
   if (cod.startsWith('3114') || cod.startsWith('3194') || /^3[1]9[01]13/.test(cod) || /^319[01]1[67]/.test(cod)) return 'encargos';
   if (cod.startsWith('31')) return 'pessoal';
-  if (cod.startsWith('4')) return 'obras';
+  // 4.4 = investimentos (obras, equipamentos); 4.5 inversoes financeiras e 4.6 amortizacao da divida nao sao obra
+  if (cod.startsWith('44')) return 'obras';
+  if (cod.startsWith('4')) return 'outras';
   if (/^33(50|40|30|41|45|60|70|80)/.test(cod) || /^3[2]/.test(cod)) return 'repasses';
   if (cod.startsWith('339014') || cod.startsWith('339015')) return 'diarias';
   if (cod.startsWith('33')) return 'servicos';
@@ -90,6 +92,15 @@ export interface Agg {
   qtd: number;
 }
 
+export interface Fornecedor {
+  nome: string;
+  cnpj: string;
+  pago: number;
+  empenhos: number;
+  /** natureza da despesa mais frequente (por valor), do detalhe do empenho */
+  oque: string;
+}
+
 export interface Autoridade {
   slug: string;
   nome: string;
@@ -115,6 +126,14 @@ export interface ResumoPref {
   porFuncao: Agg[];
   porUnidade: Agg[];
   credores: { nome: string; cnpj: string; pago: number; empenhos: number }[];
+  /** maiores fornecedores (sem folha, encargos e diarias), com o que fornecem (natureza da despesa mais frequente por valor) */
+  fornecedores?: Fornecedor[];
+  /** quem recebeu sem licitacao ou contrato informado no detalhe do empenho */
+  semLicCredores?: Fornecedor[];
+  /** quem mais recebeu diarias */
+  diariasRanking?: { nome: string; pago: number; qtd: number }[];
+  /** valor pago em despesas cujo detalhe ainda nao foi lido (nao entram em com/sem licitacao) */
+  licSemDetalhe?: number;
   maiores: PrefEmpenho[];
   escalao: Autoridade[];
   diariasTotal: number;
@@ -230,6 +249,16 @@ export function montarResumoPref(ano: number, bruto: RawEmpenho[], detalhes: Rec
   let comLicitacao = 0;
   let semLicitacao = 0;
   let semDetalhe = 0;
+  let licSemDetalhe = 0;
+  type AggForn = { nome: string; cnpj: string; pago: number; empenhos: number; naturezas: Map<string, number> };
+  const forn = new Map<string, AggForn>();
+  const semLic = new Map<string, AggForn>();
+  const diariasRank = new Map<string, { nome: string; pago: number; qtd: number }>();
+  const topForn = (m: Map<string, AggForn>, n: number): Fornecedor[] =>
+    [...m.values()]
+      .sort((a, b) => b.pago - a.pago)
+      .slice(0, n)
+      .map((f) => ({ nome: f.nome, cnpj: f.cnpj, pago: f.pago, empenhos: f.empenhos, oque: [...f.naturezas.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '' }));
 
   for (const [k, x] of unicos) {
     const det = detalhes[k];
@@ -274,13 +303,33 @@ export function montarResumoPref(ano: number, bruto: RawEmpenho[], detalhes: Rec
     c.pago += pago;
     c.empenhos += 1;
     cred.set(kc, c);
+    const natureza = d?.natureza ? bonito(depoisDoTraco(d.natureza)) : '';
     if (cat === 'diarias') {
       diariasTotal += pago;
       diariasQtd += 1;
+      const r = diariasRank.get(kc) ?? { nome: credor, pago: 0, qtd: 0 };
+      r.pago += pago;
+      r.qtd += 1;
+      diariasRank.set(kc, r);
+    }
+    if (cat !== 'pessoal' && cat !== 'encargos' && cat !== 'diarias' && cat !== 'outras') {
+      const f = forn.get(kc) ?? { nome: credor, cnpj: e.j, pago: 0, empenhos: 0, naturezas: new Map<string, number>() };
+      f.pago += pago;
+      f.empenhos += 1;
+      if (natureza) f.naturezas.set(natureza, (f.naturezas.get(natureza) ?? 0) + pago);
+      forn.set(kc, f);
     }
     if (cat !== 'pessoal' && cat !== 'encargos') {
-      if (d?.licitacao || d?.contrato) comLicitacao += pago;
-      else semLicitacao += pago;
+      if (!d) licSemDetalhe += pago;
+      else if (d.licitacao || d.contrato) comLicitacao += pago;
+      else {
+        semLicitacao += pago;
+        const f = semLic.get(kc) ?? { nome: credor, cnpj: e.j, pago: 0, empenhos: 0, naturezas: new Map<string, number>() };
+        f.pago += pago;
+        f.empenhos += 1;
+        if (natureza) f.naturezas.set(natureza, (f.naturezas.get(natureza) ?? 0) + pago);
+        semLic.set(kc, f);
+      }
     }
 
     if ((x.credor_cnpj ?? '').length === 11) {
@@ -316,6 +365,10 @@ export function montarResumoPref(ano: number, bruto: RawEmpenho[], detalhes: Rec
       porFuncao: ordenar(fun),
       porUnidade: ordenar(uni),
       credores: [...cred.values()].sort((a, b) => b.pago - a.pago).slice(0, 40),
+      fornecedores: topForn(forn, 20),
+      semLicCredores: topForn(semLic, 25),
+      diariasRanking: [...diariasRank.values()].sort((a, b) => b.pago - a.pago).slice(0, 15),
+      licSemDetalhe,
       maiores: [...lista].sort((a, b) => b.p - a.p).slice(0, 30),
       escalao,
       diariasTotal,

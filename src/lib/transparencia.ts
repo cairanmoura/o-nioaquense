@@ -126,6 +126,21 @@ export interface Credor {
   empenhos: number;
 }
 
+export interface FornecedorCamara {
+  nome: string;
+  cnpj: string;
+  pago: number;
+  empenhos: number;
+  /** natureza da despesa mais frequente por valor (detalhe do empenho) */
+  oque: string;
+  /** valor pago com licitacao/contrato informado, sem informado e com detalhe ainda nao lido */
+  com: number;
+  sem: number;
+  semDetalhe: number;
+  /** licitacoes/contratos citados no detalhe */
+  refs: string[];
+}
+
 export interface ResumoVereador {
   slug: string;
   total: number;
@@ -148,6 +163,10 @@ export interface ResumoAno {
   diariasPorMes: { vereadores: number[]; equipe: number[] };
   diariasPorVereador: ResumoVereador[];
   diariasEquipe: { total: number; quantidade: number; pessoas: Credor[] };
+  /** empresas (CNPJ) pagas pela Camara, sem folha, encargos e diarias; licitacao lida do detalhe do empenho */
+  fornecedores?: FornecedorCamara[];
+  /** valor pago a empresas, por situacao de licitacao/contrato informada no detalhe */
+  licitacao?: { com: number; sem: number; semDetalhe: number };
   destinos: { nome: string; valor: number; quantidade: number }[];
   /** quantos detalhes de empenho nao puderam ser lidos (classificacao aproximada) */
   semDetalhe: number;
@@ -349,6 +368,8 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
   const empenhos: Empenho[] = [];
   const diarias: Diaria[] = [];
   let semDetalhe = 0;
+  const forn = new Map<string, FornecedorCamara & { nat: Map<string, number> }>();
+  const licTotal = { com: 0, sem: 0, semDetalhe: 0 };
 
   for (const x of unicos.values()) {
     const [d, m, y] = x.data.split('/');
@@ -368,6 +389,29 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
 
     const iso = `${y}-${m}-${d}`;
     empenhos.push({ numero: x.numero_empenho, data: iso, credor: nome, cnpj, empenhado: brNumber(x.valor_empenhado), liquidado: brNumber(x.valor_liquidado), pago, categoria });
+
+    if (categoria === 'fornecedores' && cnpj.length === 14) {
+      const f = forn.get(cnpj) ?? { nome, cnpj, pago: 0, empenhos: 0, oque: '', com: 0, sem: 0, semDetalhe: 0, refs: [] as string[], nat: new Map<string, number>() };
+      f.pago += pago;
+      f.empenhos += 1;
+      if (!det) {
+        f.semDetalhe += pago;
+        licTotal.semDetalhe += pago;
+      } else {
+        const ref = [det.licitacao, det.contrato && `contrato ${det.contrato}`].filter(Boolean).join(' · ');
+        if (ref) {
+          f.com += pago;
+          licTotal.com += pago;
+          if (!f.refs.includes(ref)) f.refs.push(ref);
+        } else {
+          f.sem += pago;
+          licTotal.sem += pago;
+        }
+        const nat = det.natureza.includes(' - ') ? det.natureza.slice(det.natureza.indexOf(' - ') + 3).trim() : det.natureza.trim();
+        if (nat) f.nat.set(nat, (f.nat.get(nat) ?? 0) + pago);
+      }
+      forn.set(cnpj, f);
+    }
 
     if (categoria === 'diarias') {
       const hist = det?.historico ?? '';
@@ -463,6 +507,11 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
     diariasPorMes: { vereadores: mesVer, equipe: mesEqp },
     diariasPorVereador,
     diariasEquipe: { total: pessoas.reduce((s, p) => s + p.pago, 0), quantidade: pessoas.reduce((s, p) => s + p.empenhos, 0), pessoas },
+    fornecedores: [...forn.values()]
+      .sort((a, b) => b.pago - a.pago)
+      .slice(0, 25)
+      .map(({ nat, ...f }) => ({ ...f, oque: [...nat.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '', refs: f.refs.slice(0, 4) })),
+    licitacao: licTotal,
     destinos: [...destMap.values()].sort((a, b) => b.valor - a.valor),
     semDetalhe,
     atualizadoEm: new Date().toISOString(),
@@ -484,7 +533,8 @@ export function alvosCamara(bruto: RawEmpenho[]): RawEmpenho[] {
     const key = `${x.ano}/${x.numero_empenho}`;
     if (vistos.has(key)) continue;
     vistos.add(key);
-    if ((x.credor_cnpj ?? '').length === 11 && !/FOLHA/i.test(x.credor_nome ?? '')) alvos.push(x);
+    // pessoas fisicas (diarias, alugueis) e empresas: o detalhe traz natureza, licitacao e contrato
+    if (!/FOLHA|INSS|PREVID|RPPS|FGTS/i.test(x.credor_nome ?? '')) alvos.push(x);
   }
   return alvos;
 }
