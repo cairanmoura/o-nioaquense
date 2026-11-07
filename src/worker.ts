@@ -1,6 +1,7 @@
 import { App } from 'astro/app';
 // @ts-ignore
 import { handle } from '../node_modules/@astrojs/cloudflare/dist/utils/handler.js';
+import { refreshLotteries } from './lib/lotteries';
 import { syncXColumnists } from './lib/xsync';
 import { X_FLAG_HANDLE } from './lib/colunas';
 import { passoTransparencia, transparenciaCron } from './lib/transparencia-job';
@@ -54,7 +55,7 @@ export function createExports(manifest: any) {
         if (job.type === 'sweep') {
           const sources = await sweepSources(supabase, !job.backfill);
           const jobs: NewsJob[] = sources.map((s) => ({ type: 'source', sourceId: s.id, backfill: job.backfill }));
-          if (new Date().getUTCMinutes() < 10) jobs.push({ type: 'quotes' });
+          if (new Date().getUTCMinutes() < 10) { jobs.push({ type: 'quotes' }); jobs.push({ type: 'lotteries' }); }
           // Apify cobra por execucao: so 2x ao dia (09h e 21h UTC); a API oficial do X, a cada varredura
           const hr = new Date().getUTCHours();
           const xOn = (await supabase.from('x_columnists').select('id').eq('handle', X_FLAG_HANDLE).eq('active', true).limit(1)).data?.length;
@@ -96,6 +97,9 @@ export function createExports(manifest: any) {
           msg.ack();
         } else if (job.type === 'quotes') {
           await refreshQuotes(supabase);
+          msg.ack();
+        } else if (job.type === 'lotteries') {
+          console.log('lotteries:', JSON.stringify(await refreshLotteries(supabase)));
           msg.ack();
         } else {
           msg.ack();

@@ -688,7 +688,7 @@ export async function getLotteryResults(locals: App.Locals): Promise<LotteryResu
     }
   }
 
-  return mockLotteryResults;
+  return [];
 }
 
 /** Cotacoes da economia (dolar, euro, bitcoin, Ibovespa). */

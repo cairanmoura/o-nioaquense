@@ -70,6 +70,7 @@ export type NewsJob =
   | { type: 'source'; sourceId: string; backfill?: boolean }
   | { type: 'article'; sourceId: string; entry: QueueEntry }
   | { type: 'quotes' }
+  | { type: 'lotteries' }
   | { type: 'xposts' }
   | { type: 'transparencia' };
 
