@@ -347,8 +347,10 @@ const xShare = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareU
             <ul class="mt-2 space-y-1.5 text-sm">
               {otherVersions.map((v) => (
                 <li>
-                  <a href={v.source_url} target="_blank" rel="noopener noreferrer" class="font-semibold text-nioaque-green-dark hover:underline">{v.source_name ?? 'Veículo'}</a>
-                  <span class="text-ink-muted"> · {v.title}</span>
+                  <a href={v.source_url} target="_blank" rel="noopener noreferrer" class="group block hover:underline">
+                    <span class="font-semibold text-nioaque-green-dark">{v.source_name ?? 'Veículo'}</span>
+                    <span class="text-ink-muted"> · {v.title}</span>
+                  </a>
                 </li>
               ))}
             </ul>

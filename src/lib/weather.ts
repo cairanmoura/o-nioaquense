@@ -21,7 +21,7 @@ const ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 const CACHE_TTL_SECONDS = 15 * 60;
 const CACHE_URL = 'https://cache.o-nioaquense.internal/weather/nioaque';
 const REQUEST_TIMEOUT_MS = 4000;
-const FORECAST_DAYS = 6;
+const FORECAST_DAYS = 7;
 
 export type WeatherIcon = 'sun' | 'cloud' | 'rain' | 'storm' | 'fog' | 'snow';
 
@@ -62,7 +62,7 @@ export interface WeatherNow {
 /* -------------------------------------------------------------------------- */
 
 const WMO: Record<number, { label: string; icon: WeatherIcon }> = {
-  0: { label: 'Ceu limpo', icon: 'sun' },
+  0: { label: 'Céu limpo', icon: 'sun' },
   1: { label: 'Predominantemente ensolarado', icon: 'sun' },
   2: { label: 'Parcialmente nublado', icon: 'cloud' },
   3: { label: 'Tempo nublado', icon: 'cloud' },
@@ -81,7 +81,7 @@ const WMO: Record<number, { label: string; icon: WeatherIcon }> = {
   71: { label: 'Neve fraca', icon: 'snow' },
   73: { label: 'Neve', icon: 'snow' },
   75: { label: 'Neve forte', icon: 'snow' },
-  77: { label: 'Graos de neve', icon: 'snow' },
+  77: { label: 'Grãos de neve', icon: 'snow' },
   80: { label: 'Pancadas de chuva', icon: 'rain' },
   81: { label: 'Pancadas de chuva', icon: 'rain' },
   82: { label: 'Pancadas fortes', icon: 'rain' },
