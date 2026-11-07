@@ -27,7 +27,7 @@ const NOMES_MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', '
 const n = (v: number) => v.toLocaleString('pt-BR');
 const mesAno = (mes: number) => `${NOMES_MES[mes - 1]} de ${ano}`;
 const bonito = (t: string) => t.charAt(0) + t.slice(1).toLowerCase();
-const SIGLAS = /(icms|ipva|ipi|cide|iss|iptu|fpm|fundeb|sus|ses|suas)/gi;
+const SIGLAS = /\b(icms|ipva|ipi|cide|iss|iptu|fpm|fundeb|sus|ses|suas)\b/gi;
 const tipoBonito = (t: string) => bonito(t).replace(SIGLAS, (m) => m.toUpperCase());
 const lista = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs[xs.length - 1]}` : (xs[0] ?? ''));
 

@@ -8,6 +8,7 @@
 /* 1) Fontes auto-hospedadas (Bitter + Chivo): sem requisicao a terceiros nem CSS bloqueante ------ */
 @import '@fontsource/bitter/latin-400.css';
 @import '@fontsource/bitter/latin-400-italic.css';
+@import '@fontsource/bitter/latin-500.css';
 @import '@fontsource/bitter/latin-700.css';
 @import '@fontsource/bitter/latin-800.css';
 @import '@fontsource/chivo/latin-400.css';
@@ -234,7 +235,7 @@
 
   /* Corpo de materia (conteudo vindo do CMS via set:html) */
   .prose-editorial {
-    font-weight: 400;
+    font-weight: 500;
   }
 
   .prose-editorial p {

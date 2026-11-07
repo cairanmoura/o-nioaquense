@@ -106,7 +106,7 @@ function validateRewrite(d: any): string | null {
   const title = typeof d?.title === 'string' ? d.title.trim() : '';
   if (title.length < 15) return 'titulo ausente/curto';
   if (/t[ií]tulo reescrito\s*:/i.test(title)) return 'titulo com "Titulo reescrito:"';
-  if (/(\d{1,2}\/\d{1,2}\/\d{2,4}.*){3,}/.test(title)) return 'titulo com datas repetidas';
+  if (/(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b.*){3,}/.test(title)) return 'titulo com datas repetidas';
   const bullets = d.summary_bullets ?? d.bullets;
   if (!Array.isArray(bullets) || bullets.filter((b: unknown) => typeof b === 'string' && b.trim().length >= 10).length < 3) return 'menos de 3 bullets';
   const html = String(d.content_html ?? d.content ?? '');

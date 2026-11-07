@@ -295,16 +295,19 @@ function vereadorDe(nome: string): Vereador | null {
 
 function destinoDe(historico: string): string {
   const m = historico.match(/DESTINO\s+(?:À|A|AO|PARA)\s+([^,;.\d]+?)(?:\s*\/\s*([A-Z]{2}))?\s*(?:,|;|\.|\bNO\b|\bNOS\b|\bDIA\b|$)/i);
-  if (!m) return 'Não informado';
-  const cidade = m[1].trim().toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()).replace(/\s(De|Do|Da|Dos|Das)\s/g, (c) => c.toLowerCase());
-  return m[2] ? `${cidade}/${m[2].toUpperCase()}` : cidade;
+  const em = m ? null : historico.match(/\bEM\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]+?)\s*\/\s*([A-Z]{2})\b/);
+  if (!m && !em) return 'Não informado';
+  const [, cru, uf] = (m ?? em) as RegExpMatchArray;
+  const cidade = cru.trim().toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()).replace(/\s(De|Do|Da|Dos|Das)\s/g, (c) => c.toLowerCase());
+  return uf ? `${cidade}/${uf.toUpperCase()}` : cidade;
 }
 
-/** Conta os dias citados no historico (aceita "08/072026", erro comum da fonte). */
-function diasDe(historico: string, valor: number): number {
-  const datas = new Set((historico.match(/\d{2}\/\d{2}\/?\d{4}/g) ?? []).map((d) => d.replace(/\//g, '')));
-  if (datas.size > 0) return datas.size;
-  return valor > 1500 ? 2 : 1;
+/**
+ * Conta os dias citados no historico (aceita "08/072026", erro comum da fonte).
+ * Sem datas no texto devolve 0 = "nao informado": nunca estimamos.
+ */
+function diasDe(historico: string): number {
+  return new Set((historico.match(/\d{2}\/\d{2}\/?\d{4}/g) ?? []).map((d) => d.replace(/\//g, ''))).size;
 }
 
 export function semAcento(t: string): string {
@@ -375,7 +378,7 @@ function resumir(ano: number, bruto: RawEmpenho[], detalhes: Map<string, Detalhe
         credor: nome,
         vereador: ver?.slug ?? null,
         valor: pago,
-        dias: diasDe(hist, pago),
+        dias: diasDe(hist),
         destino: destinoDe(hist),
         motorista: /motorista/i.test(hist),
         historico: hist,

@@ -11,7 +11,6 @@ import type { PostgrestFilterBuilder, SupabaseClient } from '@supabase/supabase-
 import { mockReaderSubmissions } from './mock-data';
 import { cleanTitle } from './format';
 import { isPinLive } from './cover';
-import { mockLotteryResults, mockMarketQuotes } from './mock-data';
 import { demoStore } from './demo-store';
 import { isAdLive, pickLiveAd } from './ads';
 import { fetchRSSArticles, rssToArticle } from './rss';
@@ -714,7 +713,7 @@ export async function getMarketQuotes(locals: App.Locals): Promise<MarketQuote[]
     if (rows?.length) return rows;
   }
 
-  return mockMarketQuotes;
+  return [];
 }
 
 
