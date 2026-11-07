@@ -1,0 +1,278 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import autoridades from '../../data/autoridades.json';
+import { createServiceClient } from '../../lib/supabase/server';
+import { lerChave } from '../../lib/transparencia-store';
+import { anoAtual, brl, CATEGORIAS, VEREADORES, semAcento, type Categoria, type ResumoAno } from '../../lib/transparencia';
+import { ESCALAO, type ResumoPref } from '../../lib/prefeitura';
+import { chaveResumo } from '../../lib/transparencia-job';
+import type { ResumoFolha, ResumoFolhaCamara } from '../../lib/folha';
+import { lerHist, type FolhaMes } from '../../lib/folha-hist';
+import { lerProposicoesNormalizadas, producaoDosVereadores, ROTULO_CATEGORIA, type CategoriaProducao } from '../../lib/camara-dados';
+import { localPorId } from '../../lib/locations-nioaque';
+import { formatDate } from '../../lib/format';
+
+const { slug } = Astro.params;
+const ano = anoAtual();
+const itens = autoridades.grupos.flatMap((g) => g.itens as { id: string; nome: string; cargo: string; partido?: string | null; foto?: string | null }[]);
+const exec = ESCALAO.find((a) => a.slug === slug) ?? null;
+const jsonItem = itens.find((i) => i.id === slug) ?? null;
+const ver = jsonItem ? (VEREADORES.find((v) => v.foto === jsonItem.foto) ?? null) : null;
+if (!exec && !ver) return new Response(null, { status: 404 });
+
+const sb = createServiceClient(Astro.locals);
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const bonito = (t: string) => t.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()).replace(/\s(De|Do|Da|Dos|Das|E)\s/g, (c) => c.toLowerCase());
+const comp = (c: string) => `${c.slice(5)}/${c.slice(0, 4)}`;
+
+let resumoPref: ResumoPref | null = null;
+let resumoCam: ResumoAno | null = null;
+let folha: ResumoFolha | null = null;
+let folhaCam: ResumoFolhaCamara | null = null;
+let hist: Record<string, Record<string, FolhaMes>> = {};
+let props: Awaited<ReturnType<typeof lerProposicoesNormalizadas>> = null;
+let atualizadoEm: string | null = null;
+if (sb) {
+  hist = await lerHist(sb, ano);
+  if (exec) {
+    const r = await lerChave<ResumoPref>(sb, chaveResumo('prefeitura', ano));
+    resumoPref = r?.valor ?? null;
+    atualizadoEm = r?.atualizadoEm ?? null;
+    folha = (await lerChave<ResumoFolha>(sb, chaveResumo('folha', ano)))?.valor ?? null;
+  } else {
+    const r = await lerChave<ResumoAno>(sb, chaveResumo('camara', ano));
+    resumoCam = r?.valor ?? null;
+    atualizadoEm = r?.atualizadoEm ?? null;
+    folhaCam = (await lerChave<ResumoFolhaCamara>(sb, chaveResumo('folhacamara', ano)))?.valor ?? null;
+    props = await lerProposicoesNormalizadas(sb, ano);
+  }
+}
+
+// identidade
+const chaveHist = exec ? exec.slug : ver!.slug;
+const foto = exec ? exec.foto : ver!.foto;
+const nomeExib = exec ? exec.nome : ver!.nome;
+const servidorCam = ver ? folhaCam?.servidores.find((s) => /eletivo/i.test(s.tipo) && ver.match.test(semAcento(s.nome).toUpperCase())) : null;
+const civil = ver && servidorCam ? bonito(servidorCam.nome) : null;
+const cargoCurto = (c: string) => c.replace(/^Secret[áa]ri[oa] Municipal d[aeo]s? /i, 'Secretaria de ');
+const cargo = exec ? exec.cargo : `${ver!.cargo}${ver!.cargo !== 'Vereador' && ver!.cargo !== 'Vereadora' ? ' · Mesa Diretora' : ''}`;
+const partido = exec ? (jsonItem?.partido ?? null) : ver!.partido;
+
+// diarias e reembolsos (do mais recente para o mais antigo)
+type Pgto = { data: string; texto: string; valor: number };
+let pagamentos: Pgto[] = [];
+let totalDiarias = 0;
+let qtdPag = 0;
+if (exec && resumoPref) {
+  const a = resumoPref.escalao.find((x) => x.slug === exec.slug);
+  totalDiarias = a?.total ?? 0;
+  qtdPag = a?.qtd ?? 0;
+  pagamentos = (a?.lista ?? []).map((l) => ({ data: l.d, texto: `${l.tipo} · ${l.secretaria} · empenho nº ${l.n}`, valor: l.valor }));
+}
+if (ver && resumoCam) {
+  const r = resumoCam.diariasPorVereador.find((x) => x.slug === ver.slug);
+  totalDiarias = r?.total ?? 0;
+  qtdPag = r?.quantidade ?? 0;
+  pagamentos = resumoCam.diarias
+    .filter((d) => d.vereador === ver.slug)
+    .map((d) => ({ data: d.data, texto: `${d.destino === 'Não informado' ? 'Destino não informado' : d.destino}${d.dias > 0 ? ` · ${d.dias} ${d.dias === 1 ? 'dia' : 'dias'}` : ''} · empenho nº ${d.numero}`, valor: d.valor }));
+}
+pagamentos.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+
+// folha mes a mes
+const linhas = Object.keys(hist)
+  .filter((c) => hist[c][chaveHist])
+  .sort()
+  .reverse()
+  .map((c) => ({ c, ...hist[c][chaveHist] }));
+const ultimo = linhas[0] ?? null;
+const somaBruto = linhas.reduce((s, l) => s + l.bruto, 0);
+const custoTotal = somaBruto + totalDiarias;
+const temDados = Boolean(resumoPref || resumoCam);
+
+// producao legislativa
+const prod = ver && props ? (producaoDosVereadores(props.itens).get(ver.slug) ?? null) : null;
+const proposicoes = prod ? [...prod.itens].sort((a, b) => ((b.data ?? '') > (a.data ?? '') ? 1 : (b.data ?? '') < (a.data ?? '') ? -1 : 0)) : [];
+const corTipo = (cat: CategoriaProducao) =>
+  cat === 'leis' ? 'bg-nioaque-green-50 text-nioaque-green-dark' : cat === 'fiscalizacao' ? 'bg-[#E8E6F5] text-[#3B3480]' : cat === 'zeladoria' ? 'bg-[#FBEFD5] text-[#7A4A00]' : 'bg-editorial text-ink-soft';
+
+// card para redes sociais (mesmos desenhos da pagina de Transparencia)
+const periodo = `janeiro a ${MESES[new Date().getMonth()]} de ${ano}`;
+const refFolhaTxt = folha ? comp(folha.ref) : '';
+let exportId = '';
+let exportJson = '';
+let exportModo = '';
+if (exec && resumoPref) {
+  const a = resumoPref.escalao.find((x) => x.slug === exec.slug)!;
+  const f = folha?.itens[exec.slug];
+  exportId = 'pref-export-data';
+  exportModo = `autoridade:${exec.slug}`;
+  exportJson = JSON.stringify({
+    ano,
+    periodo,
+    atualizadoEm: atualizadoEm ?? resumoPref.atualizadoEm,
+    totais: { empenhado: resumoPref.totalEmpenhado, liquidado: resumoPref.totalLiquidado, pago: resumoPref.totalPago, qtd: resumoPref.qtd },
+    porMes: resumoPref.porMes,
+    ultimoMes: 0,
+    categorias: [],
+    licitacao: { com: 0, sem: 0 },
+    escalao: [{ slug: a.slug, nome: a.nome, cargo: a.cargo, cargoCurto: cargoCurto(a.cargo), foto: a.foto, total: a.total, qtd: a.qtd, diarias: a.diarias, folha: f && f.nome ? f : null, lista: a.lista.slice(0, 12).map((l) => ({ d: l.d, valor: l.valor, tipo: l.tipo, secretaria: l.secretaria })) }],
+    secretarias: [],
+    areas: [],
+    fornecedores: [],
+    receitas: null,
+    refFolha: refFolhaTxt,
+  });
+}
+if (ver && resumoCam) {
+  const r = resumoCam.diariasPorVereador.find((x) => x.slug === ver.slug)!;
+  exportId = 'export-data';
+  exportModo = ver.slug;
+  exportJson = JSON.stringify({
+    ano,
+    periodo,
+    atualizadoEm: resumoCam.atualizadoEm,
+    total: { empenhado: resumoCam.totalEmpenhado, liquidado: resumoCam.totalLiquidado, pago: resumoCam.totalPago },
+    categorias: (Object.keys(CATEGORIAS) as Categoria[]).map((c) => ({ label: CATEGORIAS[c].label, cor: CATEGORIAS[c].cor, valor: resumoCam!.porCategoria[c] })),
+    diarias: { total: resumoCam.diariasTotal, quantidade: resumoCam.diarias.length, pctGasto: 0, equipeTotal: resumoCam.diariasEquipe.total, equipeQtd: resumoCam.diariasEquipe.quantidade, vereadoresTotal: 0 },
+    vereadores: [{ slug: ver.slug, nome: ver.nome, cargo: ver.cargo, partido: ver.partido, foto: ver.foto, total: r.total, quantidade: r.quantidade, dias: r.dias, porMes: r.porMes, lista: resumoCam.diarias.filter((d) => d.vereador === ver.slug).slice(0, 9).map((d) => ({ data: d.data, destino: d.destino, valor: d.valor, dias: d.dias })) }],
+  });
+}
+
+const cartao = 'rounded-[4px] border border-pedra bg-branco p-4';
+const botao = 'inline-flex min-h-[44px] items-center gap-2 rounded-[4px] bg-nioaque-green px-4 text-sm font-semibold text-white hover:bg-nioaque-green-dark disabled:opacity-60';
+const volta = exec ? '/transparencia?entidade=prefeitura&aba=escalao' : '/transparencia?entidade=camara';
+---
+
+<MainLayout title={`${nomeExib}: salário, diárias e produção`} description={`${cargoCurto(cargo)} de Nioaque: subsídio, diárias e reembolsos em ${ano}, com dados do Portal da Transparência.`}>
+  <div class="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
+    <a href={volta} class="mt-5 inline-flex min-h-[44px] items-center text-sm font-semibold text-ink-soft hover:text-nioaque-green-dark">← Voltar para Transparência / Autoridades</a>
+
+    <header class="mt-2 flex flex-wrap items-start gap-4 border-b-2 border-nioaque-green pb-5">
+      {foto && <img src={foto} alt={`Foto de ${nomeExib}`} width="80" height="80" class="h-20 w-20 shrink-0 rounded-[4px] border border-pedra object-cover object-top" />}
+      <div class="min-w-0 flex-1">
+        <h1 class="font-editorial text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">{nomeExib}</h1>
+        {civil && <p class="text-sm text-ink-soft">{civil}</p>}
+        <p class="mt-1 text-sm font-semibold text-ink">{cargoCurto(cargo)}{partido ? ` · ${partido}` : ''}</p>
+      </div>
+      {exportJson && (
+        <button type="button" data-png-pref={exec ? exportModo : undefined} data-exportar-png={ver ? exportModo : undefined} class={botao}>
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" /></svg>
+          <span data-rotulo>Baixar Card (Redes Sociais)</span>
+        </button>
+      )}
+    </header>
+
+    {!temDados && <p class={`${cartao} mt-6 text-sm text-ink-soft`}>Dados ainda não sincronizados com a fonte oficial.</p>}
+
+    {temDados && (
+      <>
+        <section aria-label="Resumo financeiro" class="mt-6 grid items-stretch gap-3 sm:grid-cols-[1fr_1.25fr_1fr]">
+          <div class={cartao}>
+            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Subsídio último mês</p>
+            {ultimo ? (
+              <>
+                <p class="mt-1 font-editorial text-2xl font-extrabold tabular-nums text-ink">{brl(ultimo.bruto)}</p>
+                <p class="mt-1 text-xs text-ink-soft">Líquido: {brl(ultimo.liquido)} · Competência: {comp(ultimo.c)}</p>
+              </>
+            ) : (
+              <p class="mt-2 text-sm text-ink-soft">Dados ainda não sincronizados com a fonte oficial.</p>
+            )}
+          </div>
+          <div class="rounded-[4px] border-2 border-[#00661E] bg-branco p-4">
+            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-nioaque-green">Custo total em {ano}</p>
+            <p class="mt-1 font-editorial text-3xl font-extrabold tabular-nums text-nioaque-green-dark">{brl(custoTotal)}</p>
+            <p class="mt-1 text-xs text-ink-soft">Soma de {linhas.length} {linhas.length === 1 ? 'competência' : 'competências'} (bruto) + diárias</p>
+          </div>
+          <div class={cartao}>
+            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Diárias e reembolsos</p>
+            <p class="mt-1 font-editorial text-2xl font-extrabold tabular-nums text-ink">{brl(totalDiarias)}</p>
+            <p class="mt-1 text-xs text-ink-soft">{qtdPag} {qtdPag === 1 ? 'pagamento' : 'pagamentos'} em {ano}</p>
+          </div>
+        </section>
+
+        {pagamentos.length > 0 && (
+          <section class="mt-8" aria-labelledby="h-diarias">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-l-4 border-nioaque-red pl-3">
+              <h2 id="h-diarias" class="font-editorial text-2xl font-extrabold text-ink">Diárias e reembolsos</h2>
+              <span class="rounded-[4px] bg-nioaque-red-50 px-3 py-1 text-sm font-bold tabular-nums text-nioaque-red-dark">{brl(totalDiarias)}</span>
+            </div>
+            <ul class="divide-y divide-pedra rounded-[4px] border border-pedra bg-branco">
+              {pagamentos.map((p) => (
+                <li class="flex items-start justify-between gap-3 p-3 text-sm">
+                  <div class="min-w-0">
+                    <p class="font-semibold text-ink">{p.texto}</p>
+                    <p class="text-xs tabular-nums text-ink-soft">{formatDate(p.data)}</p>
+                  </div>
+                  <strong class="shrink-0 tabular-nums text-ink">{brl(p.valor)}</strong>
+                </li>
+              ))}
+            </ul>
+            {exec && qtdPag > pagamentos.length && <p class="mt-2 text-xs text-ink-soft">Mostrando {pagamentos.length} de {qtdPag} pagamentos.</p>}
+          </section>
+        )}
+
+        {ver && prod && (
+          <section class="mt-8" aria-labelledby="h-prod">
+            <div class="mb-3 border-l-4 border-nioaque-red pl-3">
+              <h2 id="h-prod" class="font-editorial text-2xl font-extrabold text-ink">Produção legislativa em {ano}</h2>
+              <p class="text-sm text-ink-soft">Proposições registradas no portal da Câmara em nome do vereador.</p>
+            </div>
+            <dl class="grid grid-cols-3 gap-3">
+              <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft">Leis e decretos</dt><dd class="font-editorial text-2xl font-extrabold tabular-nums text-ink">{prod.porCategoria.leis}</dd></div>
+              <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft">Fiscalização</dt><dd class="font-editorial text-2xl font-extrabold tabular-nums text-ink">{prod.porCategoria.fiscalizacao}</dd></div>
+              <div class={cartao}><dt class="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-soft">Zeladoria e moções</dt><dd class="font-editorial text-2xl font-extrabold tabular-nums text-ink">{prod.porCategoria.zeladoria}</dd></div>
+            </dl>
+            {prod.porCategoria['sem-ementa'] > 0 && <p class="mt-2 text-xs text-ink-soft">Mais {prod.porCategoria['sem-ementa']} {prod.porCategoria['sem-ementa'] === 1 ? 'requerimento sem ementa publicada' : 'requerimentos sem ementa publicada'}, que não entram nas três contagens.</p>}
+            <ul class="mt-3 divide-y divide-pedra rounded-[4px] border border-pedra bg-branco">
+              {proposicoes.map((p) => (
+                <li class="p-3 text-sm">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="min-w-0 font-semibold text-ink"><span class={`mr-2 inline-block rounded-[2px] px-1.5 py-0.5 align-middle text-[11px] font-bold uppercase ${corTipo(p.categoria)}`}>{p.sigla}</span>{p.titulo}</p>
+                    {p.data && <span class="shrink-0 text-xs tabular-nums text-ink-soft">{formatDate(p.data)}</span>}
+                  </div>
+                  {p.texto.replace(p.titulo, '').trim() !== '' && <p class="mt-1 text-xs leading-snug text-ink-soft">{p.texto.replace(p.titulo, '').trim().slice(0, 280)}</p>}
+                  <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
+                    <span>{ROTULO_CATEGORIA[p.categoria]}</span>
+                    {p.locais.map((id) => localPorId(id)).filter(Boolean).map((l) => <span class="rounded-[2px] bg-editorial px-1.5 py-0.5 font-semibold text-ink">{l!.nome}</span>)}
+                    <a class="font-semibold text-nioaque-green-dark underline" href={p.fonteUrl} target="_blank" rel="noopener noreferrer">Ver no portal da Câmara</a>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section class="mt-8" aria-labelledby="h-mes">
+          <div class="mb-3 border-l-4 border-nioaque-red pl-3">
+            <h2 id="h-mes" class="font-editorial text-2xl font-extrabold text-ink">Salário mês a mês ({ano})</h2>
+            <p class="text-sm text-ink-soft">Folha de pagamento do Portal da Transparência, da competência mais recente para a mais antiga.</p>
+          </div>
+          {linhas.length === 0 ? (
+            <p class={`${cartao} text-sm text-ink-soft`}>Dados ainda não sincronizados com a fonte oficial.</p>
+          ) : (
+            <div class="overflow-x-auto rounded-[4px] border border-pedra bg-branco">
+              <table class="w-full min-w-[420px] text-sm">
+                <thead>
+                  <tr class="border-b border-pedra text-left text-xs uppercase tracking-[0.08em] text-ink-soft">
+                    <th scope="col" class="p-3">Competência</th><th scope="col" class="p-3 text-right">Bruto</th><th scope="col" class="p-3 text-right">Descontos</th><th scope="col" class="p-3 text-right">Líquido</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-pedra tabular-nums">
+                  {linhas.map((l) => (
+                    <tr><th scope="row" class="p-3 text-left font-semibold">{comp(l.c)}</th><td class="p-3 text-right">{brl(l.bruto)}</td><td class="p-3 text-right">{brl(l.descontos)}</td><td class="p-3 text-right font-bold">{brl(l.liquido)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p class="mt-2 text-xs text-ink-soft">{linhas.length < new Date().getMonth() && 'Competências que o portal ainda não entregou ou que não foram sincronizadas não aparecem. '}Bruto = líquido + descontos. Fonte: <a class="underline" href={`https://web.qualitysistemas.com.br/folha-de-pagamento/${exec ? '265' : '164'}`} target="_blank" rel="noopener noreferrer">Folha de pagamento</a> do Portal da Transparência{atualizadoEm ? `; despesas atualizadas em ${new Date(atualizadoEm).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' })}` : ''}. Não guardamos CPF.</p>
+        </section>
+      </>
+    )}
+  </div>
+
+  {exportJson && <script type="application/json" id={exportId} set:html={exportJson.replace(/</g, '\\u003c')} />}
+  {exec && exportJson && <script>import '../../scripts/prefeitura-export';</script>}
+  {ver && exportJson && <script>import '../../scripts/transparencia-export';</script>}
+</MainLayout>

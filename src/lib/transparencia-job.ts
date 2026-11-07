@@ -21,6 +21,7 @@ import {
 import { buscarReceitas } from './receitas';
 import { buscarFolha, buscarFolhaCamara, type ResumoFolha } from './folha';
 import { buscarEstado, buscarFederal, buscarIbge } from './externas';
+import { histEscalao, histVereadores, mesclarHist } from './folha-hist';
 import { chaveEmpenho, ENTIDADE_PREFEITURA, montarResumoPref, orgaoDe, ORGAOS_TENTAR } from './prefeitura';
 import { CONFIG_PADRAO, dataLocal, devidaHoje, gravarChave, lerChave, type ConfigAtualizacao } from './transparencia-store';
 
@@ -183,6 +184,7 @@ export async function passoTransparencia(sb: SupabaseClient, chaveFederalApi?: s
       await gravarChave(sb, 'estado', est);
       return { continua: true, atraso: 2, info: 'folha ' + ano + ': faltam ' + f.faltam };
     }
+    await mesclarHist(sb, Number(f.ref.slice(0, 4)), f.ref, histEscalao(f.itens));
     est.pendentes.shift();
     est.erros = 0;
     est.ultimoErro = undefined;
@@ -195,6 +197,7 @@ export async function passoTransparencia(sb: SupabaseClient, chaveFederalApi?: s
     const fc = await buscarFolhaCamara(ano, dataLocal().m);
     if (!fc) return falhar('folha da Câmara: portal sem resposta');
     await gravarChave(sb, chaveResumo('folhacamara', ano), fc);
+    await mesclarHist(sb, Number(fc.ref.slice(0, 4)), fc.ref, histVereadores(fc.servidores));
     est.pendentes.shift();
     est.erros = 0;
     est.ultimoErro = undefined;

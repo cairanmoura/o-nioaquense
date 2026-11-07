@@ -222,3 +222,26 @@ export async function buscarFolhaCamara(ano: number, mesAtual: number): Promise<
   }
   return null;
 }
+
+/** Folha da Camara de um mes especifico (todos os servidores). null = portal sem resposta. */
+export async function buscarFolhaCamaraMes(ano: number, mes: number): Promise<ServidorCamara[] | null> {
+  let cookie: string | null = null;
+  try {
+    const r = await fetch(`${PORTAL}/folha-de-pagamento/164`, { signal: AbortSignal.timeout(20_000) });
+    cookie = r.headers.get('set-cookie')?.split(';')[0] ?? null;
+  } catch {
+    return null;
+  }
+  if (!cookie) return null;
+  for (let t = 0; t < 2; t++) {
+    try {
+      const r = await fetch(`${PORTAL}/api/v1/folha-de-pagamento/164/cargos/busca?ano=${ano}&mes=${mes}&termo=camara`, { headers: { cookie, accept: 'application/json' }, signal: AbortSignal.timeout(45_000) });
+      if (!r.ok) continue;
+      const l = ((await r.json()) as Busca).flatMap((o) => o.grupos.flatMap((g) => g.servidores));
+      return l.map((x) => ({ nome: x.nome, cargo: x.cargo, tipo: x.tipoCargo ?? '', situacao: x.situacao, admissao: x.dataAdmissao, base: x.salarioBase, bruto: cent(x.salarioLiquido + x.descontos), descontos: x.descontos, liquido: x.salarioLiquido }));
+    } catch {
+      /* tenta de novo */
+    }
+  }
+  return null;
+}

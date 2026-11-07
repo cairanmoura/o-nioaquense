@@ -493,6 +493,7 @@ const ABAS = [
                   <span class="block text-xs text-ink-soft">{a.qtd === 0 ? 'nenhum pagamento individual' : `${a.qtd} ${a.qtd === 1 ? 'pagamento' : 'pagamentos'}${a.diarias > 0 ? ` · diárias ${brl(a.diarias)}` : ''}`}</span>
                 </span>
               </a>
+              <a href={`/autoridades/${a.slug}`} class="mx-3 mb-2 inline-flex min-h-[44px] items-center justify-center rounded-[4px] bg-nioaque-green-50 px-3 text-xs font-bold text-nioaque-green-dark hover:underline print:hidden">Ver perfil completo</a>
               <button type="button" data-png-pref={`autoridade:${a.slug}`} class="mx-3 mb-3 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[4px] border border-pedra px-3 text-xs font-semibold text-nioaque-green-dark hover:border-nioaque-green print:hidden">
                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
                 <span data-rotulo>Salvar imagem (PNG)</span>

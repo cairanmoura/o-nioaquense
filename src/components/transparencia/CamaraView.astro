@@ -321,6 +321,7 @@ const diasTxt = (n: number) => (n > 0 ? ` · ${n} ${n === 1 ? 'dia' : 'dias'}` :
                   </summary>
                   <div class="border-t border-pedra p-3">
                     <p class="text-xs text-ink-soft">{v.quantidade === 0 ? 'Nenhuma diária paga em ' + ano + '.' : `${v.quantidade} ${v.quantidade === 1 ? 'diária' : 'diárias'}${diasTxt(v.dias)}.`}{sv ? ` Subsídio = salário base na folha de ${refFolha}.` : ''}</p>
+                    <p class="mt-1"><a class="inline-flex min-h-[44px] items-center text-sm font-bold text-nioaque-green-dark underline" href={`/autoridades/${v.info.foto.split('/').pop()!.replace(/.[a-z]+$/, '')}`}>Ver perfil completo de {v.info.nome}</a></p>
                     {emSessao > 0 && <p class="mt-1 text-xs font-semibold text-ink">{emSessao} {emSessao === 1 ? 'viagem paga coincide' : 'viagens pagas coincidem'} com dia de sessão plenária (terça-feira).</p>}
                     {prod && prod.itens.length > 0 && (
                       <details class="mt-3 rounded-[4px] border border-pedra">
