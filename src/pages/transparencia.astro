@@ -161,16 +161,13 @@ if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel |
   description={entidade === 'prefeitura' ? 'Despesas, secretarias, primeiro escalão, maiores fornecedores, receitas e gráficos da Prefeitura de Nioaque, com dados do portal oficial.' : 'Despesas, diárias, vereadores, fornecedores e folha da Câmara Municipal de Nioaque, com dados do portal oficial.'}
 >
   <div class="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
-    <header class="mt-8 mb-6 border-b-2 border-nioaque-green pb-6">
+    <header class="mt-5 mb-4 border-b-2 border-nioaque-green pb-3">
       <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-nioaque-green">{entidade === 'prefeitura' ? 'Prefeitura Municipal de Nioaque' : 'Câmara Municipal de Nioaque'}</p>
-      <h1 class="mt-1 font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">Transparência</h1>
-      <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-soft">
-        O dinheiro público é de todos. Aqui você acompanha, em gráficos e em linguagem simples, {entidade === 'prefeitura' ? 'quanto a Prefeitura de Nioaque gasta, com quem e em quais secretarias, e quanto vai para o primeiro escalão.' : 'quanto a Câmara de Nioaque gasta, quanto cada vereador recebe em diárias e para onde vai cada real.'}
-      </p>
-      <p class="mt-2 text-sm font-semibold text-nioaque-green-dark">Dados do portal oficial, atualizados semanalmente.</p>
+      <h1 class="mt-0.5 font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Transparência</h1>
+      <p class="mt-1 text-sm text-ink-soft">O dinheiro público é de todos. <strong class="text-nioaque-green-dark">Dados do portal oficial, atualizados semanalmente.</strong></p>
     </header>
 
-    <nav aria-label="Órgão" class="mb-6 flex gap-2">
+    <nav aria-label="Órgão" class="mb-3 flex gap-2">
       <a href="?entidade=prefeitura" aria-current={entidade === 'prefeitura' ? 'page' : undefined} class:list={['inline-flex min-h-[44px] items-center rounded-[4px] border px-5 text-base font-bold', entidade === 'prefeitura' ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>Prefeitura</a>
       <a href="?entidade=camara" aria-current={entidade === 'camara' ? 'page' : undefined} class:list={['inline-flex min-h-[44px] items-center rounded-[4px] border px-5 text-base font-bold', entidade === 'camara' ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}>Câmara</a>
     </nav>
@@ -207,7 +204,7 @@ if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel |
     <!-- =============================== ATALHOS (recolhidos) =============================== -->
     <details class="mt-10 rounded-[4px] border border-pedra bg-branco">
       <summary class="flex min-h-[48px] cursor-pointer items-center justify-between gap-3 px-4 font-editorial text-lg font-extrabold text-ink">
-        <span>Consultas no portal oficial da {nomeEntidade}</span>
+        <span>Consultas no portal oficial da {nomeEntidade}<span class="ml-2 text-xs font-normal text-ink-soft">(clique para ver mais)</span></span>
         <span class="text-sm font-normal text-ink-soft">{total - grupoInstituicao.itens.length} atalhos</span>
       </summary>
       <div class="border-t border-pedra p-4">
@@ -261,7 +258,7 @@ if (sb && entidade === 'prefeitura' && resumoPref && (q || orgaoSel || areaSel |
     </section>
 
     <details class="mt-4 rounded-[4px] border border-pedra bg-branco">
-      <summary class="flex min-h-[44px] cursor-pointer items-center px-4 text-sm font-semibold text-ink-soft">{entidade === 'prefeitura' ? 'Conheça a Prefeitura' : grupoInstituicao.titulo}</summary>
+      <summary class="flex min-h-[44px] cursor-pointer items-center px-4 text-sm font-semibold text-ink-soft">{entidade === 'prefeitura' ? 'Conheça a Prefeitura' : grupoInstituicao.titulo}<span class="ml-2 text-xs font-normal text-ink-soft">(clique para ver mais)</span></summary>
       <div class="border-t border-pedra p-4">
         <p class="mb-3 text-sm text-ink-soft">{grupoInstituicao.resumo}</p>
         <ul class="grid gap-2 sm:grid-cols-2">

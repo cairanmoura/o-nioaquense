@@ -19,6 +19,8 @@ const { series, ultimoMes, altura = 200, brl, descricao, mesAndamento } = Astro.
 const visiveis = Math.max(1, ultimoMes + 1);
 const totais = Array.from({ length: visiveis }, (_, i) => series.reduce((s, x) => s + (x.valores[i] ?? 0), 0));
 const max = Math.max(...totais, 1);
+/** valor curto para cima da barra: 677 mil, 1,2 mi */
+const curto = (v: number) => (v <= 0 ? '' : v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1).replace('.', ',')} mi` : v >= 1000 ? `${Math.round(v / 1000)} mil` : String(Math.round(v)));
 const parcial = mesAndamento !== undefined && mesAndamento >= 0 && mesAndamento < visiveis;
 ---
 
@@ -26,9 +28,10 @@ const parcial = mesAndamento !== undefined && mesAndamento >= 0 && mesAndamento 
   <ol class="grid items-end gap-1" style={`height:${altura}px;grid-template-columns:repeat(${visiveis},minmax(0,1fr))`} aria-label={descricao}>
     {totais.map((t, i) => (
       <li class="flex h-full flex-col justify-end text-center" title={`${MESES[i]}${i === mesAndamento ? ' (mês em andamento, valor parcial)' : ''}: ${brl(t)}`}>
+        <span class="mb-0.5 block text-[9px] font-bold leading-none tabular-nums text-ink sm:text-[11px]">{curto(t)}</span>
         <div
           class:list={['flex w-full flex-col-reverse overflow-hidden rounded-t-[2px]', i === mesAndamento && 'opacity-70 outline-dashed outline-1 outline-offset-0 outline-ink-soft']}
-          style={`height:${t > 0 ? Math.max(3, (t / max) * 100) : 0}%`}
+          style={`height:${t > 0 ? Math.max(3, (t / max) * (altura - 40)) : 0}px`}
         >
           {series.map((s) => {
             const v = s.valores[i] ?? 0;
@@ -52,5 +55,5 @@ const parcial = mesAndamento !== undefined && mesAndamento >= 0 && mesAndamento 
       <span aria-hidden="true">*</span> {MESES[mesAndamento!]}: mês em andamento, atualização parcial (não é queda de gastos).
     </p>
   )}
-  <p class="mt-2 text-xs text-ink-soft">Maior mês: {brl(max)}.</p>
+  <p class="mt-2 text-xs text-ink-soft">Valor de cada mês acima da barra (mil = R$ 1.000; mi = R$ 1.000.000). Maior mês: {brl(max)}.</p>
 </div>

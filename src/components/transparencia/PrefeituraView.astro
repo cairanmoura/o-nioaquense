@@ -172,7 +172,7 @@ const ABAS = [
   {resumo && (
     <>
       <!-- ============================ TOPO FIXO ============================ -->
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <nav aria-label="Ano" class="flex gap-1">
           {anos.map((a) => (
             <a
@@ -185,10 +185,6 @@ const ABAS = [
           ))}
         </nav>
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" data-png-pref="resumo" class={botaoPng}>
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
-            <span data-rotulo>Salvar imagem (PNG)</span>
-          </button>
           <button type="button" data-pdf="#p-conteudo" class={botao}>
             <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PDF}></path></svg>
             <span data-rotulo>Exportar PDF</span>
@@ -196,7 +192,33 @@ const ABAS = [
         </div>
       </div>
 
-      <form id="busca" method="get" action="#busca" class="mb-6 scroll-mt-24 print:hidden">
+      <section aria-label="Resumo do ano" class="mb-5">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <p class="text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green">Total geral da Prefeitura · pago em {ano}</p>
+          <button type="button" data-png-pref="resumo" class={botaoPng}>
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONE_PNG}></path></svg>
+            <span data-rotulo>Salvar resumo (PNG)</span>
+          </button>
+        </div>
+        <div class="mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+          <p class="font-editorial text-[clamp(2rem,9vw,3.25rem)] font-extrabold leading-none tabular-nums text-nioaque-green-dark">{brl(resumo.totalPago)}</p>
+          {pop && (
+            <p class="text-base text-ink">
+              <strong class="tabular-nums">{brl(resumo.totalPago / pop.valor)}</strong> por habitante
+              <span class="block text-xs text-ink-soft">População estimada de {pop.valor.toLocaleString('pt-BR')} (IBGE, {pop.ano}).</span>
+            </p>
+          )}
+        </div>
+        <p class="mt-2 text-sm text-ink-soft">
+          {periodo}. Dinheiro que já saiu do cofre.
+          Liquidado: <abbr title="Produto ou serviço já recebido e conferido" class="no-underline"><span class="tabular-nums">{brl(resumo.totalLiquidado)}</span></abbr>
+          · Reservado (empenhado): <abbr title="Valor separado no orçamento para a despesa" class="no-underline"><span class="tabular-nums">{brl(resumo.totalEmpenhado)}</span></abbr>
+          · {resumo.qtd.toLocaleString('pt-BR')} despesas.
+          {atual ? ` Atualizado semanalmente (última vez em ${atual}).` : ''}
+        </p>
+      </section>
+
+      <form id="busca" method="get" action="#busca" class="mb-5 scroll-mt-24 print:hidden">
         <input type="hidden" name="entidade" value="prefeitura" />
         <input type="hidden" name="ano" value={ano} />
         <input type="hidden" name="aba" value={aba} />
@@ -207,7 +229,7 @@ const ABAS = [
           <button type="submit" class={`${botao} min-h-[48px] px-5`}>Buscar</button>
         </div>
         <details class="mt-2" open={Boolean(orgaoSel || catSel)}>
-          <summary class="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-nioaque-green-dark">Filtrar por secretaria ou tipo de gasto</summary>
+          <summary class="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-nioaque-green-dark">Filtrar por secretaria ou tipo de gasto<span class="ml-2 text-xs font-normal text-ink-soft">(clique para ver mais)</span></summary>
           <div class="mt-2 grid gap-3 sm:grid-cols-2">
             <label class="text-sm font-semibold text-ink">
               Secretaria ou órgão
@@ -232,6 +254,7 @@ const ABAS = [
           <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
             {todos && (
               <p class="text-sm text-ink">
+                <span class="block text-xs font-bold uppercase tracking-[0.1em] text-nioaque-green">Resultado da busca (não é o total geral)</span>
                 <strong>{todos.length.toLocaleString('pt-BR')}</strong> {todos.length === 1 ? 'despesa encontrada' : 'despesas encontradas'}, somando <strong>{brl(totalResultados)}</strong> pagos em {ano}
                 {nomeOrgao ? ` · ${nomeOrgao}` : ''}{nomeArea ? ` · área ${nomeArea}` : ''}{catSel && CATEGORIAS_PREF[catSel as CategoriaPref] ? ` · ${CATEGORIAS_PREF[catSel as CategoriaPref].label}` : ''}{q ? ` · "${q}"` : ''}.
               </p>
@@ -275,31 +298,11 @@ const ABAS = [
         </section>
       )}
 
-      <section aria-label="Resumo do ano" class="mb-8">
-        <p class="text-xs font-bold uppercase tracking-[0.12em] text-nioaque-green">Pago em {ano}</p>
-        <div class="mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-          <p class="font-editorial text-[clamp(2rem,9vw,3.25rem)] font-extrabold leading-none tabular-nums text-nioaque-green-dark">{brl(resumo.totalPago)}</p>
-          {pop && (
-            <p class="text-base text-ink">
-              <strong class="tabular-nums">{brl(resumo.totalPago / pop.valor)}</strong> por habitante
-              <span class="block text-xs text-ink-soft">População estimada de {pop.valor.toLocaleString('pt-BR')} (IBGE, {pop.ano}).</span>
-            </p>
-          )}
-        </div>
-        <p class="mt-2 text-sm text-ink-soft">
-          {periodo}. Dinheiro que já saiu do cofre.
-          Liquidado: <abbr title="Produto ou serviço já recebido e conferido" class="no-underline"><span class="tabular-nums">{brl(resumo.totalLiquidado)}</span></abbr>
-          · Reservado (empenhado): <abbr title="Valor separado no orçamento para a despesa" class="no-underline"><span class="tabular-nums">{brl(resumo.totalEmpenhado)}</span></abbr>
-          · {resumo.qtd.toLocaleString('pt-BR')} despesas.
-          {atual ? ` Atualizado semanalmente (última vez em ${atual}).` : ''}
-        </p>
-      </section>
-
       <Abas abas={ABAS} ativa={aba} params={{ entidade: 'prefeitura', ano, ...filtroParams }} />
 
       <!-- ============================ ABA 1: VISÃO GERAL ============================ -->
       <section role="tabpanel" id="painel-geral" data-painel="geral" aria-labelledby="aba-geral" hidden={aba !== 'geral'}>
-        <div class="grid gap-4 lg:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
           <div class={cartao}>
             <h2 class={tituloCartao}>Para onde vai o dinheiro</h2>
             <p class="mb-3 text-xs text-ink-soft">Cada real pago em {ano}, por tipo de gasto.</p>
@@ -321,13 +324,13 @@ const ABAS = [
 
           <div class={cartao} data-alterna>
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 class={tituloCartao}>Gastos por secretaria ou área</h2>
+              <h2 class={tituloCartao}>Gastos por área ou secretaria</h2>
               <div class="flex gap-1" role="group" aria-label="Agrupar por">
-                <button type="button" data-alvo="secretaria" aria-pressed="true" class="min-h-[44px] rounded-[4px] border border-nioaque-green bg-nioaque-green px-3 text-sm font-semibold text-white">Por secretaria</button>
-                <button type="button" data-alvo="area" aria-pressed="false" class="min-h-[44px] rounded-[4px] border border-pedra bg-branco px-3 text-sm font-semibold text-ink hover:border-nioaque-green">Por área</button>
+                <button type="button" data-alvo="area" aria-pressed="true" class="min-h-[44px] rounded-[4px] border border-nioaque-green bg-nioaque-green px-3 text-sm font-semibold text-white">Por área</button>
+                <button type="button" data-alvo="secretaria" aria-pressed="false" class="min-h-[44px] rounded-[4px] border border-pedra bg-branco px-3 text-sm font-semibold text-ink hover:border-nioaque-green">Por secretaria</button>
               </div>
             </div>
-            <div data-visao="secretaria">
+            <div data-visao="secretaria" hidden>
               <ul class="space-y-3">
                 {resumo.porSecretaria.slice(0, 10).map((s) => (
                   <li>
@@ -342,7 +345,7 @@ const ABAS = [
                 <span data-rotulo>Salvar imagem (PNG)</span>
               </button>
             </div>
-            <div data-visao="area" hidden>
+            <div data-visao="area">
               <p class="mb-2 text-xs text-ink-soft">Saúde, educação, assistência social e outras áreas, somando todos os órgãos.</p>
               <ul class="space-y-3">
                 {resumo.porFuncao.slice(0, 10).map((s) => (
@@ -417,7 +420,7 @@ const ABAS = [
                 {(resumo.licSemDetalhe ?? 0) > 0 && <p class="mt-1 text-xs text-ink-soft">Fora da conta: {brl(resumo.licSemDetalhe ?? 0)} pagos em despesas cujo detalhe o portal ainda não entregou.</p>}
                 {semLicCredores.length > 0 && (
                   <details class="mt-3 rounded-[4px] border border-pedra">
-                    <summary class="flex min-h-[44px] cursor-pointer items-center px-3 text-sm font-bold text-nioaque-green-dark">Ver quem recebeu sem licitação informada ({semLicCredores.length} maiores)</summary>
+                    <summary class="flex min-h-[44px] cursor-pointer items-center px-3 text-sm font-bold text-nioaque-green-dark">Ver quem recebeu sem licitação informada ({semLicCredores.length} maiores)<span class="ml-2 text-xs font-normal text-ink-soft">(clique para ver mais)</span></summary>
                     <ol class="divide-y divide-pedra border-t border-pedra text-sm">
                       {semLicCredores.map((f) => (
                         <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2">
@@ -457,7 +460,7 @@ const ABAS = [
               ['secretarios', 'Secretários'],
             ].map(([v, r]) => (
               <a
-                href={url(v ? { escalao: v } : {}, '#p-escalao')}
+                href={url({ aba: 'escalao', ...(v ? { escalao: v } : {}) }, '#abas')}
                 aria-current={escSel === v ? 'true' : undefined}
                 class:list={['inline-flex min-h-[44px] items-center rounded-[4px] border px-3 text-sm font-semibold', escSel === v ? 'border-nioaque-green bg-nioaque-green text-white' : 'border-pedra bg-branco text-ink hover:border-nioaque-green']}
               >
@@ -472,7 +475,7 @@ const ABAS = [
           {escFiltrado.map((a) => (
             <li class={`flex h-full flex-col rounded-[4px] border bg-branco transition-colors hover:border-nioaque-green ${selecionada?.slug === a.slug ? 'border-2 border-nioaque-green' : 'border-pedra'}`}>
               <a
-                href={url({ ...(escSel ? { escalao: escSel } : {}), autoridade: a.slug }, '#p-autoridade')}
+                href={url({ aba: 'escalao', ...(escSel ? { escalao: escSel } : {}), autoridade: a.slug }, '#p-autoridade')}
                 aria-current={selecionada?.slug === a.slug ? 'true' : undefined}
                 class="flex min-h-[44px] flex-1 gap-3 p-3"
               >

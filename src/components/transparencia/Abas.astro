@@ -53,6 +53,7 @@ const href = (id: string) => {
         const p = painel(a.dataset.aba ?? '');
         if (p) p.hidden = !ativa;
       }
+      document.querySelectorAll<HTMLInputElement>('input[name="aba"]').forEach((i) => (i.value = id));
       if (empurrar) {
         const u = new URL(location.href);
         u.searchParams.set('aba', id);
