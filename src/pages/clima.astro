@@ -1,0 +1,229 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import WeatherWidget from '../components/WeatherWidget.astro';
+import WeatherIcon from '../components/WeatherIcon.astro';
+import { getClimaPagina } from '../lib/clima';
+import { barChart, lineChart, rangeChart } from '../lib/clima-charts';
+
+/**
+ * /clima
+ * Clima de Nioaque: agora, proximas 48 h, 10 dias, ultimos 30 dias e 12 meses.
+ * Graficos SVG renderizados no servidor.
+ */
+
+const clima = await getClimaPagina(Astro.locals);
+
+const hoursEvery = clima.hours.length > 0 ? 6 : 1;
+const hourLabels = clima.hours.map((h) => `${h.hour}h`);
+
+const chartHoraTemp = lineChart({
+  labels: hourLabels,
+  series: [{ values: clima.hours.map((h) => h.temp), cls: 'stroke-nioaque-red-dark' }],
+  every: hoursEvery,
+  aria: 'Temperatura prevista para as próximas 48 horas em Nioaque',
+});
+const chartHoraChuva = barChart({
+  labels: hourLabels,
+  values: clima.hours.map((h) => h.rainProb),
+  unit: '%',
+  max: 100,
+  every: hoursEvery,
+  height: 170,
+  aria: 'Chance de chuva por hora nas próximas 48 horas em Nioaque',
+});
+const chartDias = rangeChart({
+  labels: clima.days.map((d) => `${d.weekday} ${d.day}`.replace(/^(\S+) /, '$1 ')),
+  mins: clima.days.map((d) => d.tempMin),
+  maxs: clima.days.map((d) => d.tempMax),
+  aria: 'Temperaturas mínima e máxima previstas para os próximos 10 dias em Nioaque',
+});
+const chartDiasChuva = barChart({
+  labels: clima.days.map((d) => d.day),
+  values: clima.days.map((d) => d.rainMm),
+  unit: ' mm',
+  showValues: true,
+  height: 170,
+  aria: 'Chuva prevista em milímetros para os próximos 10 dias em Nioaque',
+});
+const chartHistTemp = lineChart({
+  labels: clima.history.map((d) => d.day),
+  series: [
+    { values: clima.history.map((d) => d.tempMax), cls: 'stroke-nioaque-red-dark' },
+    { values: clima.history.map((d) => d.tempMin), cls: 'stroke-nioaque-green' },
+  ],
+  every: 5,
+  aria: 'Temperaturas máxima e mínima dos últimos 30 dias em Nioaque',
+});
+const chartHistChuva = barChart({
+  labels: clima.history.map((d) => d.day),
+  values: clima.history.map((d) => d.rainMm),
+  unit: ' mm',
+  every: 5,
+  height: 170,
+  aria: 'Chuva diária dos últimos 30 dias em Nioaque, em milímetros',
+});
+const chartMesesChuva = barChart({
+  labels: clima.months.map((m) => m.label),
+  values: clima.months.map((m) => m.rainMm),
+  unit: ' mm',
+  showValues: true,
+  height: 180,
+  aria: 'Chuva acumulada por mês nos últimos 12 meses em Nioaque, em milímetros',
+});
+const chartMesesTemp = lineChart({
+  labels: clima.months.map((m) => m.label),
+  series: [{ values: clima.months.map((m) => m.tempAvg), cls: 'stroke-nioaque-red-dark' }],
+  height: 170,
+  aria: 'Temperatura média mensal nos últimos 12 meses em Nioaque',
+});
+
+const totalChuva30 = clima.history.reduce((sum, d) => sum + d.rainMm, 0);
+const maxHist = clima.history.length ? Math.max(...clima.history.map((d) => d.tempMax)) : null;
+const minHist = clima.history.length ? Math.min(...clima.history.map((d) => d.tempMin)) : null;
+const diasChuva = clima.history.filter((d) => d.rainMm >= 1).length;
+
+const eyebrow = 'font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-nioaque-green';
+const card = 'rounded-[4px] border border-line bg-nioaque-white p-4 sm:p-5';
+---
+
+<MainLayout
+  title="Clima em Nioaque"
+  description="Tempo agora, previsão por hora e para 10 dias, histórico dos últimos 30 dias e chuva mês a mês em Nioaque (MS)."
+>
+  <div class="container-editorial py-8 sm:py-10">
+    <header class="mb-6 border-b-2 border-nioaque-green pb-5">
+      <h1 class="font-editorial text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">Clima em Nioaque</h1>
+      <p class="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-soft">
+        Tempo agora, previsão por hora e para os próximos 10 dias, e o que já aconteceu: temperatura e chuva dos últimos 30 dias e mês a mês no último ano.
+      </p>
+    </header>
+
+    <div class="mb-8 border border-line rounded-[4px] overflow-hidden">
+      <WeatherWidget />
+    </div>
+
+    {
+      !clima.ok && (
+        <p class="mb-8 rounded-[4px] border border-line bg-nioaque-white p-4 text-sm text-ink-soft">
+          A previsão detalhada está indisponível no momento. Tente novamente em alguns minutos.
+        </p>
+      )
+    }
+
+    {
+      clima.hours.length > 0 && (
+        <section class="mb-8" aria-labelledby="h-horas">
+          <h2 id="h-horas" class={`${eyebrow} mb-3`}>Próximas 48 horas</h2>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Temperatura (°C)</h3>
+              <Fragment set:html={chartHoraTemp} />
+            </div>
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Chance de chuva (%)</h3>
+              <Fragment set:html={chartHoraChuva} />
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      clima.days.length > 0 && (
+        <section class="mb-8" aria-labelledby="h-dias">
+          <h2 id="h-dias" class={`${eyebrow} mb-3`}>Próximos 10 dias</h2>
+          <ul class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {clima.days.map((d) => (
+              <li class="rounded-[4px] border border-line bg-nioaque-white p-3">
+                <p class="flex items-center justify-between text-xs font-semibold text-ink-muted">
+                  <span class="capitalize">{d.weekday} {d.day}</span>
+                  <span class="text-nioaque-green"><WeatherIcon icon={d.icon} size={18} /></span>
+                </p>
+                <p class="mt-1 font-editorial text-lg font-extrabold text-ink tabular-nums">
+                  <span class="text-nioaque-red-dark">{d.tempMax}°</span>
+                  <span class="text-ink-muted"> / {d.tempMin}°</span>
+                </p>
+                <p class="mt-0.5 truncate text-xs text-ink-soft">{d.label}</p>
+                <p class="mt-1 text-xs tabular-nums text-ink-muted">
+                  Chuva {d.rainProb}% · {d.rainMm} mm
+                </p>
+                <p class="text-xs tabular-nums text-ink-muted">
+                  UV {d.uv} · Vento {d.windMax} km/h
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Mínima e máxima por dia</h3>
+              <Fragment set:html={chartDias} />
+            </div>
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Chuva prevista (mm)</h3>
+              <Fragment set:html={chartDiasChuva} />
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      clima.history.length > 0 && (
+        <section class="mb-8" aria-labelledby="h-hist">
+          <h2 id="h-hist" class={`${eyebrow} mb-3`}>Histórico: últimos 30 dias</h2>
+          <dl class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { k: 'Chuva acumulada', v: `${Math.round(totalChuva30)} mm` },
+              { k: 'Dias com chuva', v: `${diasChuva}` },
+              { k: 'Máxima do período', v: `${maxHist}°` },
+              { k: 'Mínima do período', v: `${minHist}°` },
+            ].map((item) => (
+              <div class="rounded-[4px] border border-line bg-nioaque-white p-3 text-center">
+                <dt class="text-xs font-medium text-ink-muted">{item.k}</dt>
+                <dd class="mt-0.5 font-editorial text-xl font-extrabold text-ink tabular-nums">{item.v}</dd>
+              </div>
+            ))}
+          </dl>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class={card}>
+              <h3 class="mb-1 text-sm font-semibold text-ink">Temperatura por dia</h3>
+              <p class="mb-2 text-xs text-ink-muted">
+                <span class="font-semibold text-nioaque-red-dark">Máxima</span> e
+                <span class="font-semibold text-nioaque-green">mínima</span> (eixo: dia do mês)
+              </p>
+              <Fragment set:html={chartHistTemp} />
+            </div>
+            <div class={card}>
+              <h3 class="mb-1 text-sm font-semibold text-ink">Chuva por dia (mm)</h3>
+              <p class="mb-2 text-xs text-ink-muted">Eixo: dia do mês</p>
+              <Fragment set:html={chartHistChuva} />
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      clima.months.length > 0 && (
+        <section class="mb-8" aria-labelledby="h-meses">
+          <h2 id="h-meses" class={`${eyebrow} mb-3`}>Mês a mês: último ano</h2>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Chuva acumulada (mm)</h3>
+              <Fragment set:html={chartMesesChuva} />
+            </div>
+            <div class={card}>
+              <h3 class="mb-2 text-sm font-semibold text-ink">Temperatura média (°C)</h3>
+              <Fragment set:html={chartMesesTemp} />
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <p class="text-xs leading-relaxed text-ink-muted">
+      Dados do Open-Meteo (modelos meteorológicos e reanálise ERA5) para as coordenadas do centro de Nioaque.
+      São estimativas de modelo, não medições de estação local. Atualizado a cada 30 minutos.
+    </p>
+  </div>
+</MainLayout>

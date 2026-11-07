@@ -54,7 +54,7 @@ export interface WeatherNow {
   sunrise: string;
   sunset: string;
   forecast: WeatherDay[];
-  source: 'open-meteo' | 'google' | 'fallback';
+  source: 'open-meteo' | 'fallback';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -186,73 +186,6 @@ const FALLBACK: WeatherNow = {
   source: 'fallback',
 };
 
-/* -------------------------------------------------------------------------- */
-/* Google Weather API (opcional)                                               */
-/* -------------------------------------------------------------------------- */
-
-function googleIcon(type: string): WeatherIcon {
-  const t = type.toUpperCase();
-  if (t.includes('THUNDER')) return 'storm';
-  if (t.includes('SNOW') || t.includes('HAIL') || t.includes('SLEET')) return 'snow';
-  if (t.includes('RAIN') || t.includes('SHOWER') || t.includes('DRIZZLE')) return 'rain';
-  if (t.includes('FOG') || t.includes('HAZE') || t.includes('MIST')) return 'fog';
-  if (t.includes('CLEAR') || t.includes('SUNNY')) return 'sun';
-  return 'cloud';
-}
-
-/**
- * Com `GOOGLE_WEATHER_API_KEY` configurada, troca os valores de "agora" pelos
- * da Google Weather API (currentConditions). Qualquer falha mantem o Open-Meteo.
- * A previsao e o historico continuam vindo do Open-Meteo.
- */
-async function applyGoogleCurrent(locals: App.Locals, target: WeatherNow): Promise<void> {
-  const key = locals.runtime?.env?.GOOGLE_WEATHER_API_KEY;
-  if (!key) return;
-
-  try {
-    const url =
-      'https://weather.googleapis.com/v1/currentConditions:lookup' +
-      `?location.latitude=${NIOAQUE_COORDS.latitude}&location.longitude=${NIOAQUE_COORDS.longitude}` +
-      '&languageCode=pt-BR&unitsSystem=METRIC';
-
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      headers: { 'X-Goog-Api-Key': key, Accept: 'application/json' },
-    });
-    if (!response.ok) return;
-
-    const g = (await response.json()) as {
-      weatherCondition?: { type?: string; description?: { text?: string } };
-      temperature?: { degrees?: number };
-      feelsLikeTemperature?: { degrees?: number };
-      relativeHumidity?: number;
-      isDaytime?: boolean;
-      wind?: { speed?: { value?: number } };
-      precipitation?: { qpf?: { quantity?: number } };
-    };
-
-    if (typeof g.temperature?.degrees !== 'number') return;
-
-    target.temperature = Math.round(g.temperature.degrees);
-    if (typeof g.feelsLikeTemperature?.degrees === 'number') {
-      target.feelsLike = Math.round(g.feelsLikeTemperature.degrees);
-    }
-    if (typeof g.relativeHumidity === 'number') target.humidity = Math.round(g.relativeHumidity);
-    if (typeof g.wind?.speed?.value === 'number') target.windSpeed = Math.round(g.wind.speed.value);
-    if (typeof g.isDaytime === 'boolean') target.isDay = g.isDaytime;
-    if (typeof g.precipitation?.qpf?.quantity === 'number') {
-      target.precipitation = Number(g.precipitation.qpf.quantity.toFixed(1));
-    }
-    if (g.weatherCondition?.type) {
-      target.icon = googleIcon(g.weatherCondition.type);
-      target.label = g.weatherCondition.description?.text ?? target.label;
-    }
-    target.source = 'google';
-  } catch {
-    /* mantem Open-Meteo */
-  }
-}
-
 /** Clima atual + previsao de Nioaque. Nunca lanca. */
 export async function getNioaqueWeather(locals: App.Locals): Promise<WeatherNow> {
   const cached = await readCache(locals);
@@ -328,7 +261,6 @@ export async function getNioaqueWeather(locals: App.Locals): Promise<WeatherNow>
       source: 'open-meteo',
     };
 
-    await applyGoogleCurrent(locals, payload);
     await writeCache(locals, payload);
     return payload;
   } catch {

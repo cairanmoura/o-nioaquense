@@ -4,9 +4,7 @@
  * Dados da pagina /clima: previsao por hora (48 h), previsao de 10 dias,
  * historico dos ultimos 30 dias e resumo mensal dos ultimos 12 meses.
  *
- * Fonte: Open-Meteo (gratuita, sem chave). A API do Google Weather guarda so
- * 24 h de historico, entao nao cobre o historico desta pagina; ela alimenta
- * apenas o "agora" (ver weather.ts). Cache de 30 min na borda.
+ * Fonte: Open-Meteo (gratuita, sem chave). Cache de 30 min na borda.
  */
 
 import { NIOAQUE_COORDS, describe } from './weather';
